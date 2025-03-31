@@ -1,0 +1,7 @@
+{
+    "javascript.preferences.importModuleSpecifierEnding": "js",
+    "typescript.preferences.importModuleSpecifierEnding": "js",
+    "files.autoSaveDelay": 60000,
+    "typescript.preferences.importModuleSpecifier": "non-relative",
+    "typescript.preferences.preferTypeOnlyAutoImports": true
+}
