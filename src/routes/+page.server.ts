@@ -14,10 +14,12 @@ export async function load() {
     }
     else {
         value = await get_preview(YOUTUBE_HANDLE);
-        await save_json(
-            import.meta.url.replace('+page.server.ts', 'channel.json').replace('file:///', ''),
-            value
-        );
+        if (dev) {
+            await save_json(
+                import.meta.url.replace('+page.server.ts', 'channel.json').replace('file:///', ''),
+                value
+            );
+        }
     }
 
     return {
