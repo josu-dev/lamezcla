@@ -1,12 +1,12 @@
 <script lang="ts">
   import { ExternalLink } from "$lib/components/icons.js";
-  import type { Playlist, Track, TrackId } from "$lib/player/types.js";
-  import { duration_to_mmss, duration_to_seconds, playlist_url } from "$lib/player/utils.js";
+  import type * as Model from "$lib/models/youtube.js";
+  import { playlist_url, seconds_to_ddhhmmss } from "$lib/player/utils.js";
   type Props = {
-    playlist: Playlist;
-    tracks: Track[];
-    current_track?: TrackId;
-    on_select?: (id: TrackId) => void;
+    playlist: Model.Playlist;
+    tracks: Model.PlaylistEntry[];
+    current_track?: Model.StringId;
+    on_select?: (id: Model.StringId) => void;
   };
 
   let { playlist, tracks, current_track, on_select = () => {} }: Props = $props();
@@ -18,7 +18,7 @@
         continue;
       }
 
-      total_s += duration_to_seconds(t.video?.duration);
+      total_s += t.video.total_seconds;
     }
 
     const days = Math.floor(total_s / 86400);
@@ -42,7 +42,7 @@
   });
 </script>
 
-<aside class="max-w-96 w-full py-1 border-l border-border max-h-screen overflow-hidden flex flex-col">
+<aside class="max-w-96 w-full py-1 border-l border-border max-h-[calc(100dvh-3.5rem)] overflow-hidden flex flex-col">
   <div class="border-b px-2 py-2 border-border">
     <h2 class="text-xl font-bold">
       Current Playlist
@@ -87,9 +87,7 @@
               </div>
             </div>
             <div class="justify-self-end text-xs tracking-wide">
-              {#if video}
-                {duration_to_mmss(video?.duration)}
-              {/if}
+              {seconds_to_ddhhmmss(video.total_seconds)}
             </div>
           </div>
         </button>

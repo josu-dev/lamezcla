@@ -9,12 +9,17 @@
   };
 
   let { playlists, current_playlist = undefined, on_select }: Props = $props();
+  let open = $state(false);
 </script>
 
 <aside class="min-w-64 border-r border-border flex max-h-screen flex-col">
   <div class="px-2 pt-3">
     <h2 class="font-bold text-xl">Playlists</h2>
   </div>
+
+  <section>
+    <ul></ul>
+  </section>
 
   <ul class="px-2 py-1 flex flex-col gap-y-1 mt-4 overflow-x-clip overflow-y-auto flex-1">
     {#each playlists as p (p.id)}

@@ -4,7 +4,7 @@ export type StringId = string;
 
 export type StringNumber = `${number}`;
 
-export type StringUTC = string;
+export type StringDate = string;
 
 export type PageInfo = { totalResults: number, resultsPerPage: number; };
 
@@ -53,6 +53,9 @@ export type TopicsDetails = {
 
 export type PrivacyStatus = 'private' | 'public' | 'unlisted';
 
+export type ThumbnailsDMH = { default: Thumbnail, medium: Thumbnail, high: Thumbnail; };
+export type ThumbnailsDMHSM = ThumbnailsDMH & { standard: Thumbnail; maxres: Thumbnail; };
+
 export type Channel = {
     kind: 'youtube#channel',
     etag: StringId,
@@ -61,8 +64,8 @@ export type Channel = {
         title: string,
         description: string,
         customUrl: string,
-        publishedAt: StringUTC,
-        thumbnails: { default: Thumbnail, medium: Thumbnail, high: Thumbnail; },
+        publishedAt: StringDate,
+        thumbnails?: ThumbnailsDMH,
         localized: Localized,
         defaultLanguage?: string;
         country?: string;
@@ -108,7 +111,7 @@ export type Channel = {
     },
     contentOwnerDetails: {
         contentOwner: string,
-        timeLinked: StringUTC;
+        timeLinked: StringDate;
     },
     localizations: Localizations;
 };
@@ -124,17 +127,11 @@ export type Playlist = {
     etag: StringId,
     id: StringId,
     snippet: {
-        publishedAt: StringUTC,
+        publishedAt: StringDate,
         channelId: StringId,
         title: string,
         description: string,
-        thumbnails: {
-            default: Thumbnail,
-            medium: Thumbnail,
-            high: Thumbnail,
-            standard: Thumbnail,
-            maxres: Thumbnail;
-        },
+        thumbnails?: ThumbnailsDMHSM,
         channelTitle: string,
         defaultLanguage?: string,
         localized: Localized;
@@ -176,17 +173,11 @@ export type PlaylistItem = {
     etag: StringId,
     id: StringId,
     snippet: {
-        publishedAt: StringUTC,
+        publishedAt: StringDate,
         channelId: StringId,
         title: string,
         description: string,
-        thumbnails: {
-            default: Thumbnail,
-            medium: Thumbnail,
-            high: Thumbnail,
-            standard: Thumbnail,
-            maxres: Thumbnail;
-        },
+        thumbnails?: ThumbnailsDMHSM,
         channelTitle: string,
         videoOwnerChannelTitle: string,
         videoOwnerChannelId: StringId,
@@ -197,7 +188,7 @@ export type PlaylistItem = {
     contentDetails: {
         videoId: StringId,
         note?: string,
-        videoPublishedAt: StringUTC;
+        videoPublishedAt: StringDate;
     },
     status: {
         privacyStatus: PrivacyStatus;
@@ -213,17 +204,11 @@ export type Video = {
     etag: StringId,
     id: string,
     snippet: {
-        publishedAt: StringUTC,
+        publishedAt: StringDate,
         channelId: string,
         title: string,
         description: string,
-        thumbnails: {
-            default: Thumbnail,
-            medium: Thumbnail,
-            high: Thumbnail,
-            standard: Thumbnail,
-            maxres: Thumbnail;
-        },
+        thumbnails?: ThumbnailsDMHSM,
         channelTitle: string,
         tags: string[],
         categoryId: string,
@@ -250,7 +235,7 @@ export type Video = {
         failureReason: string,
         rejectionReason: string,
         privacyStatus: string,
-        publishAt: StringUTC,
+        publishAt: StringDate,
         license: string,
         embeddable: boolean,
         publicStatsViewable: boolean,
@@ -277,7 +262,7 @@ export type Video = {
         topicCategories: string[];
     },
     recordingDetails: {
-        recordingDate: StringUTC;
+        recordingDate: StringDate;
     },
     fileDetails: {
         fileName: string,
@@ -329,10 +314,10 @@ export type Video = {
         editorSuggestions: string[],
     },
     liveStreamingDetails: {
-        actualStartTime: StringUTC,
-        actualEndTime: StringUTC,
-        scheduledStartTime: StringUTC,
-        scheduledEndTime: StringUTC,
+        actualStartTime: StringDate,
+        actualEndTime: StringDate,
+        scheduledStartTime: StringDate,
+        scheduledEndTime: StringDate,
         concurrentViewers: number,
         activeLiveChatId: string;
     },
