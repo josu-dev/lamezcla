@@ -1,4 +1,4 @@
-export const SITE_NAME = "La Mezcla";
+export const SITE_NAME = "lamezcla";
 
 export const DEFAULT_SEO = {
     icon: '/favicon.svg',
@@ -11,10 +11,10 @@ export const DEFAULT_SEO = {
     title_template: '%s - ' + SITE_NAME,
     // image: {
     //     url: "/banner_og.webp",
-    //     alt: "La Mezcla Banner",
+    //     alt: "lamezcla Banner",
     //     width: "1200",
     //     height: "630",
     // },
     image: undefined,
-    language_tag: 'es'
+    language_tag: 'en'
 } as const;

@@ -1,7 +1,7 @@
 <script lang="ts">
   import Button from "$lib/components/el/Button.svelte";
   import * as Icon from "$lib/components/icons.js";
-  import { noop } from "$lib/utils.js";
+  import { noop } from "$lib/utils/index.js";
 
   type Props = {
     is_paused: boolean;

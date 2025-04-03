@@ -1,26 +1,16 @@
 <script lang="ts">
+  import type * as Model from "$lib/models/youtube.js";
   import Controls from "$lib/player/Controls.svelte";
   import IFramePlayer from "$lib/player/IFramePlayer/IFramePlayer.svelte";
   import type * as IFP from "$lib/player/IFramePlayer/types.js";
   import Tracklist from "$lib/player/Tracklist.svelte";
-  import type { PlaylistItem, TrackId, Video } from "$lib/player/types.js";
   import { channel_url } from "$lib/player/utils.js";
 
   const YT_AUTOPLAY = 1;
   const YT_SHOW_CONTROLS = 0;
   type Props = {
-    playlist: {
-      tracks: {
-        item: PlaylistItem;
-        video: Video | undefined;
-      }[];
-      id: string;
-      channel_id: string;
-      title: string;
-      description: string;
-      published_at: string;
-      privacy_status: string;
-      item_count: number;
+    playlist: Model.Playlist & {
+      tracks: Model.PlaylistEntry[];
     };
   };
 
@@ -30,7 +20,7 @@
   let tracks = $derived.by(() => {
     const out = [];
     for (const t of playlist.tracks) {
-      if (t.video == null || !t.video.embeddable) {
+      if (!(t.video.is_available && t.video.is_embeddable)) {
         continue;
       }
       out.push(t);
@@ -57,12 +47,12 @@
   let repeat = $state(0);
   let is_playing = $state(false);
   let is_paused = $state(false);
-  let is_unavailable = $derived(curr.video?.embeddable !== true);
+  let is_unavailable = $derived(curr.video?.is_embeddable !== true);
   let is_volume_menu_open = $state(false);
   let is_muted = $state(false);
   let volume = $state(50);
 
-  function set_idx_by_id(id: TrackId) {
+  function set_idx_by_id(id: Model.StringId) {
     for (let i = 0; i < tracks.length; i++) {
       if (tracks[i].item.id === id) {
         idx = i;
@@ -70,10 +60,6 @@
       }
     }
   }
-  // $effect.pre(() => {
-  //   const _ = curr;
-  //   is_unavailable =
-  // })
 
   function shuffle_tracks() {
     tracks.sort(() => Math.random() - 0.5);
