@@ -1,13 +1,16 @@
 <script lang="ts">
-  import { insert_channel, select_channels } from "$lib/client/db/index.js";
-  import { getPersistedState } from "$lib/client/state.svelte.js";
+  import { goto } from "$app/navigation";
+  import { insert_channel } from "$lib/client/db/index.js";
+  import { use_channel_ctx } from "$lib/client/state/channels.svelte.js";
+  import Button from "$lib/components/el/Button.svelte";
   import Input from "$lib/components/el/Input.svelte";
+  import * as Icon from "$lib/components/icons.js";
   import type * as Model from "$lib/models/youtube.js";
   import { superForm } from "sveltekit-superforms";
 
   let { data } = $props();
-  let channels: Model.Channel[] = $state([]);
-  let selected_channel = getPersistedState({ key: "selected_channel", initial: "" });
+
+  let cstate = use_channel_ctx();
 
   const { form, enhance } = superForm(data.form, {
     onError: (ev) => {
@@ -18,31 +21,27 @@
         console.error("something happend", ev);
         return;
       }
-      add_channel(ev.form.message.channel);
+
+      const channel = ev.form.message.channel;
+      add_channel(channel).then(() => {
+        goto("/" + channel.handle);
+      });
     },
   });
 
   async function add_channel(channel: Model.Channel) {
     const new_id = await insert_channel(channel);
-    load_channels();
+    cstate.sync();
   }
-
-  async function load_channels() {
-    channels = await select_channels();
-  }
-
-  $effect(() => {
-    load_channels();
-  });
 </script>
 
 <main class="flex flex-col items-center h-full">
-  <h1 class="text-4xl font-bold">lamezcla</h1>
+  <h1 class="text-4xl font-bold mt-[1em]">lamezcla</h1>
 
-  <form action="?/channel" method="post" use:enhance class="min-w-64">
+  <form action="?/channel" method="post" use:enhance class="flex flex-col min-w-64 mt-8">
     <div class="flex flex-col gap-1">
-      <label for="input-handle">
-        <span>Handle</span>
+      <label for="input-handle" class="flex">
+        <span class="font-semibold">Youtube channel </span><span class="text-muted text-sm ml-auto">(handle @)</span>
       </label>
       <Input
         type="text"
@@ -52,30 +51,10 @@
         oninput={(ev) => ($form.handle = ev.currentTarget.value)}
       />
     </div>
+    <div class="mx-auto mt-4">
+      <Button title="Load" size="md">
+        <Icon.UserPlus />
+      </Button>
+    </div>
   </form>
-
-  <ul class="mt-4 w-64 space-y-2">
-    {#each channels as channel (channel.id)}
-      <li>
-        <a href="/{channel.handle}" class="grid px-2 w-full py-2 bg-accent rounded-md">
-          <div class="flex gap-4 items-center">
-            <div class="size-12 flex-none">
-              {#if channel.img}
-                <img
-                  src={channel.img.url}
-                  alt="{channel.title} profile thumbnail"
-                  height={channel.img.height}
-                  width={channel.img.width}
-                  class="rounded-md overflow-clip shadow"
-                />
-              {/if}
-            </div>
-            <div class="font-bold text-xl leading-tight">
-              {channel.title}
-            </div>
-          </div>
-        </a>
-      </li>
-    {/each}
-  </ul>
 </main>

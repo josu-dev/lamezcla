@@ -41,6 +41,8 @@
     --radius-md: calc(var(--radius) - 2px);
     --radius-lg: var(--radius);
     --radius-xl: calc(var(--radius) + 4px);
+    --spacing-site-header: calc(var(--spacing) * 14);
+    --spacing-site-content: calc(100dvh - var(--spacing) * 14);
 }
 
 @layer base {
@@ -63,5 +65,13 @@
 @layer utilities {
     .border-dev {
         border: 1px solid fuchsia;
+    }
+
+    .h-site-header {
+        height: calc(var(--site-header-height));
+    }
+
+    .h-site-content {
+        height: calc(100dvh-var(--site-header-height));
     }
 }

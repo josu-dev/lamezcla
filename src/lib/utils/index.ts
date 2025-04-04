@@ -8,6 +8,10 @@ export function now_utc() {
     return new Date().toISOString();
 }
 
+export function uuid() {
+    return crypto.randomUUID();
+}
+
 export type Optional<T> = undefined | T;
 
 export type OptionalPromise<T> = Promise<undefined | T>;

@@ -2,28 +2,23 @@
   import { goto } from "$app/navigation";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import * as Icon from "$lib/components/icons.js";
-  import type * as Models from "$lib/models/youtube.js";
-  import type { Optional } from "$lib/utils/index.js";
-  import type { Snippet } from "svelte";
   import type { PageData } from "./$types.js";
 
   type Props = {
     data: PageData;
-    children: Snippet;
   };
 
-  let { data, children }: Props = $props();
+  let { data }: Props = $props();
+
   let channel = $derived(data.channel);
   let playlists = $derived(data.playlists);
-  let current_playlist: Optional<string> = $state();
-  let playlist_entries: Models.PlaylistEntry[] = $state([]);
 
   function on_play_playlist(id: string) {
     goto(`/play?l=${id}`);
   }
 </script>
 
-<div class="grid h-[calc(100dvh-3.5rem)]">
+<div class="grid h-site-content">
   <div class="border-b border-border flex gap-4 py-4 flex-none px-4">
     <div>
       <img
@@ -36,7 +31,7 @@
     </div>
     <div>
       <h1 class="text-4xl font-bold">{channel.title}</h1>
-      <div class="text-sm font-semibold text-muted">
+      <div class="text-sm font-semibold text-muted mt-1">
         Created <HumanTime utc={channel.published_at} />
         - Refreshed <HumanTime utc={channel.updated_at} as_relative />
       </div>
