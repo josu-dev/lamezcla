@@ -2,6 +2,7 @@ export { default as EllipsisVertical } from '@lucide/svelte/icons/ellipsis-verti
 export { default as ExternalLink } from '@lucide/svelte/icons/external-link';
 export { default as House } from '@lucide/svelte/icons/house';
 export { default as Library } from '@lucide/svelte/icons/library';
+export { default as ListVideo } from '@lucide/svelte/icons/list-video';
 export { default as Menu } from '@lucide/svelte/icons/menu';
 export { default as Pause } from '@lucide/svelte/icons/pause';
 export { default as Play } from '@lucide/svelte/icons/play';
@@ -12,6 +13,8 @@ export { default as Search } from '@lucide/svelte/icons/search';
 export { default as Shuffle } from '@lucide/svelte/icons/shuffle';
 export { default as SkipBack } from '@lucide/svelte/icons/skip-back';
 export { default as SkipForward } from '@lucide/svelte/icons/skip-forward';
+export { default as User } from '@lucide/svelte/icons/user';
+export { default as UserPlus } from '@lucide/svelte/icons/user-plus';
 export { default as Volume } from '@lucide/svelte/icons/volume';
 export { default as Volume1 } from '@lucide/svelte/icons/volume-1';
 export { default as Volume2 } from '@lucide/svelte/icons/volume-2';
