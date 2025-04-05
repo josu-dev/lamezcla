@@ -1,17 +1,22 @@
 import * as localquery from '$lib/client/db/index.js';
 import type * as Model from '$lib/models/index.js';
-import { now_utc, uuid } from '$lib/utils/index.js';
+import { now_utc, uuid, type VoidPromise } from '$lib/utils/index.js';
+import { SvelteSet } from 'svelte/reactivity';
 import { create_context, type UseContextArgs } from './shared.js';
 
 
 class PinnedState {
     pinned: Model.PinnedEntry[] = $state([]);
+    #pinned_ids: Set<string> = new SvelteSet();
 
     constructor(pinned: Model.PinnedEntry[]) {
         this.pinned = pinned;
+        for (const p of pinned) {
+            this.#pinned_ids.add(p.item.pinned_id);
+        }
     }
 
-    async pin<T extends Model.PinnedItemType>(type: T, value: Model.PinnedItemValueMap[T]) {
+    async pin<T extends Model.PinnedItemType>(type: T, value: Model.PinnedItemValueMap[T]): VoidPromise {
         const now = now_utc();
         const item: Model.PinnedItem = {
             id: uuid(),
@@ -29,9 +34,10 @@ class PinnedState {
             value: value
         } as any;
         this.pinned.push(new_entry);
+        this.#pinned_ids.add(item.pinned_id);
     }
 
-    async unpin(entry: Model.PinnedEntry) {
+    async unpin(entry: Model.PinnedEntry): VoidPromise {
         const id = entry.item.id;
         await localquery.delete_pinned_item(id);
 
@@ -46,11 +52,33 @@ class PinnedState {
         }
 
         this.pinned.splice(i, 1);
+        this.#pinned_ids.delete(entry.item.pinned_id);
     }
 
-    async sync() {
+    async unpin_by_id(id: string): VoidPromise {
+        let i = 0;
+        for (; i < this.pinned.length; i++) {
+            if (this.pinned[i].item.pinned_id === id) {
+                break;
+            }
+        }
+        if (i === this.pinned.length) {
+            return;
+        }
+
+        const entry = this.pinned[i];
+        await localquery.delete_pinned_item(entry.item.id);
+        this.#pinned_ids.delete(entry.item.pinned_id);
+        this.pinned.splice(i, 1);
+    }
+
+    async sync(): VoidPromise {
         const pe = await localquery.select_pinned_entries();
         this.pinned = pe;
+    }
+
+    is_pinned(id: string): boolean {
+        return this.#pinned_ids.has(id);
     }
 }
 

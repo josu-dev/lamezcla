@@ -1,81 +1,118 @@
 <script lang="ts">
+  import { use_pinned_ctx } from "$lib/client/state/pinned.svelte.js";
+  import ActionsMenu from "$lib/components/ActionsMenu/ActionsMenu.svelte";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import * as Icon from "$lib/components/icons.js";
-  import type { Snippet } from "svelte";
+  import PageSimple from "$lib/components/PageSimple.svelte";
+  import * as Model from "$lib/models/index.js";
+  import { seconds_to_ddhhmmss } from "$lib/player/utils.js";
+  import { uuid } from "$lib/utils/index.js";
   import type { PageData } from "./$types.js";
 
   type Props = {
     data: PageData;
-    children: Snippet;
   };
 
-  let { data, children }: Props = $props();
+  let { data }: Props = $props();
   let playlist = $derived(data.playlist);
-  let playlist_entries = $derived(data.entries);
+
+  const pinned_state = use_pinned_ctx();
+
+  let entries = $derived.by(() => {
+    const unavailable: Model.PlaylistEntry[] = [];
+    const displayed: Model.PlaylistEntry[] = [];
+
+    for (const e of data.entries) {
+      if (e.video.is_available) {
+        displayed.push(e);
+      } else {
+        unavailable.push(e);
+      }
+    }
+
+    return {
+      displayed,
+      unavailable,
+    };
+  });
 </script>
 
-<div class="grid h-screen">
-  <div class="border-b border-border flex gap-4 py-4 flex-none px-4">
-    <div>
-      <img
-        src={playlist.img?.url}
-        width={playlist.img?.width}
-        height={playlist.img?.height}
-        alt="{playlist.title} profile avatar"
-        class="rounded-md shadow size-16"
-      />
+<PageSimple
+  header={{
+    img: playlist.img,
+    title: playlist.title,
+    updated_at: playlist.updated_at,
+  }}
+  content={{
+    title: "Track" + (entries.displayed.length === 0 ? "" : "s"),
+    item_count: entries.displayed.length,
+  }}
+>
+  {#if entries.unavailable.length > 0}
+    <div class="px-4 pb-2">
+      <p class="text-sm font-semibold text-muted">{entries.unavailable.length} unavailable tracks</p>
     </div>
-    <div>
-      <h1 class="text-4xl font-bold">{playlist.title}</h1>
-      <div class="text-sm font-semibold text-muted">
-        Created <HumanTime utc={playlist.published_at} />
-        - Refreshed <HumanTime utc={playlist.updated_at} as_relative />
-      </div>
-    </div>
-  </div>
-
-  <div class="flex flex-col flex-1 overflow-x-clip overflow-y-auto">
-    <div class="flex-none px-4 pt-4 pb-2 sticky top-0 z-10 bg-background/95">
-      <h2 class="text-xl font-bold">Tracks {playlist_entries.length}</h2>
-    </div>
-    <ul class="grid grid-cols-1 gap-x-8 gap-y-6">
-      {#each playlist_entries as { item, video } (item.id)}
-        <li>
-          <button class="group text-left cursor-pointer">
-            <div class="flex px-4 py-2">
-              <div class="relative">
-                <img
-                  src={video.img?.url}
-                  width={video.img?.width}
-                  height={video.img?.height}
-                  alt="{video.title} playlist thumbnail"
-                  class="rounded-md w-full aspect-video object-fill"
-                />
-                <div
-                  class="absolute grid opacity-0 [&:is(:where(.group):hover:not(:has(a:hover))_*)]:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
-                >
-                  <div class="flex items-center gap-2 text-2xl font-bold">
-                    <Icon.Play class="size-8 stroke-3" /> Play
-                  </div>
-                </div>
-                <div class="absolute bottom-2 right-2">
-                  <span class="bg-accent px-1.5 py-1 rounded-md text-xs font-semibold tracking-wider">
-                    ≈ {playlist.item_count} tracks
-                  </span>
+  {/if}
+  <ul class="grid grid-cols-[repeat(1,minmax(auto,64rem))] pb-4">
+    {#each entries.displayed as { item, video } (item.id)}
+      {@const is_pinned = pinned_state.is_pinned(video.id)}
+      <li class="flex flex-col flex-1">
+        <button class="group text-left flex w-full">
+          <div class="flex gap-4 px-4 py-2 w-full">
+            <div class="relative">
+              <img
+                src={video.img?.url}
+                width={video.img?.width}
+                height={video.img?.height}
+                alt="{video.title} video thumbnail"
+                class="rounded-md w-full aspect-video object-fill"
+              />
+              <div
+                class="absolute grid opacity-0 [&:is(:where(.group):hover:not(:has([data-no-play]:hover))_*)]:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
+              >
+                <div class="flex items-center gap-2 text-2xl font-bold">
+                  <Icon.Play class="size-8 stroke-3" /> Play
                 </div>
               </div>
-              <div>
-                <h3 class="text-xl fotn-bold mt-2">{video.title}</h3>
-                <p>
-                  <a href="/playlist/{video.id}" class="text-base font-bold text-muted hover:text-foreground"
-                    >View all playlist tracks</a
-                  >
-                </p>
+              <div class="absolute bottom-2 right-2">
+                <span class="bg-accent px-1.5 py-1 rounded-md text-xs font-semibold tracking-wider">
+                  {seconds_to_ddhhmmss(video.total_seconds)}
+                </span>
               </div>
             </div>
-          </button>
-        </li>
-      {/each}
-    </ul>
-  </div>
-</div>
+            <div>
+              <div class="flex">
+                <h3 class="text-lg font-semibold mt-2">{video.title}</h3>
+              </div>
+              <p class="mt-1 text-sm font-semibold text-muted">
+                <a href="/{video.id}" data-no-play class="hover:text-foreground">
+                  {video.channel_title}
+                </a>
+                -
+                <span><HumanTime as_relative utc={video.published_at} /></span>
+              </p>
+            </div>
+            <div class="flex items-center ml-auto" data-no-play>
+              <ActionsMenu
+                actions={[
+                  {
+                    id: uuid(),
+                    label: "Pin",
+                    action: () => {
+                      if (is_pinned) {
+                        pinned_state.unpin_by_id(video.id);
+                      } else {
+                        pinned_state.pin("video", video);
+                      }
+                    },
+                    icon: is_pinned ? Icon.PinOff : Icon.Pin,
+                  },
+                ]}
+              />
+            </div>
+          </div>
+        </button>
+      </li>
+    {/each}
+  </ul>
+</PageSimple>

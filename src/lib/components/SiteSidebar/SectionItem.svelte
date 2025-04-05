@@ -5,6 +5,7 @@
     href?: string;
     item?: Item;
     left_icon?: Snippet;
+    right_icon?: Snippet;
     title: string;
     subtitle?: Snippet;
     is_selected?: boolean;
@@ -16,6 +17,7 @@
     item,
     href = "#main",
     left_icon,
+    right_icon,
     title,
     subtitle,
     on_selected,
@@ -32,7 +34,7 @@
     class="block hover:bg-accent data-selected:bg-accent data-selected:hover:bg-muted/50 rounded-md group {classes}"
     onclick={on_selected}
   >
-    <div class="flex py-1 pl-0.5 pr-1.5 gap-1.5 items-center">
+    <div class="flex py-1 px-0.5 gap-1.5 items-center">
       <div class="rounded-md overflow-hidden p-0.5">
         {@render left_icon?.()}
       </div>
@@ -41,6 +43,9 @@
           {title}
         </div>
         {@render subtitle?.()}
+      </div>
+      <div class="rounded-md overflow-hidden p-0.5">
+        {@render right_icon?.()}
       </div>
     </div>
   </a>

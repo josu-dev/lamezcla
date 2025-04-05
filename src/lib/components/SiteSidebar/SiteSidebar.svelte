@@ -9,20 +9,20 @@
 
   type Props = {
     channels: Model.Channel[];
-    pinned: Model.PinnedEntry[];
     on_channel_select?: (value: Model.Channel) => void;
     on_pinned?: (value: Model.PinnedEntry) => void;
     on_pinned_select?: (value: Model.PinnedEntry) => void;
     on_pinned_removed?: (value: Model.PinnedEntry) => void;
   };
 
-  let { channels, pinned, on_channel_select, on_pinned, on_pinned_select, on_pinned_removed }: Props = $props();
+  let { channels, on_channel_select, on_pinned, on_pinned_select, on_pinned_removed }: Props = $props();
 
   let open = $state(false);
 
-  const p = use_pinned_ctx();
+  const pinned_state = use_pinned_ctx();
+
   let displayed_pinned = $derived.by(() => {
-    return p.pinned.toSorted((a, b) => a.item.order - b.item.order);
+    return pinned_state.pinned.toSorted((a, b) => a.item.order - b.item.order);
   });
 
   const pinned_item_icon: Record<Model.PinnedItemType, Component> = {
@@ -72,6 +72,18 @@
                 <div class="text-xs text-muted-foreground">{p.value.item_count ?? 0} tracks</div>
               {/if}
             {/snippet}
+            {#snippet right_icon()}
+              <button
+                onclick={(ev) => {
+                  ev.preventDefault();
+                  ev.stopPropagation();
+                  pinned_state.unpin_by_id(p.item.pinned_id);
+                }}
+                class="block invisible group-hover:visible rounded-md pr-1 py-1 hover:bg-muted"
+              >
+                <Icon.PinOff class="size-5" />
+              </button>
+            {/snippet}
           </SectionItem>
         {:else}
           <SectionItem title="No pins added" class="cursor-default" />
@@ -83,14 +95,7 @@
       {#snippet children()}
         {#each channels as c (c.id)}
           {@const pathname = "/" + c.handle}
-          <SectionItem
-            title={c.title}
-            href={pathname}
-            is_selected={page.url.pathname === pathname}
-            on_selected={(ev) => {
-              p.pin("channel", c);
-            }}
-          >
+          <SectionItem title={c.title} href={pathname} is_selected={page.url.pathname === pathname}>
             {#snippet left_icon()}
               <img
                 src={c.img?.url}

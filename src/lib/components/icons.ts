@@ -5,6 +5,8 @@ export { default as Library } from '@lucide/svelte/icons/library';
 export { default as ListVideo } from '@lucide/svelte/icons/list-video';
 export { default as Menu } from '@lucide/svelte/icons/menu';
 export { default as Pause } from '@lucide/svelte/icons/pause';
+export { default as Pin } from '@lucide/svelte/icons/pin';
+export { default as PinOff } from '@lucide/svelte/icons/pin-off';
 export { default as Play } from '@lucide/svelte/icons/play';
 export { default as Repeat } from '@lucide/svelte/icons/repeat';
 export { default as Repeat1 } from '@lucide/svelte/icons/repeat-1';

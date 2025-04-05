@@ -41,7 +41,7 @@
   <form action="?/channel" method="post" use:enhance class="flex flex-col min-w-64 mt-8">
     <div class="flex flex-col gap-1">
       <label for="input-handle" class="flex">
-        <span class="font-semibold">Youtube channel </span><span class="text-muted text-sm ml-auto">(handle @)</span>
+        <span class="font-semibold">Youtube channel </span><span class="text-muted text-sm ml-auto">( @handle )</span>
       </label>
       <Input
         type="text"

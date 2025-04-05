@@ -7,6 +7,7 @@ export type LocalPlaylistItem = {
     id: string,
     playlist_id: string;
     video_id: string;
+    position: number;
     privacy_status: string;
     published_at: string;
 };
@@ -14,8 +15,8 @@ export type LocalPlaylistItem = {
 export type Table = EntityTable<LocalPlaylistItem, 'id'>;
 
 export const TABLE_NAME = 'playlists_items';
+
 export const TABLE_INDEXES = 'id, playlist_id, video_id';
-// playlist_items: 'id, playlist_id, video_id, published_at, updated_at, available, privacy_status',
 
 let db: DexieWithTables;
 

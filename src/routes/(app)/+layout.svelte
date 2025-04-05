@@ -30,7 +30,7 @@
   </header>
 
   <div class="flex">
-    <SiteSidebar channels={cstate.channels} pinned={pstate.pinned} />
+    <SiteSidebar channels={cstate.channels} />
 
     <div class="flex-1">
       {@render children()}
