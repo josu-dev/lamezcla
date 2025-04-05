@@ -76,12 +76,13 @@ export function unavailable_video(id: string): Model.Video {
 
 export async function select_playlist_entries(id: string) {
     const items = await db.playlists_items.where('playlist_id').equals(id).toArray();
-    console.log("items", items);
     if (items.length === 0) {
         return [];
     }
-    const ids = [];
 
+    items.sort((a, b) => a.position - b.position);
+
+    const ids = [];
     for (const v of items) {
         ids.push(v.video_id);
     }

@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+@plugin 'tailwindcss-animate';
 
 
 @font-face {
@@ -59,6 +60,10 @@
 
     body {
         @apply bg-background text-foreground font-sans;
+    }
+
+    a, button {
+        cursor: pointer;
     }
 }
 

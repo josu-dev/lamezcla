@@ -163,8 +163,9 @@ export async function get_playlist_items_all(id: string) {
                 id: item.id,
                 playlist_id: item.snippet.playlistId,
                 video_id: item.contentDetails.videoId,
-                published_at: item.snippet.publishedAt,
+                position: item.snippet.position,
                 privacy_status: item.status.privacyStatus,
+                published_at: item.snippet.publishedAt,
             };
             out.push(p);
         }

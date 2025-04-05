@@ -35,6 +35,7 @@ export type PlaylistItem = {
     id: string;
     playlist_id: string;
     video_id: string;
+    position: number;
     privacy_status: string;
     published_at: string;
 };
