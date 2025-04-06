@@ -44,7 +44,7 @@
         return `/playlist/${entry.value.id}`;
       }
       case "video": {
-        return `/play?v=${entry.value.id}`;
+        return `/video/${entry.value.id}`;
       }
       default: {
         console.error("Unreacheable path", entry);

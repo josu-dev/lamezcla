@@ -1,7 +1,7 @@
 import type { DexieWithTables } from '$lib/client/db/db.js';
 import type * as Model from '$lib/models/youtube.js';
 import { VIDEO_FLAGS } from '$lib/models/youtube.js';
-import type { VoidPromise } from '$lib/utils/index.js';
+import type { OptionalPromise, VoidPromise } from '$lib/utils/index.js';
 import type { EntityTable } from 'dexie';
 
 export type LocalVideo = {
@@ -19,7 +19,6 @@ export type Table = EntityTable<LocalVideo, 'id'>;
 
 export const TABLE_NAME = 'videos';
 export const TABLE_INDEXES = 'id, channel_id';
-// videos: 'id, channel_id, channel_title, published_at, title, duration, duration_seconds, embeddable, privacy_status',
 
 let db: DexieWithTables;
 
@@ -72,6 +71,16 @@ export function unavailable_video(id: string): Model.Video {
         is_unlisted: false,
         is_embeddable: false,
     };
+}
+
+export async function select_video(id: string): OptionalPromise<Model.Video> {
+    const video = await db.videos.where('id').equals(id).first();
+    if (video === undefined) {
+        return undefined;
+    }
+
+    const out = map_local_video_to_video(video);
+    return out;
 }
 
 export async function select_playlist_entries(id: string) {

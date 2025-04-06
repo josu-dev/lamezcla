@@ -10,11 +10,11 @@ export const load: PageLoad = async ({ params, fetch }) => {
     const [
         playlist, entries
     ] = await Promise.all([
-        localquery.select_playlist(params.playlist),
-        localquery.select_playlist_entries(params.playlist)
+        localquery.select_playlist(params.playlist_id),
+        localquery.select_playlist_entries(params.playlist_id)
     ]);
     if (playlist === undefined) {
-        return error(404, `Playlist with id '${params.playlist}' no loaded`);
+        return error(404, `Playlist with id '${params.playlist_id}' no loaded`);
     }
 
     if (entries.length > 0) {
