@@ -79,9 +79,9 @@
                   ev.stopPropagation();
                   pinned_state.unpin_by_id(p.item.pinned_id);
                 }}
-                class="block invisible group-hover:visible rounded-md pr-1 py-1 hover:bg-muted"
+                class="block invisible group-hover:visible rounded-md p-1 hover:bg-muted"
               >
-                <Icon.PinOff class="size-5" />
+                <Icon.PinOff class="size-4" />
               </button>
             {/snippet}
           </SectionItem>

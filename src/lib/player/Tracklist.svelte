@@ -46,8 +46,14 @@
   <div class="border-b px-2 py-2 border-border">
     <h2 class="text-xl font-bold">
       Current Playlist
-      <a href={playlist_url(playlist.id)} rel="noopener noreferrer" title="Open {playlist.title}" class="ml-1">
-        <span class="sr-only">Open {playlist.title}</span>
+      <a
+        href={playlist_url(playlist.id)}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Open {playlist.title}"
+        class="ml-1"
+      >
+        <span class="sr-only">Open {playlist.title} playlist</span>
         <ExternalLink class="inline-block size-5 align-top" />
       </a>
     </h2>

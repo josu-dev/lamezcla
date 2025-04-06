@@ -4,19 +4,88 @@
   import ActionsMenu from "$lib/components/ActionsMenu/ActionsMenu.svelte";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import * as Icon from "$lib/components/icons.js";
-  import { uuid } from "$lib/utils/index.js";
+  import SearchInput from "$lib/components/SearchInput.svelte";
+  import type { SortMode } from "$lib/components/SortMenu/index.js";
+  import { SortMenu } from "$lib/components/SortMenu/index.js";
+  import * as Model from "$lib/models/index.js";
+  import { channel_url } from "$lib/player/utils.js";
+  import { uuid, type Tuple } from "$lib/utils/index.js";
+  import { Searcher } from "$lib/utils/searcher.js";
   import type { PageData } from "./$types.js";
 
   type Props = {
     data: PageData;
   };
 
+  type SortByMode = SortMode<Model.Playlist>;
+
+  const SORT_MODES = [
+    {
+      id: "published_new",
+      label: "Published newest",
+      compare_fn: (a, b) => b.published_at.localeCompare(a.published_at),
+    },
+    {
+      id: "published_old",
+      label: "Published oldest",
+      compare_fn: (a, b) => a.published_at.localeCompare(b.published_at),
+    },
+    {
+      id: "title_az",
+      label: "Title A to Z",
+      compare_fn: (a, b) => a.title.localeCompare(b.title),
+    },
+    {
+      id: "title_za",
+      label: "Title Z to A",
+      compare_fn: (a, b) => b.title.localeCompare(a.title),
+    },
+    {
+      id: "tracks_01",
+      label: "Track count - to +",
+      compare_fn: (a, b) => a.item_count - b.item_count,
+    },
+    {
+      id: "tracks_10",
+      label: "Track count + to -",
+      compare_fn: (a, b) => b.item_count - a.item_count,
+    },
+  ] satisfies Tuple<SortByMode>;
+
+  const DEFAULT_SORT_MODE = SORT_MODES[0];
+
+  const searcher = new Searcher<Model.Playlist>({ mapper: (p) => p.title, on_empty_search: "all" });
+
   let { data }: Props = $props();
 
-  let channel = $derived(data.channel);
-  let playlists = $derived(data.playlists);
+  $effect(() => {
+    searcher.set(data.playlists);
+  });
 
   const pinned_state = use_pinned_ctx();
+
+  let channel = $derived(data.channel);
+  let channel_is_pinned = $derived(pinned_state.is_pinned(channel.id));
+  let search_query = $state("");
+
+  let filtered_playlists = $derived.by(() => {
+    if (search_query === "") {
+      return [...data.playlists];
+    }
+
+    const out = searcher.search(search_query);
+    return out;
+  });
+
+  let sort_by: SortByMode = $state(DEFAULT_SORT_MODE);
+
+  let playlists = $derived.by(() => {
+    const displayed = filtered_playlists.toSorted(sort_by.compare_fn);
+
+    return {
+      displayed: displayed,
+    };
+  });
 
   function on_play_playlist(id: string) {
     goto(`/play?l=${id}`);
@@ -35,19 +104,59 @@
       />
     </div>
     <div>
-      <h1 class="text-4xl font-bold">{channel.title}</h1>
+      <h1 class="text-4xl font-bold">
+        {channel.title}
+        <a
+          href={channel_url(channel.id)}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open {channel.title} channel"
+          class=""
+        >
+          <span class="sr-only">Open {channel.title}</span>
+          <Icon.ExternalLink class="inline-block size-5 align-top" />
+        </a>
+      </h1>
       <div class="text-sm font-semibold text-muted mt-1">
         Refreshed <HumanTime utc={channel.updated_at} as_relative />
       </div>
     </div>
+    <div class="ml-auto self-center">
+      <ActionsMenu
+        actions={[
+          {
+            id: uuid(),
+            label: channel_is_pinned ? "Unpin" : "Pin",
+            action: () => {
+              if (channel_is_pinned) {
+                pinned_state.unpin_by_id(channel.id);
+              } else {
+                pinned_state.pin("channel", channel);
+              }
+            },
+            icon: channel_is_pinned ? Icon.PinOff : Icon.Pin,
+          },
+        ]}
+      />
+    </div>
   </div>
 
-  <div class="flex flex-col flex-1 overflow-x-clip overflow-y-auto">
-    <div class="flex-none px-4 pt-4 pb-2 sticky top-0 z-10 bg-background/95">
-      <h2 class="text-xl font-bold">Playlists {playlists.length}</h2>
+  <div class="flex flex-col flex-1 overflow-x-clip overflow-y-auto [scrollbar-gutter:stable] isolate">
+    <div class="flex-none flex justify-between px-4 pt-4 pb-2 sticky top-0 z-10 bg-background/95">
+      <h2 class="text-xl font-bold">Playlists {playlists.displayed.length}</h2>
+      <div class="flex gap-x-2">
+        <SearchInput label="Search playlist" oninput={(ev) => (search_query = ev.currentTarget.value)} maxlength={32} />
+        <SortMenu
+          current={sort_by}
+          modes={SORT_MODES}
+          on_selected={(mode) => {
+            sort_by = mode;
+          }}
+        />
+      </div>
     </div>
     <ul class="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-2">
-      {#each playlists as playlist (playlist.id)}
+      {#each playlists.displayed as playlist (playlist.id)}
         {@const is_pinned = pinned_state.is_pinned(playlist.id)}
         <li class="flex flex-col flex-1">
           <button class="group text-left flex flex-1" onclick={() => on_play_playlist(playlist.id)}>
@@ -81,7 +190,7 @@
                       actions={[
                         {
                           id: uuid(),
-                          label: "Pin",
+                          label: is_pinned ? "Unpin" : "Pin",
                           action: () => {
                             if (is_pinned) {
                               pinned_state.unpin_by_id(playlist.id);

@@ -13,8 +13,8 @@
 
   let { data, children }: Props = $props();
 
-  let cstate = use_channel_ctx(data.channels);
-  let pstate = use_pinned_ctx(data.pinned);
+  let channels_s = use_channel_ctx(data.channels);
+  let pinned_s = use_pinned_ctx(data.pinned);
 </script>
 
 <div class="flex flex-col h-full">
@@ -30,7 +30,7 @@
   </header>
 
   <div class="flex">
-    <SiteSidebar channels={cstate.channels} />
+    <SiteSidebar channels={channels_s.channels} />
 
     <div class="flex-1">
       {@render children()}
