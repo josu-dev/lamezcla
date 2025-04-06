@@ -14,7 +14,7 @@
 </script>
 
 <header class="border-b border-border flex gap-4 py-4 flex-none px-4">
-  <div>
+  <div class="flex-none">
     <img
       src={img?.url}
       width={img?.width}
@@ -24,7 +24,7 @@
     />
   </div>
   <div>
-    <h1 class="text-4xl font-bold">
+    <h1 class="text-4xl font-bold line-clamp-2">
       {@render title()}
     </h1>
     <div class="text-sm font-semibold text-muted mt-1">

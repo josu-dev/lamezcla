@@ -3,7 +3,7 @@
 
   type Props = {
     title: Snippet;
-    actions: Snippet;
+    actions?: Snippet;
     children: Snippet;
   };
 
@@ -16,7 +16,7 @@
       {@render title()}
     </h2>
     <div class="flex gap-x-2">
-      {@render actions()}
+      {@render actions?.()}
     </div>
   </div>
   {@render children()}
