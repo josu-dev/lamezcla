@@ -24,7 +24,7 @@ function get_pinned_mockup(): Model.PinnedEntry[] {
             id: 'pin_001',
             pinned_at: '2025-04-03T10:00:00Z',
             updated_at: '2025-04-03T10:00:00Z',
-            order: 1,
+            position: 1,
         },
         value: {
             id: 'vid_001',
@@ -51,7 +51,7 @@ function get_pinned_mockup(): Model.PinnedEntry[] {
             id: 'pin_003',
             pinned_at: '2025-04-03T12:00:00Z',
             updated_at: '2025-04-03T12:00:00Z',
-            order: 3,
+            position: 3,
         },
         value: {
             id: 'pl_001',
@@ -73,7 +73,7 @@ function get_pinned_mockup(): Model.PinnedEntry[] {
             id: 'pin_004',
             pinned_at: '2025-04-03T13:00:00Z',
             updated_at: '2025-04-03T13:00:00Z',
-            order: 4,
+            position: 4,
         },
         value: {
             id: 'pl_custom_001',
@@ -95,7 +95,7 @@ function get_pinned_mockup(): Model.PinnedEntry[] {
             id: 'pin_005',
             pinned_at: '2025-04-03T14:00:00Z',
             updated_at: '2025-04-03T14:00:00Z',
-            order: 5,
+            position: 5,
         },
         value: {
             id: 'chan_004',

@@ -22,7 +22,7 @@
   const pinned_state = use_pinned_ctx();
 
   let displayed_pinned = $derived.by(() => {
-    return pinned_state.pinned.toSorted((a, b) => a.item.order - b.item.order);
+    return pinned_state.pinned.toSorted((a, b) => a.item.position - b.item.position);
   });
 
   const pinned_item_icon: Record<Model.PinnedItemType, Component> = {

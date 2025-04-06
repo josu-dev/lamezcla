@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { ExternalLink } from "$lib/components/icons.js";
+  import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import type * as Model from "$lib/models/youtube.js";
-  import { playlist_url, seconds_to_ddhhmmss } from "$lib/player/utils.js";
+  import { seconds_to_ddhhmmss } from "$lib/player/utils.js";
+
   type Props = {
     playlist: Model.Playlist;
     tracks: Model.PlaylistEntry[];
@@ -46,16 +47,7 @@
   <div class="border-b px-2 py-2 border-border">
     <h2 class="text-xl font-bold">
       Current Playlist
-      <a
-        href={playlist_url(playlist.id)}
-        target="_blank"
-        rel="noopener noreferrer"
-        title="Open {playlist.title}"
-        class="ml-1"
-      >
-        <span class="sr-only">Open {playlist.title} playlist</span>
-        <ExternalLink class="inline-block size-5 align-top" />
-      </a>
+      <SourceLink type="playlist" id={playlist.id} title={playlist.title} size="size-5" />
     </h2>
     <div class="flex text-sm gap-x-2 text-muted-foreground font-semibold">
       <div>{total_tracks} tracks</div>
