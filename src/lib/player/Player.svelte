@@ -1,10 +1,10 @@
 <script lang="ts">
+  import { channel_url } from "$lib/components/sources/shared.js";
   import type * as Model from "$lib/models/youtube.js";
   import Controls from "$lib/player/Controls.svelte";
   import IFramePlayer from "$lib/player/IFramePlayer/IFramePlayer.svelte";
   import type * as IFP from "$lib/player/IFramePlayer/types.js";
   import Tracklist from "$lib/player/Tracklist.svelte";
-  import { channel_url } from "$lib/player/utils.js";
 
   const YT_AUTOPLAY = 1;
   const YT_SHOW_CONTROLS = 0;

@@ -40,11 +40,3 @@ export function seconds_to_ddhhmmss(value: number): string {
     }
     return s + '';
 }
-
-export function playlist_url(id: string) {
-    return `https://www.youtube.com/playlist?list=${id}`;
-}
-
-export function channel_url(id: string) {
-    return `https://www.youtube.com/channel/${id}`;
-}

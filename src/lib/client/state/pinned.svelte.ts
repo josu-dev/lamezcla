@@ -23,7 +23,7 @@ class PinnedState {
             type: type,
             pinned_at: now,
             updated_at: now,
-            order: this.pinned.length,
+            position: this.pinned.length,
             pinned_id: value.id,
         };
         await localquery.insert_pinned_item(item);

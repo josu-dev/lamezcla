@@ -1,14 +1,14 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { use_pinned_ctx } from "$lib/client/state/pinned.svelte.js";
-  import ActionsMenu from "$lib/components/ActionsMenu/ActionsMenu.svelte";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import * as Icon from "$lib/components/icons.js";
+  import type { SortMode } from "$lib/components/menus/index.js";
+  import { ActionsMenu, SortMenu } from "$lib/components/menus/index.js";
+  import * as PageSimple from "$lib/components/page/PageSimple/index.js";
   import SearchInput from "$lib/components/SearchInput.svelte";
-  import type { SortMode } from "$lib/components/SortMenu/index.js";
-  import { SortMenu } from "$lib/components/SortMenu/index.js";
+  import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import * as Model from "$lib/models/index.js";
-  import { channel_url } from "$lib/player/utils.js";
   import { uuid, type Tuple } from "$lib/utils/index.js";
   import { Searcher } from "$lib/utils/searcher.js";
   import type { PageData } from "./$types.js";
@@ -66,8 +66,8 @@
 
   let channel = $derived(data.channel);
   let channel_is_pinned = $derived(pinned_state.is_pinned(channel.id));
-  let search_query = $state("");
 
+  let search_query = $state("");
   let filtered_playlists = $derived.by(() => {
     if (search_query === "") {
       return [...data.playlists];
@@ -92,36 +92,16 @@
   }
 </script>
 
-<div class="flex flex-col h-site-content">
-  <div class="border-b border-border flex gap-4 py-4 flex-none px-4">
-    <div>
-      <img
-        src={channel.img?.url}
-        width={channel.img?.width}
-        height={channel.img?.height}
-        alt="{channel.title} profile avatar"
-        class="rounded-md shadow size-16"
-      />
-    </div>
-    <div>
-      <h1 class="text-4xl font-bold">
-        {channel.title}
-        <a
-          href={channel_url(channel.id)}
-          target="_blank"
-          rel="noopener noreferrer"
-          title="Open {channel.title} channel"
-          class=""
-        >
-          <span class="sr-only">Open {channel.title}</span>
-          <Icon.ExternalLink class="inline-block size-5 align-top" />
-        </a>
-      </h1>
-      <div class="text-sm font-semibold text-muted mt-1">
-        Refreshed <HumanTime utc={channel.updated_at} as_relative />
-      </div>
-    </div>
-    <div class="ml-auto self-center">
+<PageSimple.Root>
+  <PageSimple.Header img={channel.img} img_alt="{channel.title} profile avatar">
+    {#snippet title()}
+      {channel.title}
+      <SourceLink type="channel" id={channel.id} title={channel.title} size="size-5" />
+    {/snippet}
+    {#snippet children()}
+      Refreshed <HumanTime utc={channel.updated_at} as_relative />
+    {/snippet}
+    {#snippet actions()}
       <ActionsMenu
         actions={[
           {
@@ -137,81 +117,82 @@
             icon: channel_is_pinned ? Icon.PinOff : Icon.Pin,
           },
         ]}
-      />
-    </div>
-  </div>
+      />{/snippet}
+  </PageSimple.Header>
 
-  <div class="flex flex-col flex-1 overflow-x-clip overflow-y-auto [scrollbar-gutter:stable] isolate">
-    <div class="flex-none flex justify-between px-4 pt-4 pb-2 sticky top-0 z-10 bg-background/95">
-      <h2 class="text-xl font-bold">Playlists {playlists.displayed.length}</h2>
-      <div class="flex gap-x-2">
-        <SearchInput label="Search playlist" oninput={(ev) => (search_query = ev.currentTarget.value)} maxlength={32} />
-        <SortMenu
-          current={sort_by}
-          modes={SORT_MODES}
-          on_selected={(mode) => {
-            sort_by = mode;
-          }}
-        />
-      </div>
-    </div>
-    <ul class="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-2">
-      {#each playlists.displayed as playlist (playlist.id)}
-        {@const is_pinned = pinned_state.is_pinned(playlist.id)}
-        <li class="flex flex-col flex-1">
-          <button class="group text-left flex flex-1" onclick={() => on_play_playlist(playlist.id)}>
-            <div class="flex flex-col px-4 py-2">
-              <div class="relative">
-                <img
-                  src={playlist.img?.url}
-                  width={playlist.img?.width}
-                  height={playlist.img?.height}
-                  alt="{playlist.title} playlist thumbnail"
-                  class="rounded-md w-full aspect-video object-fill"
-                />
-                <div
-                  class="absolute grid opacity-0 [&:is(:where(.group):hover:not(:has([data-no-play]:hover))_*)]:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
-                >
-                  <div class="flex items-center gap-2 text-2xl font-semibold">
-                    <Icon.Play class="size-8 stroke-2" /> Play
+  <PageSimple.Content>
+    {#snippet title()}
+      Playlists {playlists.displayed.length}
+    {/snippet}
+    {#snippet actions()}
+      <SearchInput label="Search playlist" oninput={(ev) => (search_query = ev.currentTarget.value)} maxlength={32} />
+      <SortMenu
+        current={sort_by}
+        modes={SORT_MODES}
+        on_selected={(mode) => {
+          sort_by = mode;
+        }}
+      />
+    {/snippet}
+    {#snippet children()}
+      <ul class="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-2">
+        {#each playlists.displayed as playlist (playlist.id)}
+          {@const is_pinned = pinned_state.is_pinned(playlist.id)}
+          <li class="flex flex-col flex-1">
+            <button class="group text-left flex flex-1" onclick={() => on_play_playlist(playlist.id)}>
+              <div class="flex flex-col px-4 py-2">
+                <div class="relative">
+                  <img
+                    src={playlist.img?.url}
+                    width={playlist.img?.width}
+                    height={playlist.img?.height}
+                    alt="{playlist.title} playlist thumbnail"
+                    class="rounded-md w-full aspect-video object-fill"
+                  />
+                  <div
+                    class="absolute grid opacity-0 [&:is(:where(.group):hover:not(:has([data-no-play]:hover))_*)]:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
+                  >
+                    <div class="flex items-center gap-2 text-2xl font-semibold">
+                      <Icon.Play class="size-8 stroke-2" /> Play
+                    </div>
+                  </div>
+                  <div class="absolute bottom-2 right-2">
+                    <span class="bg-accent px-1.5 py-1 rounded-md text-xs font-semibold tracking-wider">
+                      ≈ {playlist.item_count} tracks
+                    </span>
                   </div>
                 </div>
-                <div class="absolute bottom-2 right-2">
-                  <span class="bg-accent px-1.5 py-1 rounded-md text-xs font-semibold tracking-wider">
-                    ≈ {playlist.item_count} tracks
-                  </span>
-                </div>
-              </div>
-              <div>
-                <div class="flex">
-                  <h3 class="text-lg font-semibold mt-2">{playlist.title}</h3>
-                  <div class="mt-2 ml-auto relative" data-no-play>
-                    <ActionsMenu
-                      actions={[
-                        {
-                          id: uuid(),
-                          label: is_pinned ? "Unpin" : "Pin",
-                          action: () => {
-                            if (is_pinned) {
-                              pinned_state.unpin_by_id(playlist.id);
-                            } else {
-                              pinned_state.pin("playlist", playlist);
-                            }
+                <div>
+                  <div class="flex">
+                    <h3 class="text-lg font-semibold mt-2">{playlist.title}</h3>
+                    <div class="mt-2 ml-auto relative" data-no-play>
+                      <ActionsMenu
+                        actions={[
+                          {
+                            id: uuid(),
+                            label: is_pinned ? "Unpin" : "Pin",
+                            action: () => {
+                              if (is_pinned) {
+                                pinned_state.unpin_by_id(playlist.id);
+                              } else {
+                                pinned_state.pin("playlist", playlist);
+                              }
+                            },
+                            icon: is_pinned ? Icon.PinOff : Icon.Pin,
                           },
-                          icon: is_pinned ? Icon.PinOff : Icon.Pin,
-                        },
-                      ]}
-                    />
+                        ]}
+                      />
+                    </div>
                   </div>
+                  <p class="mt-1 text-sm font-semibold text-muted">
+                    <a href="/playlist/{playlist.id}" data-no-play class="hover:text-foreground"> View all tracks </a>
+                  </p>
                 </div>
-                <p class="mt-1 text-sm font-semibold text-muted">
-                  <a href="/playlist/{playlist.id}" data-no-play class="hover:text-foreground"> View all tracks </a>
-                </p>
               </div>
-            </div>
-          </button>
-        </li>
-      {/each}
-    </ul>
-  </div>
-</div>
+            </button>
+          </li>
+        {/each}
+      </ul>
+    {/snippet}
+  </PageSimple.Content>
+</PageSimple.Root>

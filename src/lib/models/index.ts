@@ -28,7 +28,7 @@ export type PinnedItemBase = {
     id: string,
     pinned_at: string,
     updated_at: string,
-    order: number,
+    position: number,
 };
 
 export type PinnedItemMap = {

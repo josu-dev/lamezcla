@@ -22,7 +22,7 @@ export type DexieWithTables = Dexie & {
     [videos.TABLE_NAME]: videos.Table,
 };
 
-const db = new Dexie('local-yt-cache') as DexieWithTables;
+const db = new Dexie('lamezcla-cache') as DexieWithTables;
 
 db.version(1).stores({
     [channels.TABLE_NAME]: channels.TABLE_INDEXES,
