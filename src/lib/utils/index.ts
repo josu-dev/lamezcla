@@ -21,3 +21,5 @@ export type ArrayPromise<T> = Promise<T[]>;
 export type VoidPromise = Promise<void>;
 
 export type ElEvent<E extends Event, T extends HTMLElement> = E & { currentTarget: T; };
+
+export type Tuple<T> = [T, ...T[]];

@@ -1,7 +1,15 @@
+export { default as ArrowDown10 } from '@lucide/svelte/icons/arrow-down-0-1';
+export { default as ArrowDown01 } from '@lucide/svelte/icons/arrow-down-1-0';
+export { default as ArrowDownZA } from '@lucide/svelte/icons/arrow-down-a-z';
+export { default as ArrowDownNarrowWide } from '@lucide/svelte/icons/arrow-down-narrow-wide';
+export { default as ArrowDownWideNarrow } from '@lucide/svelte/icons/arrow-down-wide-narrow';
+export { default as ArrowDownAZ } from '@lucide/svelte/icons/arrow-down-z-a';
+export { default as ArrowDownUp } from '@lucide/svelte/icons/arrow-up-down';
 export { default as EllipsisVertical } from '@lucide/svelte/icons/ellipsis-vertical';
 export { default as ExternalLink } from '@lucide/svelte/icons/external-link';
 export { default as House } from '@lucide/svelte/icons/house';
 export { default as Library } from '@lucide/svelte/icons/library';
+export { default as ListOrdered } from '@lucide/svelte/icons/list-ordered';
 export { default as ListVideo } from '@lucide/svelte/icons/list-video';
 export { default as Menu } from '@lucide/svelte/icons/menu';
 export { default as Pause } from '@lucide/svelte/icons/pause';
