@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
+  import { use_channel_ctx } from "$lib/client/state/channels.svelte.js";
   import { use_pinned_ctx } from "$lib/client/state/pinned.svelte.js";
   import * as Icon from "$lib/components/icons.js";
   import Section from "$lib/components/SiteSidebar/Section.svelte";
@@ -8,18 +9,22 @@
   import type { Component } from "svelte";
 
   type Props = {
-    channels: Model.Channel[];
     on_channel_select?: (value: Model.Channel) => void;
     on_pinned?: (value: Model.PinnedEntry) => void;
     on_pinned_select?: (value: Model.PinnedEntry) => void;
     on_pinned_removed?: (value: Model.PinnedEntry) => void;
   };
 
-  let { channels, on_channel_select, on_pinned, on_pinned_select, on_pinned_removed }: Props = $props();
+  let { on_channel_select, on_pinned, on_pinned_select, on_pinned_removed }: Props = $props();
 
   let open = $state(false);
 
+  const channel_state = use_channel_ctx();
   const pinned_state = use_pinned_ctx();
+
+  let displayed_channel = $derived.by(() => {
+    return [...channel_state.channels];
+  });
 
   let displayed_pinned = $derived.by(() => {
     return pinned_state.pinned.toSorted((a, b) => a.item.position - b.item.position);
@@ -93,7 +98,7 @@
 
     <Section title="Channels">
       {#snippet children()}
-        {#each channels as c (c.id)}
+        {#each displayed_channel as c (c.id)}
           {@const pathname = "/" + c.handle}
           <SectionItem title={c.title} href={pathname} is_selected={page.url.pathname === pathname}>
             {#snippet left_icon()}

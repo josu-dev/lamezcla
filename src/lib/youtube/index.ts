@@ -29,9 +29,6 @@ export async function fetch_api<T extends YTA.AnyResponse>(opts: YTA.FetchApiOpt
     }
 
     const data: T = await r.json();
-    if (data.pageInfo.totalResults === 0) {
-        console.warn('empty result', data);
-    }
 
     return ok(data);
 }
@@ -112,6 +109,9 @@ export async function get_channel_playlists_all(channel_id: string) {
             };
             out.push(p);
         }
+        if (out.length >= value.pageInfo.totalResults) {
+            break;
+        }
         if (value.nextPageToken) {
             next_page = value.nextPageToken;
             continue;
@@ -155,7 +155,6 @@ export async function get_playlist_items_all(id: string) {
         if (r.is_err) {
             return r;
         }
-
         const value = r.value;
 
         for (const item of value.items) {
@@ -169,11 +168,60 @@ export async function get_playlist_items_all(id: string) {
             };
             out.push(p);
         }
+        if (out.length >= value.pageInfo.totalResults) {
+            break;
+        }
         if (value.nextPageToken) {
             next_page = value.nextPageToken;
             continue;
         }
         break;
+    }
+
+    return ok(out);
+}
+
+function _get_playlists(ids: string[]) {
+    assert(ids.length > 0 && ids.length < 51, "ids must be at least 1 and at much 50");
+    const others: Record<string, any> = {
+        id: ids.join(","),
+        maxResults: MAX_RESULTS_PER_REQUEST
+    };
+
+    return fetch_api<YTA.PlaylistListResponse>({
+        endpoint: ENDPOINT_PLAYLIST,
+        part: ["snippet", "player", "status", "contentDetails"],
+        others: others
+    });
+}
+
+export async function get_playlists(ids: string[]) {
+    const out: Models.Playlist[] = [];
+    let i = 0;
+    while (i < ids.length) {
+        const slice = ids.slice(i, i + 50);
+        i += slice.length;
+        const r = await _get_playlists(slice);
+        if (r.is_err) {
+            return r;
+        }
+
+        const value = r.value;
+
+        for (const item of value.items) {
+            const p: Models.Playlist = {
+                id: item.id,
+                channel_id: item.snippet.channelId,
+                description: item.snippet.description,
+                img: item.snippet.thumbnails?.medium,
+                item_count: item.contentDetails.itemCount,
+                privacy_status: item.status.privacyStatus,
+                published_at: item.snippet.publishedAt,
+                updated_at: now_utc(),
+                title: item.snippet.title,
+            };
+            out.push(p);
+        }
     }
 
     return ok(out);
@@ -268,104 +316,3 @@ export async function get_videos(ids: string[]) {
 
     return ok(out);
 }
-
-
-// export async function get_preview(channel_handle: string): Promise<any> {
-//     const r_channel = await get_channel_by_handle(channel_handle);
-//     if (r_channel === undefined) {
-//         return {};
-//     }
-
-//     const tosave: Preview = {
-//         channel: {
-//             id: r_channel.id,
-//             handle: r_channel.snippet.customUrl,
-//             title: r_channel.snippet.title,
-//         },
-//         playlists: []
-//     };
-
-//     const channel_id = r_channel.id;
-//     const r_playlists = await get_channel_playlists(channel_id);
-//     if (r_playlists === undefined) {
-//         return {};
-//     }
-
-
-//     for (const r_playlist of r_playlists) {
-//         const playlist: YTT.Playlist = {
-//             id: r_playlist.id,
-//             channel_id: r_playlist.snippet.channelId,
-//             title: r_playlist.snippet.title,
-//             description: r_playlist.snippet.description,
-//             published_at: r_playlist.snippet.publishedAt,
-//             privacy_status: r_playlist.status.privacyStatus,
-//             item_count: r_playlist.contentDetails.itemCount
-//         };
-//         const r_playlist_items = await get_playlist_items(r_playlist.id);
-//         if (r_playlist_items === undefined) {
-//             continue;
-//         }
-
-//         const items: YTT.PlaylistItem[] = [];
-//         const ids: string[] = [];
-//         for (const r_item of r_playlist_items) {
-//             const item: YTT.PlaylistItem = {
-//                 id: r_item.id,
-//                 playlist_id: playlist.id,
-//                 video_id: r_item.contentDetails.videoId,
-//                 privacy_status: r_item.status.privacyStatus,
-//                 available: true,
-//                 published_at: r_item.snippet.publishedAt,
-//             };
-//             items.push(item);
-//             ids.push(item.video_id);
-//         }
-//         const r_videos = await get_videos(ids);
-//         const videos: (undefined | YTT.Video)[] = [];
-//         if (r_videos === undefined) {
-//             for (const item of items) {
-//                 item.available = false;
-//             }
-//         }
-//         else {
-//             let item_i = 0;
-//             let video_i = 0;
-//             while (video_i < r_videos.length) {
-//                 const item = items[item_i];
-//                 const r_video = r_videos[video_i];
-
-//                 if (item.video_id === r_video.id) {
-//                     const video: YTT.Video = {
-//                         id: r_video.id,
-//                         channel_id: r_video.snippet.channelId,
-//                         channel_title: r_video.snippet.channelTitle,
-//                         title: r_video.snippet.title,
-//                         duration: r_video.contentDetails.duration,
-//                         privacy_status: r_video.status.privacyStatus,
-//                         embeddable: r_video.status.embeddable,
-//                         published_at: r_video.snippet.publishedAt,
-//                     };
-//                     videos.push(video);
-//                     item_i += 1;
-//                     video_i += 1;
-//                 }
-//                 else {
-//                     videos.push(undefined);
-//                     item_i += 1;
-//                 }
-//             }
-//             for (; item_i < items.length; item_i++) {
-//                 videos.push(undefined);
-//             }
-//         }
-
-
-//         tosave.playlists.push({
-//             playlist: playlist,
-//             items: items,
-//             videos: videos,
-//         });
-//     }
-//     return tosave;
-// }

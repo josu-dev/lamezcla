@@ -1,7 +1,10 @@
 import { err, ok } from '$lib/utils/results.js';
 
+
+export type FetchFn = typeof fetch;
+
 type TryFetchOptions = {
-    fetch?: typeof fetch,
+    fetch?: FetchFn,
     url: string,
     json?: any,
     init?: RequestInit,

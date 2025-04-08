@@ -1,19 +1,9 @@
 <script lang="ts">
-  import Player from "$lib/player/Player.svelte";
+  import { PlayerStatic } from "$lib/player/index.js";
 
   let { data } = $props();
-  let playlist = $derived.by(() => {
-    return {
-      ...data.playlist,
-      tracks: data.entries,
-    };
-  });
 </script>
 
-<div class="grid bg-background text-foreground">
-  <main class="flex flex-col">
-    {#if playlist}
-      <Player {playlist} />
-    {/if}
-  </main>
-</div>
+<main class="grid h-site-content">
+  <PlayerStatic video={data.video} entries={data.entries} playlist={data.playlist} start_index={data.start_index} />
+</main>

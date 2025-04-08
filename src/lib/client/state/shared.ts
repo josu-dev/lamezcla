@@ -18,4 +18,4 @@ export function create_context<T>(key: string) {
     };
 }
 
-export type UseContextArgs<T extends abstract new (...args: any) => any> = ConstructorParameters<T>;
+export type UseContextArgs<T extends new (...args: any[]) => any> = ConstructorParameters<T>;
