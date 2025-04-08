@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import { use_pinned_ctx } from "$lib/client/state/pinned.svelte.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import * as Icon from "$lib/components/icons.js";
@@ -7,7 +8,7 @@
   import * as PageSimple from "$lib/components/page/PageSimple/index.js";
   import SearchInput from "$lib/components/SearchInput.svelte";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
-  import * as Model from "$lib/models/index.js";
+  import type * as Model from "$lib/models/index.js";
   import { seconds_to_ddhhmmss } from "$lib/player/utils.js";
   import { uuid, type Tuple } from "$lib/utils/index.js";
   import { Searcher } from "$lib/utils/searcher.js";
@@ -126,6 +127,10 @@
       displayed: displayed,
     };
   });
+
+  function on_play_video(id: string) {
+    goto(`/play?v=${id}`);
+  }
 </script>
 
 <PageSimple.Root>
@@ -180,7 +185,12 @@
         {#each entries.displayed as { item, video } (item.id)}
           {@const is_pinned = pinned_state.is_pinned(video.id)}
           <li class="flex flex-col flex-1">
-            <button class="group text-left flex w-full">
+            <button
+              onclick={() => {
+                on_play_video(video.id);
+              }}
+              class="group text-left flex w-full"
+            >
               <div class="flex gap-4 px-4 py-2 w-full">
                 <div class="relative">
                   <img

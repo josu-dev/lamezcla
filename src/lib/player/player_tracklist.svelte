@@ -1,20 +1,20 @@
 <script lang="ts">
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
-  import type * as Model from "$lib/models/youtube.js";
-  import { seconds_to_ddhhmmss } from "$lib/player/utils.js";
+  import type * as Model from "$lib/models/index.js";
+  import { seconds_to_ddhhmmss } from "./utils.js";
 
   type Props = {
     playlist: Model.Playlist;
-    tracks: Model.PlaylistEntry[];
-    current_track?: Model.StringId;
-    on_select?: (id: Model.StringId) => void;
+    entries: Model.PlaylistEntry[];
+    current_entry?: Model.StringId;
+    on_select?: (value: Model.PlaylistEntry, index: number) => void;
   };
 
-  let { playlist, tracks, current_track, on_select = () => {} }: Props = $props();
-  let total_tracks = $derived(tracks.length);
+  let { playlist, entries, current_entry: curr_entry, on_select = () => {} }: Props = $props();
+  let total_entries = $derived(entries.length);
   let total_time = $derived.by(() => {
     let total_s = 0;
-    for (const t of tracks) {
+    for (const t of entries) {
       if (t.video === undefined) {
         continue;
       }
@@ -50,19 +50,20 @@
       <SourceLink type="playlist" id={playlist.id} title={playlist.title} size="size-5" />
     </h2>
     <div class="flex text-sm gap-x-2 text-muted-foreground font-semibold">
-      <div>{total_tracks} tracks</div>
+      <div>{total_entries} tracks</div>
       -
       <div>{total_time.human}</div>
     </div>
   </div>
 
   <ul class="flex flex-col gap-y-1 px-2 py-1 overflow-x-clip overflow-y-auto flex-1">
-    {#each tracks as { item, video }, i (item.id)}
-      {@const is_current = item.id === current_track}
+    {#each entries as e, i (e.item.id)}
+      {@const is_current = e.item.id === curr_entry}
+      {@const index = i + 1}
       <li>
         <button
           onclick={() => {
-            on_select(item.id);
+            on_select(e, index);
           }}
           class="text-left rounded-md block w-full"
         >
@@ -74,18 +75,18 @@
               class="grid place-items-center rounded-md leading-0 text-sm font-semibold size-10"
               class:bg-primary={is_current}
             >
-              {i + 1}
+              {index}
             </div>
             <div class="flex flex-col">
               <div class="font-semibold line-clamp-2 text-sm leading-tight">
-                {video?.title}
+                {e.video.title}
               </div>
               <div class="text-sm mt-0.5 text-muted-foreground">
-                {video?.channel_title}
+                {e.video.channel_title}
               </div>
             </div>
             <div class="justify-self-end text-xs tracking-wide">
-              {seconds_to_ddhhmmss(video.total_seconds)}
+              {seconds_to_ddhhmmss(e.video.total_seconds)}
             </div>
           </div>
         </button>

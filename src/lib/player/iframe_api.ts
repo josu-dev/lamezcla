@@ -1,4 +1,4 @@
-export type YouTubePlayerOptions = {
+export type PlayerVars = {
     /**
      * This parameter specifies whether the initial video will automatically start to play when the player loads.
      * Supported values are 0 or 1. The default value is 0.
@@ -101,14 +101,21 @@ export type YouTubePlayerOptions = {
     widget_referrer?: string;
 };
 
-export type YouTubePlayerInstance = {
+export type PlayerOptions = {
+    videoId?: string;
+    height?: number;
+    width?: number;
+    playerVars?: PlayerVars;
+};
+
+export type PlayerInstance = {
     addEventListener: (event: string, listener: (...args: any) => any) => void;
     destroy: () => void;
     getAvailablePlaybackRates: () => number;
     getAvailableQualityLevels: () => string;
     getCurrentTime: () => number;
     getDuration: () => number;
-    getIframe: () => object;
+    getIframe: () => HTMLIFrameElement;
     getOption: (module: string, option: string) => any;
     getOptions: (module?: string) => any;
     setOption: (module: string, option: string, value: any) => void;
@@ -161,13 +168,13 @@ export type YouTubePlayerInstance = {
     }) => void;
 };
 
-type YouTubeEventBase = {
-    target: YouTubePlayerInstance;
+type PlayerEventBase = {
+    target: PlayerInstance;
 };
 
-export type YouTubeReadyEvent = YouTubeEventBase;
+export type ReadyEvent = PlayerEventBase;
 
-export type YouTubePlayerStates = {
+export type PlayerStates = {
     UNSTARTED: -1,
     ENDED: 0,
     PLAYING: 1,
@@ -176,23 +183,23 @@ export type YouTubePlayerStates = {
     CUED: 5,
 };
 
-export type YouTubePlayerState = YouTubePlayerStates[keyof YouTubePlayerStates];
+export type PlayerState = PlayerStates[keyof PlayerStates];
 
-export type YouTubeStateChangeEvent = YouTubeEventBase & {
-    data: YouTubePlayerState;
+export type StateChangeEvent = PlayerEventBase & {
+    data: PlayerState;
 };
 
-export type YouTubePlaybackQuality = 'small' | 'medium' | 'large' | 'hd720' | 'hd1080' | 'highres';
+export type PlaybackQuality = 'small' | 'medium' | 'large' | 'hd720' | 'hd1080' | 'highres';
 
-export type YouTubePlaybackQualityChangeEvent = YouTubeEventBase & {
-    data: YouTubePlaybackQuality;
+export type PlaybackQualityChangeEvent = PlayerEventBase & {
+    data: PlaybackQuality;
 };
 
-export type YouTubePlaybackRateChangeEvent = YouTubeEventBase & {
+export type PlaybackRateChangeEvent = PlayerEventBase & {
     data: number;
 };
 
-export type YouTubeErrors = {
+export type PlayerErrors = {
     INVALID_PARAMETER: 2,
     HTML5_ERROR: 5,
     VIDEO_NOT_FOUND: 100,
@@ -200,12 +207,12 @@ export type YouTubeErrors = {
     EMBEDDED_PLAYER_NOT_ALLOWED_ALT: 150,
 };
 
-export type YouTubeError = YouTubeErrors[keyof YouTubeErrors];
+export type PlayerError = PlayerErrors[keyof PlayerErrors];
 
-export type YouTubeErrorEvent = YouTubeEventBase & {
-    data: YouTubeError;
+export type ErrorEvent = PlayerEventBase & {
+    data: PlayerError;
 };
 
-export type YouTubeApiChangeEvent = YouTubeEventBase;
+export type ApiChangeEvent = PlayerEventBase;
 
-export type YouTubeAutoplayBlockedEvent = YouTubeEventBase;
+export type AutoplayBlockedEvent = PlayerEventBase;
