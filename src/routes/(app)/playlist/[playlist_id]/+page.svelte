@@ -134,7 +134,23 @@
 </script>
 
 <PageSimple.Root>
-  <PageSimple.Header img={playlist.img} img_alt="{playlist.title} playlist thumbnail">
+  <PageSimple.Header>
+    {#snippet image()}
+      <PageSimple.HeaderImage img={playlist.img} alt="{playlist.title} playlist thumbnail">
+        {#snippet children(image)}
+          <a href="/play?l={playlist.id}" class="group relative">
+            {@render image()}
+            <div
+              class="absolute grid opacity-0 [&:is(:where(.group):hover:not(:has([data-no-play]:hover))_*)]:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
+            >
+              <div class="flex items-center gap-2 text-lg font-bold">
+                <Icon.Play class="size-5 stroke-3" /> Play
+              </div>
+            </div>
+          </a>
+        {/snippet}
+      </PageSimple.HeaderImage>
+    {/snippet}
     {#snippet title()}
       {playlist.title}
       <SourceLink type="playlist" id={playlist.id} title={playlist.title} size="size-5" />
@@ -218,7 +234,7 @@
                     <h3 class="text-lg font-semibold mt-2">{video.title}</h3>
                   </div>
                   <p class="mt-1 text-sm font-semibold text-muted">
-                    <a href="/{video.id}" data-no-play class="hover:text-foreground">
+                    <a href="/{video.channel_id}" data-no-play class="hover:text-foreground">
                       {video.channel_title}
                     </a>
                     -

@@ -40,7 +40,7 @@
   function pinned_item_pathname<T extends Model.PinnedEntry>(entry: T): string {
     switch (entry.type) {
       case "channel": {
-        return `/${entry.value.handle}`;
+        return `/${entry.value.handle ?? entry.value.id}`;
       }
       case "playlist": {
         return `/playlist/${entry.value.id}`;
@@ -99,7 +99,7 @@
     <Section title="Channels">
       {#snippet children()}
         {#each displayed_channel as c (c.id)}
-          {@const pathname = "/" + c.handle}
+          {@const pathname = "/" + (c.handle ?? c.id)}
           <SectionItem title={c.title} href={pathname} is_selected={page.url.pathname === pathname}>
             {#snippet left_icon()}
               <img

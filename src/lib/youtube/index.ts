@@ -6,6 +6,7 @@ import type { AsyncResult } from '$lib/utils/index.js';
 import { assert, err, now_utc, ok } from '$lib/utils/index.js';
 import type * as YTA from './api.types.js';
 
+
 const MAX_RESULTS_PER_REQUEST = "50";
 const BASE_API = `https://youtube.googleapis.com/youtube/v3`;
 const ENDPOINT_CHANNEL = `/channels`;
@@ -33,6 +34,38 @@ export async function fetch_api<T extends YTA.AnyResponse>(opts: YTA.FetchApiOpt
     return ok(data);
 }
 
+function normalize_channel(value: YTA.Channel): Models.Channel {
+    const customUrl = value.snippet.customUrl;
+    const safe_handle = customUrl === undefined ? undefined : customUrl.startsWith('@') ? customUrl : undefined;
+    const out: Models.Channel = {
+        id: value.id,
+        handle: safe_handle,
+        title: value.snippet.title,
+        img: value.snippet.thumbnails?.default,
+        published_at: value.snippet.publishedAt,
+        updated_at: now_utc()
+    };
+    return out;
+}
+
+export async function get_channel(id: string): AsyncResult<Models.Channel, Response> {
+    const data = await fetch_api<YTA.ChannelListResponse>({
+        endpoint: ENDPOINT_CHANNEL,
+        part: ['snippet', 'contentDetails', 'status'],
+        others: {
+            id: id
+        }
+    });
+    if (data.is_err) {
+        return data;
+    }
+
+    const channel = data.value.items[0];
+    const out = normalize_channel(channel);
+
+    return ok(out);
+}
+
 export async function get_channel_by_handle(handle: string): AsyncResult<Models.Channel, Response> {
     const data = await fetch_api<YTA.ChannelListResponse>({
         endpoint: ENDPOINT_CHANNEL,
@@ -46,15 +79,7 @@ export async function get_channel_by_handle(handle: string): AsyncResult<Models.
     }
 
     const channel = data.value.items[0];
-
-    const out: Models.Channel = {
-        id: channel.id,
-        handle: channel.snippet.customUrl,
-        title: channel.snippet.title,
-        img: channel.snippet.thumbnails?.default,
-        published_at: channel.snippet.publishedAt,
-        updated_at: now_utc()
-    };
+    const out = normalize_channel(channel);
 
     return ok(out);
 }

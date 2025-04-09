@@ -1,4 +1,5 @@
-import { json } from '@sveltejs/kit';
+import type { Err } from '$lib/utils/results.js';
+import { error, json } from '@sveltejs/kit';
 import * as v from 'valibot';
 
 export async function parse_json<T extends v.GenericSchema>(schema: T, request: Request): Promise<v.SafeParseResult<T>> {
@@ -27,4 +28,8 @@ export function response_error(status: number, data: any = undefined): Response 
     }
 
     return json(data, { status: status });
+}
+
+export function throw_as_500(e: Err<unknown>, msg?: string): never {
+    error(e.error instanceof Response ? e.error.status : 500, msg);
 }

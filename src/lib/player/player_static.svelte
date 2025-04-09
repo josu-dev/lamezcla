@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { channel_url } from "$lib/components/sources/shared.js";
   import type * as Model from "$lib/models/index.js";
   import { use_player_ctx } from "./player.svelte.js";
   import ControlsStatic from "./player_controls_static.svelte";
@@ -70,7 +69,7 @@
           <div class="text-center my-6">
             <h3 class="text-xl font-bold text-pretty leading-tight">{curr_video.title}</h3>
             <a
-              href={channel_url(curr_video.channel_id)}
+              href="/{curr_video.channel_id}"
               rel="noopener noreferrer"
               class="block font-bold text-muted-foreground mt-1.5"
             >

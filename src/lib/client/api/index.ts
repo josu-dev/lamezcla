@@ -4,6 +4,36 @@ import { try_fetch } from '$lib/utils/fetch.js';
 import { err, ok } from '$lib/utils/results.js';
 
 
+export async function get_channel(id: string, fetch: FetchFn) {
+    const r_channel = await try_fetch({
+        fetch: fetch,
+        url: `/api/youtube/${id}`,
+        parse_json: true,
+    });
+    if (r_channel.is_err) {
+        return r_channel;
+    }
+
+    const channel: Model.Channel = (r_channel.value as any).data;
+
+    return ok(channel);
+}
+
+export async function get_channel_playlists(id: string, fetch: FetchFn) {
+    const r_playlists = await try_fetch({
+        fetch: fetch,
+        url: `/api/youtube/${id}/playlists`,
+        parse_json: true,
+    });
+    if (r_playlists.is_err) {
+        return r_playlists;
+    }
+
+    const out: Model.Playlist[] = (r_playlists.value as any).data;
+
+    return ok(out);
+}
+
 export async function get_playlist(id: string, fetch: FetchFn) {
     const r_playlists = await try_fetch({
         fetch: fetch,

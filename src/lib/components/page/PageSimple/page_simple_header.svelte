@@ -1,27 +1,19 @@
 <script lang="ts">
-  import type * as Model from "$lib/models/index.js";
   import type { Snippet } from "svelte";
 
   type Props = {
-    img?: Model.Image;
-    img_alt: string;
+    image?: Snippet;
     title: Snippet;
     children?: Snippet;
     actions: Snippet;
   };
 
-  let { img, img_alt, title, children, actions }: Props = $props();
+  let { image, title, children, actions }: Props = $props();
 </script>
 
 <header class="border-b border-border flex gap-4 py-4 flex-none px-4">
   <div class="flex-none">
-    <img
-      src={img?.url}
-      width={img?.width}
-      height={img?.height}
-      alt={img_alt}
-      class="rounded-md shadow size-16 object-cover"
-    />
+    {@render image?.()}
   </div>
   <div>
     <h1 class="text-4xl font-bold line-clamp-2">
