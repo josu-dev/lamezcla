@@ -93,7 +93,10 @@
 </script>
 
 <PageSimple.Root>
-  <PageSimple.Header img={channel.img} img_alt="{channel.title} profile avatar">
+  <PageSimple.Header>
+    {#snippet image()}
+      <PageSimple.HeaderImage img={channel.img} alt="{channel.title} profile avatar" />
+    {/snippet}
     {#snippet title()}
       {channel.title}
       <SourceLink type="channel" id={channel.id} title={channel.title} size="size-5" />

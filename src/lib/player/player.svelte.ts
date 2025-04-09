@@ -51,6 +51,19 @@ type IDontKnow = {
     video_id: Optional<string>;
 };
 
+class Test {
+    #data = $state(1);
+    #data_derived = $derived(this.#data * 2);
+
+    read_data() {
+        this.#data = 1;
+        this.#data_derived = 98;
+        return this.#data_derived;
+    };
+}
+
+export const instance = new Test();
+
 class PlayerState {
     // @ts-expect-error its initilized inside effect
     #player: IFrameAPI.PlayerInstance;
@@ -165,9 +178,10 @@ class PlayerState {
         }
         this.#poll_iframe_id = setInterval(() => {
             if (this.#not_ready) {
-                this.#s_progress = Math.floor((this.#player.getCurrentTime() * 100) / (this.#player.getDuration() || 100));
+                return;
             }
-        }, 1000);
+            this.#s_progress = (this.#player.getCurrentTime() * 100) / (this.#player.getDuration() || 100);
+        }, 500);
 
         // autoplay
         this.#play();

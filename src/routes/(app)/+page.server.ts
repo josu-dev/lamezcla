@@ -10,7 +10,7 @@ const profile_schema = v.object({
     handle: v.pipe(v.string(), v.regex(/^@\w{3,48}$/))
 });
 
-export async function load() {
+export async function load({ fetch }) {
     const form = await superValidate(valibot(profile_schema));
 
     return { form };

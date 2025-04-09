@@ -23,7 +23,10 @@
 </script>
 
 <PageSimple.Root>
-  <PageSimple.Header img={video.img} img_alt="{video.title} video thumbnail">
+  <PageSimple.Header>
+    {#snippet image()}
+      <PageSimple.HeaderImage img={video.img} alt="{video.title} video thumbnail" />
+    {/snippet}
     {#snippet title()}
       {video.title}
       <SourceLink type="video" id={video.id} title={video.title} size="size-5" />

@@ -12,7 +12,7 @@ export type Image = {
 
 export type Channel = {
     id: StringId;
-    handle: string;
+    handle?: string;
     title: string;
     img: undefined | Image;
     published_at: StringUTC;
