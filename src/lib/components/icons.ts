@@ -12,6 +12,7 @@ export { default as Library } from '@lucide/svelte/icons/library';
 export { default as ListOrdered } from '@lucide/svelte/icons/list-ordered';
 export { default as ListVideo } from '@lucide/svelte/icons/list-video';
 export { default as Menu } from '@lucide/svelte/icons/menu';
+export { default as Music } from '@lucide/svelte/icons/music';
 export { default as Pause } from '@lucide/svelte/icons/pause';
 export { default as Pin } from '@lucide/svelte/icons/pin';
 export { default as PinOff } from '@lucide/svelte/icons/pin-off';
