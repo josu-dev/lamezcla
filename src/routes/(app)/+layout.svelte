@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { use_channel_ctx } from "$lib/client/state/channels.svelte.js";
+  import { use_followed_ctx } from "$lib/client/state/followed.svelte.js";
   import { use_pinned_ctx } from "$lib/client/state/pinned.svelte.js";
   import * as Icon from "$lib/components/icons.js";
   import SiteSidebar from "$lib/components/SiteSidebar/SiteSidebar.svelte";
@@ -14,7 +14,7 @@
 
   let { data, children }: Props = $props();
 
-  use_channel_ctx(data.channels);
+  use_followed_ctx(data.followed);
   use_pinned_ctx(data.pinned);
 </script>
 

@@ -26,6 +26,7 @@ export { default as SkipBack } from '@lucide/svelte/icons/skip-back';
 export { default as SkipForward } from '@lucide/svelte/icons/skip-forward';
 export { default as User } from '@lucide/svelte/icons/user';
 export { default as UserPlus } from '@lucide/svelte/icons/user-plus';
+export { default as UserX } from '@lucide/svelte/icons/user-x';
 export { default as Volume } from '@lucide/svelte/icons/volume';
 export { default as Volume1 } from '@lucide/svelte/icons/volume-1';
 export { default as Volume2 } from '@lucide/svelte/icons/volume-2';

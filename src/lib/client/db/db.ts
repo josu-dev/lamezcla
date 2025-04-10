@@ -1,5 +1,6 @@
 import Dexie from 'dexie';
 import * as channels from './channels.js';
+import * as followed_channels from './followed_channels.js';
 import * as pinned_items from './pinned_items.js';
 import * as playlists from './playlists.js';
 import * as playlists_items from './playlists_items.js';
@@ -16,6 +17,7 @@ function attach_db(db: Dexie, modules: TablesModules): void {
 
 export type DexieWithTables = Dexie & {
     [channels.TABLE_NAME]: channels.Table,
+    [followed_channels.TABLE_NAME]: followed_channels.Table,
     [pinned_items.TABLE_NAME]: pinned_items.Table,
     [playlists.TABLE_NAME]: playlists.Table,
     [playlists_items.TABLE_NAME]: playlists_items.Table,
@@ -26,6 +28,7 @@ const db = new Dexie('lamezcla-cache') as DexieWithTables;
 
 db.version(1).stores({
     [channels.TABLE_NAME]: channels.TABLE_INDEXES,
+    [followed_channels.TABLE_NAME]: followed_channels.TABLE_INDEXES,
     [pinned_items.TABLE_NAME]: pinned_items.TABLE_INDEXES,
     [playlists.TABLE_NAME]: playlists.TABLE_INDEXES,
     [playlists_items.TABLE_NAME]: playlists_items.TABLE_INDEXES,
@@ -34,6 +37,7 @@ db.version(1).stores({
 
 const tables = [
     channels,
+    followed_channels,
     pinned_items,
     playlists,
     playlists_items,

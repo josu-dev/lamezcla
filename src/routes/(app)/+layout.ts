@@ -5,12 +5,12 @@ import type { LayoutLoad } from './$types.js';
 export const ssr = false;
 
 export const load: LayoutLoad = async () => {
-    const channels = await localdb.select_channels();
+    const followed = await localdb.select_followed_entries();
     const pinned = await localdb.select_pinned_entries();
     // const pinned = get_pinned_mockup();
 
     return {
-        channels: channels,
+        followed: followed,
         pinned: pinned,
     };
 };
