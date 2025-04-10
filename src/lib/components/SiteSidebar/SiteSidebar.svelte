@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { use_channel_ctx } from "$lib/client/state/channels.svelte.js";
+  import { use_followed_ctx } from "$lib/client/state/followed.svelte.js";
   import { use_pinned_ctx } from "$lib/client/state/pinned.svelte.js";
   import * as Icon from "$lib/components/icons.js";
   import Section from "$lib/components/SiteSidebar/Section.svelte";
@@ -19,11 +19,11 @@
 
   let open = $state(false);
 
-  const channel_state = use_channel_ctx();
+  const followed_state = use_followed_ctx();
   const pinned_state = use_pinned_ctx();
 
   let displayed_channel = $derived.by(() => {
-    return [...channel_state.channels];
+    return followed_state.followed.toSorted((a, b) => a.value.title.localeCompare(b.value.title));
   });
 
   let displayed_pinned = $derived.by(() => {
@@ -91,28 +91,40 @@
             {/snippet}
           </SectionItem>
         {:else}
-          <SectionItem title="No pins added" class="cursor-default" />
+          <SectionItem title="Nothing pinned" class="cursor-default" />
         {/each}
       {/snippet}
     </Section>
 
-    <Section title="Channels">
+    <Section title="Followed">
       {#snippet children()}
         {#each displayed_channel as c (c.id)}
-          {@const pathname = "/" + (c.handle ?? c.id)}
-          <SectionItem title={c.title} href={pathname} is_selected={page.url.pathname === pathname}>
+          {@const pathname = "/" + (c.value.handle ?? c.value.id)}
+          <SectionItem title={c.value.title} href={pathname} is_selected={page.url.pathname === pathname}>
             {#snippet left_icon()}
               <img
-                src={c.img?.url}
-                height={c.img?.height}
-                width={c.img?.width}
-                alt="{c.title} channel avatar"
+                src={c.value.img?.url}
+                height={c.value.img?.height}
+                width={c.value.img?.width}
+                alt="{c.value.title} channel avatar"
                 class="rounded-md overflow-clip size-7 p-0.5 m-0.5"
               />
             {/snippet}
+            {#snippet right_icon()}
+              <button
+                onclick={(ev) => {
+                  ev.preventDefault();
+                  ev.stopPropagation();
+                  followed_state.unfollow(c.value);
+                }}
+                class="block invisible group-hover:visible rounded-md p-1 hover:bg-muted"
+              >
+                <Icon.X class="size-4" />
+              </button>
+            {/snippet}
           </SectionItem>
         {:else}
-          <SectionItem title="No channels added" class="cursor-default" />
+          <SectionItem title="No channels followed" class="cursor-default" />
         {/each}
       {/snippet}
     </Section>

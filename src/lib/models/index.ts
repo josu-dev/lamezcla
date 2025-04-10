@@ -3,6 +3,7 @@ import type * as Y from './youtube.js';
 
 export * from './youtube.js';
 
+
 export type PinnedPlaylist = {
     type: 'playlist',
     pinned_id: string,
@@ -23,11 +24,10 @@ export type PinnedVideo = {
     pinned_id: string,
 };
 
-
 export type PinnedItemBase = {
     id: string,
-    pinned_at: string,
-    updated_at: string,
+    pinned_at: Y.StringUTC,
+    updated_at: Y.StringUTC,
     position: number,
 };
 
@@ -58,3 +58,17 @@ export type PinnedEntryMap = {
 };
 
 export type PinnedEntry = PinnedEntryMap[keyof PinnedEntryMap];
+
+
+export type FollowedChannel = {
+    id: string,
+    channel_id: string,
+    position: number,
+    followed_at: Y.StringUTC,
+};
+
+export type FollowedEntry = {
+    id: string,
+    item: FollowedChannel,
+    value: Y.Channel,
+};

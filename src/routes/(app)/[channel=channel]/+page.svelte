@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import { use_followed_ctx } from "$lib/client/state/followed.svelte.js";
   import { use_pinned_ctx } from "$lib/client/state/pinned.svelte.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import * as Icon from "$lib/components/icons.js";
@@ -62,9 +63,11 @@
     searcher.set(data.playlists);
   });
 
+  const followed_state = use_followed_ctx();
   const pinned_state = use_pinned_ctx();
 
   let channel = $derived(data.channel);
+  let channel_is_followed = $derived(followed_state.is_followed(channel.id));
   let channel_is_pinned = $derived(pinned_state.is_pinned(channel.id));
 
   let search_query = $state("");
@@ -107,6 +110,18 @@
     {#snippet actions()}
       <ActionsMenu
         actions={[
+          {
+            id: uuid(),
+            label: channel_is_followed ? "Unfollow" : "Follow",
+            action: () => {
+              if (channel_is_followed) {
+                followed_state.unfollow(channel);
+              } else {
+                followed_state.follow(channel);
+              }
+            },
+            icon: channel_is_followed ? Icon.UserX : Icon.UserPlus,
+          },
           {
             id: uuid(),
             label: channel_is_pinned ? "Unpin" : "Pin",

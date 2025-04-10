@@ -1,6 +1,5 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import { use_channel_ctx } from "$lib/client/state/channels.svelte.js";
   import Button from "$lib/components/el/Button.svelte";
   import Input from "$lib/components/el/Input.svelte";
   import * as Icon from "$lib/components/icons.js";
@@ -11,8 +10,6 @@
   import { parse_query } from "./shared.js";
 
   let { data } = $props();
-
-  let channel_state = use_channel_ctx();
 
   const { form, enhance } = superForm(data.form, {
     onError: (ev) => {
@@ -86,7 +83,13 @@
           Search <Icon class="" />
         </Button>
       {:else}
-        <span class="text-muted">Enter something...</span>
+        <span class="text-muted">
+          {#if query.raw}
+            Type more...
+          {:else}
+            Type something...
+          {/if}
+        </span>
       {/if}
     </div>
   </form>

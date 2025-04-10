@@ -72,11 +72,6 @@ class PinnedState {
         this.pinned.splice(i, 1);
     }
 
-    async sync(): VoidPromise {
-        const pe = await localquery.select_pinned_entries();
-        this.pinned = pe;
-    }
-
     is_pinned(id: string): boolean {
         return this.#pinned_ids.has(id);
     }
