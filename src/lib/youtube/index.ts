@@ -111,6 +111,7 @@ function _get_channel_playlists(channel_id: string, page_token: undefined | stri
 
 export async function get_channel_playlists_all(channel_id: string) {
     const out: Models.Playlist[] = [];
+    let processed = 0;
     let next_page: undefined | string;
     while (true) {
         const r = await _get_channel_playlists(channel_id, next_page);
@@ -119,8 +120,12 @@ export async function get_channel_playlists_all(channel_id: string) {
         }
 
         const value = r.value;
-
         for (const item of value.items) {
+            processed += 1;
+            if (item.snippet.title.length === 0 && item.contentDetails.itemCount === 0) {
+                continue;
+            }
+
             const p: Models.Playlist = {
                 id: item.id,
                 channel_id: item.snippet.channelId,
@@ -234,6 +239,10 @@ export async function get_playlists(ids: string[]) {
         const value = r.value;
 
         for (const item of value.items) {
+            if (item.snippet.title.length === 0 && item.contentDetails.itemCount === 0) {
+                continue;
+            }
+
             const p: Models.Playlist = {
                 id: item.id,
                 channel_id: item.snippet.channelId,

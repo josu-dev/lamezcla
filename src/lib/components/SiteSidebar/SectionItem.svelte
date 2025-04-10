@@ -15,7 +15,7 @@
 
   let {
     item,
-    href = "#main",
+    href = "#",
     left_icon,
     right_icon,
     title,

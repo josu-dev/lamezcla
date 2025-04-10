@@ -1,11 +1,11 @@
 import { create_context, type UseContextArgs } from '$lib/client/state/shared.js';
 import type * as Model from "$lib/models/index.js";
 import { assert, type Optional } from '$lib/utils/index.js';
+import { mutable, mutable_derived } from '$lib/utils/mutable.svelte.js';
 import { untrack } from 'svelte';
 import type * as IFrameAPI from "./iframe_api.js";
 // @ts-expect-error types missing, its fine
 import YoutubePlayer from "youtube-player";
-
 
 /**
  * Expose PlayerState constants for convenience. These constants can also be
@@ -46,31 +46,12 @@ const DEFAULT_PROPS = {
     skip_on_unavailable: true,
 } satisfies PlayerStateProps;
 
-type IDontKnow = {
-    entry: Optional<Model.PlaylistEntry>;
-    video_id: Optional<string>;
-};
-
-class Test {
-    #data = $state(1);
-    #data_derived = $derived(this.#data * 2);
-
-    read_data() {
-        this.#data = 1;
-        this.#data_derived = 98;
-        return this.#data_derived;
-    };
-}
-
-export const instance = new Test();
-
 class PlayerState {
     // @ts-expect-error its initilized inside effect
     #player: IFrameAPI.PlayerInstance;
+    #not_ready: boolean;
     // @ts-expect-error its initilized inside effect
     #iframe: HTMLIFrameElement;
-
-    #not_ready: boolean;
     #poll_iframe_id: Optional<number>;
 
     #props: Required<PlayerStateProps>;
@@ -113,9 +94,9 @@ class PlayerState {
 
     #s_is_playing = $state(false);
     #s_is_paused = $state(false);
-    #s_is_unavailable = $derived(this.#s_curr_entry?.video?.is_embeddable !== true);
+    #s_is_unavailable = mutable_derived(() => this.#s_curr_entry?.video?.is_embeddable !== true);
     #s_is_muted = $state(false);
-    #s_progress = $state(0);
+    #s_progress = mutable(0);
     #s_repeat = $state(0);
     #s_volume = $state(25);
 
@@ -166,7 +147,7 @@ class PlayerState {
         });
     }
 
-    #player_on_ready = (ev: IFrameAPI.ReadyEvent) => {
+    #player_on_ready = (ev: IFrameAPI.ReadyEvent): void => {
         this.#player = ev.target;
         this.#not_ready = false;
         this.#iframe = this.#player.getIframe();
@@ -180,14 +161,14 @@ class PlayerState {
             if (this.#not_ready) {
                 return;
             }
-            this.#s_progress = (this.#player.getCurrentTime() * 100) / (this.#player.getDuration() || 100);
+            this.#s_progress.set((this.#player.getCurrentTime() * 100) / (this.#player.getDuration() || 100));
         }, 500);
 
         // autoplay
         this.#play();
     };
 
-    #player_on_error = (ev: IFrameAPI.ErrorEvent) => {
+    #player_on_error = (ev: IFrameAPI.ErrorEvent): void => {
         if (ev.data !== 101 && ev.data !== 150) {
             return;
         }
@@ -198,11 +179,11 @@ class PlayerState {
         }
 
         this.#state.is_playing = false;
-        this.#s_is_unavailable = true;
+        this.#s_is_unavailable.set(true);
         this.#s_is_playing = false;
     };
 
-    #player_on_state_change = (ev: IFrameAPI.StateChangeEvent) => {
+    #player_on_state_change = (ev: IFrameAPI.StateChangeEvent): void => {
         switch (ev.data) {
             case PLAYER_STATE.ENDED: {
                 this.#state.is_playing = false;
@@ -227,7 +208,7 @@ class PlayerState {
                 this.#state.is_playing = true;
                 this.#s_is_paused = false;
                 this.#s_is_playing = true;
-                this.#s_is_unavailable = false;
+                this.#s_is_unavailable.set(false);
                 break;
             }
             case PLAYER_STATE.PAUSED: {
@@ -240,15 +221,15 @@ class PlayerState {
         }
     };
 
-    #player_on_playback_rate_change = (ev: IFrameAPI.PlaybackRateChangeEvent) => {
+    #player_on_playback_rate_change = (ev: IFrameAPI.PlaybackRateChangeEvent): void => {
         // parent cb
     };
 
-    #player_on_playback_quality_change = (ev: IFrameAPI.PlaybackQualityChangeEvent) => {
+    #player_on_playback_quality_change = (ev: IFrameAPI.PlaybackQualityChangeEvent): void => {
         // parent cb
     };
 
-    #play = () => {
+    #play = (): void => {
         if (this.#not_ready || this.#state.is_unplayable) {
             return;
         }
@@ -263,7 +244,7 @@ class PlayerState {
         }
     };
 
-    play = (video_id: string) => {
+    play = (video_id: string): void => {
         // if (video_id === undefined && this.#tracks.length) {
         //     this.#video_id = this.#tracks[0].video.id;
         //     video_id = this.#video_id;
@@ -275,7 +256,7 @@ class PlayerState {
         this.#play();
     };
 
-    play_by_index = (index: number) => {
+    play_by_index = (index: number): void => {
         assert(index > 0 && index <= this.#entries.length, `Invalid playlist index '${index}'`);
 
         const t = this.#entries[index - 1];
@@ -286,11 +267,11 @@ class PlayerState {
         this.#play();
     };
 
-    set_playlist = (value: Model.Playlist) => {
+    set_playlist = (value: Model.Playlist): void => {
         this.#s_playlist = value;
     };
 
-    set_entries = (value: Model.PlaylistEntry[]) => {
+    set_entries = (value: Model.PlaylistEntry[]): void => {
         const valid = [];
         for (const e of value) {
             if (e.video.is_available && e.video.is_embeddable) {
@@ -305,23 +286,23 @@ class PlayerState {
         this.#s_curr_index = 0;
     };
 
-    shuffle = () => {
+    shuffle = (): void => {
         this.#entries.sort(() => Math.random() - 0.5);
         this.#s_entries = [...this.#entries];
         this.play_by_index(1);
     };
 
-    prev_track = () => {
+    prev_track = (): void => {
         const prev_i = (untrack(() => this.#s_curr_index) - 1) % this.#entries.length;
         this.play_by_index(prev_i + 1);
     };
 
-    next_track = () => {
+    next_track = (): void => {
         const prev_i = (untrack(() => this.#s_curr_index) + 1) % this.#entries.length;
         this.play_by_index(prev_i + 1);
     };
 
-    toggle_play = () => {
+    toggle_play = (): void => {
         if (this.#state.is_playing) {
             this.#player.pauseVideo();
         }
@@ -330,7 +311,7 @@ class PlayerState {
         }
     };
 
-    toggle_mute = () => {
+    toggle_mute = (): void => {
         if (this.#state.is_muted) {
             this.#player.unMute();
             this.#state.is_muted = false;
@@ -343,16 +324,16 @@ class PlayerState {
         }
     };
 
-    set_volume = (value: number) => {
+    set_volume = (value: number): void => {
         this.#player.setVolume(value);
         this.#s_volume = value;
     };
 
-    set_repeat = (value: number) => {
+    set_repeat = (value: number): void => {
         this.#s_repeat = value;
     };
 
-    move_to = (id: string) => {
+    move_to = (id: string): boolean => {
         if (this.#not_ready) {
             return false;
         }
@@ -364,29 +345,29 @@ class PlayerState {
         return true;
     };
 
-    get is_playing() { return this.#s_is_playing; }
+    get is_playing(): boolean { return this.#s_is_playing; }
 
-    get is_paused() { return this.#s_is_paused; }
+    get is_paused(): boolean { return this.#s_is_paused; }
 
-    get is_muted() { return this.#s_is_muted; }
+    get is_muted(): boolean { return this.#s_is_muted; }
 
-    get progress() { return this.#s_progress; }
+    get progress(): number { return this.#s_progress.read(); }
 
-    get volume() { return this.#s_volume; }
+    get volume(): number { return this.#s_volume; }
 
-    get repeat() { return this.#s_repeat; }
+    get repeat(): number { return this.#s_repeat; }
 
-    get curr_entry() { return this.#s_curr_entry; }
+    get curr_entry(): Optional<Model.PlaylistEntry> { return this.#s_curr_entry; }
 
-    get prev_entry() { return this.#s_prev_entry; }
+    get prev_entry(): Optional<Model.PlaylistEntry> { return this.#s_prev_entry; }
 
-    get next_entry() { return this.#s_next_entry; }
+    get next_entry(): Optional<Model.PlaylistEntry> { return this.#s_next_entry; }
 
-    get playlist() { return this.#s_playlist; }
+    get playlist(): Optional<Model.Playlist> { return this.#s_playlist; }
 
-    get tracks() { return this.#s_entries; }
+    get tracks(): Model.PlaylistEntry[] { return this.#s_entries; }
 
-    get curr_entry_is_unavailable() { return this.#s_is_unavailable; }
+    get curr_entry_is_unavailable(): boolean { return this.#s_is_unavailable.read(); }
 }
 
 

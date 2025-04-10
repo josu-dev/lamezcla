@@ -59,7 +59,7 @@ export function getPersistedState<T>(options: PersistedStateOptions<T>) {
             if (ev.key !== key || ev.newValue == null) {
                 return;
             }
-            console.log(ev);
+
             _value = deserialize(ev.newValue);
         }));
     }
