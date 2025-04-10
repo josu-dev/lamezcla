@@ -1,20 +1,26 @@
+import * as apiquery from '$lib/client/api/index.js';
 import * as localquery from '$lib/client/db/index.js';
-import * as Model from '$lib/models/youtube.js';
-import { try_fetch } from '$lib/utils/fetch.js';
+import { throw_as_500 } from '$lib/utils/response.js';
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types.js';
 
 export const ssr = false;
 
 export const load: PageLoad = async ({ params, fetch }) => {
-    const [
+    let [
         playlist, entries
     ] = await Promise.all([
         localquery.select_playlist(params.playlist_id),
         localquery.select_playlist_entries(params.playlist_id)
     ]);
     if (playlist === undefined) {
-        return error(404, `Playlist with id '${params.playlist_id}' no loaded`);
+        const r_playlist = await apiquery.get_playlist(params.playlist_id, fetch);
+        if (r_playlist.is_err) {
+            throw_as_500(r_playlist, `Playlist with id '${params.playlist_id}' couldn't be loaded`);
+        }
+
+        playlist = r_playlist.value;
+        await localquery.insert_playlists([playlist]);
     }
 
     if (entries.length > 0) {
@@ -24,41 +30,24 @@ export const load: PageLoad = async ({ params, fetch }) => {
         };
     }
 
-    const r_items = await try_fetch({
-        fetch: fetch,
-        url: `/api/youtube/${playlist.channel_id}/playlists/${playlist.id}`,
-        parse_json: true,
-    });
-    if (r_items.is_err) {
-        console.error(r_items.error);
-        error(r_items.error instanceof Response ? r_items.error.status : 500);
+    const r = await apiquery.get_playlist_entries(params.playlist_id, fetch, playlist.channel_id);
+    if (r.is_err) {
+        throw_as_500(r);
     }
 
-    const items: Model.PlaylistItem[] = (r_items.value as any).data;
-    await localquery.insert_playlists_items(items);
+    const { items, compact_videos } = r.value;
+    await Promise.all([
+        localquery.insert_playlists_items(items),
+        localquery.insert_videos(compact_videos),
+    ]);
+    entries = await localquery.select_playlist_entries(params.playlist_id);
 
-    const ids: string[] = [];
-    for (const item of items) {
-        ids.push(item.video_id);
+    if (entries.length === 0) {
+        error(400, `Playlist with '${params.playlist_id}' is empty`);
     }
-    const r_videos = await try_fetch({
-        fetch: fetch,
-        url: `/api/youtube/videos`,
-        json: { ids: ids },
-        parse_json: true,
-    });
-    if (r_videos.is_err) {
-        console.error(r_videos.error);
-        error(r_videos.error instanceof Response ? r_videos.error.status : 500);
-    }
-
-    const videos_compact: Model.VideoCompact[] = (r_videos.value as any).data;
-    await localquery.insert_videos(videos_compact);
-
-    const new_entries = await localquery.select_playlist_entries(playlist.id);
 
     return {
         playlist: playlist,
-        entries: new_entries
+        entries: entries
     };
 };

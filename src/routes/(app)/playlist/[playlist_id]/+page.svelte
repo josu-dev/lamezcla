@@ -208,7 +208,7 @@
               class="group text-left flex w-full"
             >
               <div class="flex gap-4 px-4 py-2 w-full">
-                <div class="relative">
+                <div class="relative flex-none">
                   <img
                     src={video.img?.url}
                     width={video.img?.width}

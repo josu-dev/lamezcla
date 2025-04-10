@@ -7,6 +7,8 @@
   import type { ElEvent } from "$lib/utils/index.js";
   import type { Component } from "svelte";
   import { superForm } from "sveltekit-superforms";
+  import type { Query, QueryMode } from "./shared.js";
+  import { parse_query } from "./shared.js";
 
   let { data } = $props();
 
@@ -22,20 +24,16 @@
         return;
       }
 
-      const channel = ev.form.message.channel;
-      channel_state.add(channel).then(() => {
-        goto("/" + channel.handle);
-      });
+      const msg = ev.form.message;
+      if (msg.is_error) {
+        console.error(msg);
+        return;
+      }
+
+      const redirect_to = msg.redirect_to;
+      goto(redirect_to);
     },
   });
-
-  type QueryMode = "" | "v" | "c" | "ch" | "pl";
-
-  type Query = {
-    raw: string;
-    mode: QueryMode;
-    value: string;
-  };
 
   let query: Query = $state.raw({
     raw: "",
@@ -43,71 +41,13 @@
     value: "",
   });
 
-  const ytlink_re =
-    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?.*v=(?<v_id1>[\w-]+)(?:.*&list=(?<pl_id1>[\w-]+))?|playlist\?.*list=(?<pl_id2>[\w-]+)|(?<handle>@[\w-]+)|channel\/(?<c_id1>[\w-]+))|youtu\.be\/(?<v_id2>[\w-]+))/i;
-
-  function infer_query(v: string): Query {
-    if (v.startsWith("@")) {
-      return {
-        raw: v,
-        mode: "ch",
-        value: v,
-      };
-    }
-
-    if (v.length < 21) {
-      return {
-        raw: v,
-        mode: "",
-        value: "",
-      };
-    }
-
-    const r = ytlink_re.exec(v);
-    if (r === null) {
-      return {
-        raw: v,
-        mode: "",
-        value: "",
-      };
-    }
-
-    let mode: QueryMode = "";
-    let value = "";
-    const groups = r.groups!;
-    const video_id = groups.v_id1 ?? groups.v_id2;
-    const playlist_id = groups.pl_id1 ?? groups.pl_id2;
-    const handle = groups.handle;
-    const channel_id = groups.c_id1;
-    if (video_id?.length) {
-      mode = "v";
-      value = video_id;
-    }
-    if (playlist_id?.length) {
-      mode = "pl";
-      value = playlist_id;
-    } else if (handle?.length) {
-      mode = "ch";
-      value = handle;
-    } else if (channel_id?.length) {
-      mode = "c";
-      value = channel_id;
-    }
-
-    return {
-      raw: v,
-      mode: mode,
-      value: value,
-    };
-  }
-
   function on_input(ev: ElEvent<Event, HTMLInputElement>) {
     const v = ev.currentTarget.value;
     if (v === query.raw) {
       return;
     }
 
-    query = infer_query(v);
+    query = parse_query(v);
   }
 
   const mode_to_icon: Record<QueryMode, Component> = {
@@ -129,7 +69,15 @@
           >Enter a <span class="font-bold">@handle</span> or a <span class="font-bold">YT link</span></span
         >
       </label>
-      <Input type="text" id="input-query" name="query" defaultValue={query.raw} oninput={on_input} minlength={2} />
+      <Input
+        type="text"
+        id="input-query"
+        name="query"
+        defaultValue={query.raw}
+        oninput={on_input}
+        minlength={2}
+        maxlength={128}
+      />
     </div>
     <div class="mx-auto mt-4">
       {#if query.mode}
