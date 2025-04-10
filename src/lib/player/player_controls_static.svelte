@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Button from "$lib/components/el/Button.svelte";
+  import ButtonIcon from "$lib/components/el/ButtonIcon.svelte";
   import * as Icon from "$lib/components/icons.js";
   import { use_player_ctx } from "./player.svelte.js";
 
@@ -25,23 +25,23 @@
 
   <div class="grid grid-cols-1 grid-rows-1 *:col-[1/1] *:row-[1/1] py-1">
     <div class="flex items-center justify-center gap-x-2">
-      <Button onclick={player.shuffle} title="Shuffle" size="sm">
+      <ButtonIcon onclick={player.shuffle} title="Shuffle" size="sm">
         <Icon.Shuffle />
-      </Button>
-      <Button onclick={player.prev_track} title="Skip back" size="md">
+      </ButtonIcon>
+      <ButtonIcon onclick={player.prev_track} title="Skip back" size="md">
         <Icon.SkipBack />
-      </Button>
-      <Button onclick={player.toggle_play} title="Play" size="md">
+      </ButtonIcon>
+      <ButtonIcon onclick={player.toggle_play} title="Play" size="md">
         {#if player.is_playing}
           <Icon.Pause />
         {:else}
           <Icon.Play />
         {/if}
-      </Button>
-      <Button onclick={player.next_track} title="Skip ahead" size="md">
+      </ButtonIcon>
+      <ButtonIcon onclick={player.next_track} title="Skip ahead" size="md">
         <Icon.SkipForward />
-      </Button>
-      <Button
+      </ButtonIcon>
+      <ButtonIcon
         onclick={handle_on_repeat}
         title="Repeat"
         size="sm"
@@ -53,10 +53,10 @@
         {:else}
           <Icon.Repeat />
         {/if}
-      </Button>
+      </ButtonIcon>
     </div>
     <div class="flex justify-self-end gap-x-1">
-      <Button onclick={player.toggle_mute} title={player.is_muted ? "Unmute" : "Mute"} size="md">
+      <ButtonIcon onclick={player.toggle_mute} title={player.is_muted ? "Unmute" : "Mute"} size="md">
         {#if player.is_muted}
           <Icon.VolumeX />
         {:else if player.volume > 70}
@@ -66,7 +66,7 @@
         {:else}
           <Icon.Volume />
         {/if}
-      </Button>
+      </ButtonIcon>
       <label for="input-volume-desktop" class="sr-only">Volume</label>
       <input
         type="range"
