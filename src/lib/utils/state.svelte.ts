@@ -1,3 +1,4 @@
+import { untrack } from 'svelte';
 
 export type MutableReader<T> = () => T;
 
@@ -38,4 +39,11 @@ export function mutable_derived<T>(value: MutableReader<T>): Mutable<T> {
     }
 
     return { read, set };
+}
+
+export function effect_once(fn: () => (void | (() => void))): void {
+    $effect(() => {
+        const cleanup = untrack(fn);
+        return cleanup;
+    });
 }

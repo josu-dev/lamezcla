@@ -62,7 +62,7 @@
         @apply bg-background text-foreground font-sans;
     }
 
-    a, button {
+    a, button, input {
         cursor: pointer;
     }
 }
