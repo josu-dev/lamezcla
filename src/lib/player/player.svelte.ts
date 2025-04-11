@@ -1,8 +1,6 @@
 import { create_context, type UseContextArgs } from '$lib/client/state/shared.js';
 import type * as Model from "$lib/models/index.js";
 import { assert, type Optional } from '$lib/utils/index.js';
-import { mutable, mutable_derived } from '$lib/utils/mutable.svelte.js';
-import { untrack } from 'svelte';
 import type * as IFrameAPI from "./iframe_api.js";
 // @ts-expect-error types missing, its fine
 import YoutubePlayer from "youtube-player";
@@ -22,6 +20,8 @@ const PLAYER_STATE = {
     CUED: 5,
 } as const;
 
+const POLL_IFRAME_INTERVAL = 500;
+
 export type PlayerStateProps = {
     target_id: string | undefined;
     height: number;
@@ -32,6 +32,7 @@ export type PlayerStateProps = {
     muted: boolean;
     start: number;
     skip_on_unavailable: boolean;
+    volume: number;
 };
 
 const DEFAULT_PROPS = {
@@ -42,9 +43,54 @@ const DEFAULT_PROPS = {
     controls: false,
     loop: false,
     muted: false,
-    start: 0,
     skip_on_unavailable: true,
+    start: 0,
+    volume: 25,
 } satisfies PlayerStateProps;
+
+/**
+ * How the current track should repeat
+ *
+ * - 0 No repeat
+ * - 1 Repeat in loop
+ * - 2 Repear once
+ */
+export type PlayerRepeat = 0 | 1 | 2;
+
+type PlayerInternalState = {
+    entry_i: number;
+    is_mode_list: boolean;
+    is_mode_single: boolean;
+    is_muted: boolean;
+    is_paused: boolean;
+    is_playing: boolean;
+    repeat: PlayerRepeat;
+    time_current: number,
+    time_duration: number,
+    volume: number,
+} & ({
+    is_unplayable: true;
+    video_id: undefined;
+} | {
+    is_unplayable: false;
+    video_id: string;
+});
+
+type CurrentTrack = {
+    index: number,
+    time_duration: number,
+    time_current: number,
+    time_percentage: number,
+    unavailable: boolean,
+} & ({
+    unplayable: true,
+    video?: Model.Video,
+    entry?: Model.PlaylistEntry,
+} | {
+    unplayable: false,
+    video: Model.Video,
+    entry?: Model.PlaylistEntry,
+});
 
 class PlayerState {
     // @ts-expect-error its initilized inside effect
@@ -55,63 +101,57 @@ class PlayerState {
     #poll_iframe_id: Optional<number>;
 
     #props: Required<PlayerStateProps>;
-    #state: {
-        index: number;
-        is_mode_single: boolean;
-        is_mode_list: boolean;
-        is_muted: boolean;
-        is_playing: boolean;
-    } & ({
-        is_unplayable: true;
-        video_id: undefined;
-    } | {
-        is_unplayable: false;
-        video_id: string;
-    });
+    #state: PlayerInternalState;
     #entries: Model.PlaylistEntry[];
 
     #s_playlist: undefined | Model.Playlist = $state();
     #s_entries: Model.PlaylistEntry[] = $state([]);
-    #s_curr_index: number = $state(-1);
-    #s_curr_entry = $derived.by(() => {
-        if (this.#s_curr_index < 0 || this.#s_curr_index > (this.#s_entries.length - 1)) {
-            return undefined;
-        }
-        return this.#s_entries[this.#s_curr_index];
+    #s_current: CurrentTrack = $state({
+        index: -1,
+        time_current: 0,
+        time_duration: 100,
+        time_percentage: 0,
+        unplayable: true,
+        unavailable: false,
+        video: undefined,
+        entry: undefined,
     });
+    #s_curr_i: number = $state(-1);
     #s_prev_entry = $derived.by(() => {
-        if (this.#s_curr_index < 1 || this.#s_curr_index > this.#s_entries.length) {
+        if (this.#s_curr_i < 1 || this.#s_curr_i > this.#s_entries.length) {
             return undefined;
         }
-        return this.#s_entries[this.#s_curr_index - 1];
+        return this.#s_entries[this.#s_curr_i - 1];
     });
     #s_next_entry = $derived.by(() => {
-        if (this.#s_curr_index < 0 || this.#s_curr_index > (this.#entries.length - 2)) {
+        if (this.#s_curr_i < 0 || this.#s_curr_i > (this.#entries.length - 2)) {
             return undefined;
         }
-        return this.#s_entries[this.#s_curr_index + 1];
+        return this.#s_entries[this.#s_curr_i + 1];
     });
 
-    #s_is_playing = $state(false);
-    #s_is_paused = $state(false);
-    #s_is_unavailable = mutable_derived(() => this.#s_curr_entry?.video?.is_embeddable !== true);
     #s_is_muted = $state(false);
-    #s_progress = mutable(0);
+    #s_is_paused = $state(false);
+    #s_is_playing = $state(false);
     #s_repeat = $state(0);
     #s_volume = $state(25);
 
     constructor(props: Partial<PlayerStateProps>) {
-        this.#props = { ...DEFAULT_PROPS, ...props };
-
         this.#not_ready = true;
+        this.#props = { ...DEFAULT_PROPS, ...props };
         this.#state = {
-            index: -1,
+            entry_i: -1,
             is_mode_single: false,
             is_mode_list: false,
             is_muted: this.#props.muted,
+            is_paused: false,
             is_playing: false,
             is_unplayable: true,
+            repeat: 0,
+            time_current: 0,
+            time_duration: 100,
             video_id: undefined,
+            volume: this.#props.volume,
         };
         this.#entries = [];
 
@@ -153,16 +193,11 @@ class PlayerState {
         this.#iframe = this.#player.getIframe();
 
         // sync state
-        this.#player.setVolume(this.#s_volume);
-        if (this.#s_is_muted) {
+        this.#player.setVolume(this.#state.volume);
+        if (this.#state.is_muted) {
             this.#player.mute();
         }
-        this.#poll_iframe_id = setInterval(() => {
-            if (this.#not_ready) {
-                return;
-            }
-            this.#s_progress.set((this.#player.getCurrentTime() * 100) / (this.#player.getDuration() || 100));
-        }, 500);
+        this.#poll_iframe_id = setInterval(this.#on_iframe_poll, POLL_IFRAME_INTERVAL);
 
         // autoplay
         this.#play();
@@ -179,7 +214,7 @@ class PlayerState {
         }
 
         this.#state.is_playing = false;
-        this.#s_is_unavailable.set(true);
+        this.#s_current.unavailable = true;
         this.#s_is_playing = false;
     };
 
@@ -188,7 +223,7 @@ class PlayerState {
             case PLAYER_STATE.ENDED: {
                 this.#state.is_playing = false;
                 this.#s_is_playing = false;
-                switch (this.#s_repeat) {
+                switch (this.#state.repeat) {
                     case 0: {
                         this.next_track();
                         break;
@@ -198,20 +233,24 @@ class PlayerState {
                         break;
                     }
                     case 2: {
+                        this.#state.repeat = 0;
                         this.#s_repeat = 0;
+                        this.#player.playVideo();
                         break;
                     }
                 }
                 break;
             }
             case PLAYER_STATE.PLAYING: {
+                this.#state.is_paused = false;
                 this.#state.is_playing = true;
                 this.#s_is_paused = false;
                 this.#s_is_playing = true;
-                this.#s_is_unavailable.set(false);
+                this.#s_current.unavailable = false;
                 break;
             }
             case PLAYER_STATE.PAUSED: {
+                this.#state.is_paused = true;
                 this.#state.is_playing = false;
                 this.#s_is_paused = true;
                 this.#s_is_playing = false;
@@ -227,6 +266,18 @@ class PlayerState {
 
     #player_on_playback_quality_change = (ev: IFrameAPI.PlaybackQualityChangeEvent): void => {
         // parent cb
+    };
+
+    #on_iframe_poll = () => {
+        if (this.#not_ready) {
+            return;
+        }
+
+        const time = this.#player.getCurrentTime() ?? 100;
+        const duration = this.#player.getDuration() ?? 100;
+        this.#s_current.time_current = this.#state.time_current = Math.floor(time);
+        this.#s_current.time_duration = this.#state.time_duration = Math.ceil(duration);
+        this.#s_current.time_percentage = time / duration;
     };
 
     #play = (): void => {
@@ -245,10 +296,6 @@ class PlayerState {
     };
 
     play = (video_id: string): void => {
-        // if (video_id === undefined && this.#tracks.length) {
-        //     this.#video_id = this.#tracks[0].video.id;
-        //     video_id = this.#video_id;
-        // }
         this.#state.video_id = video_id;
         this.#state.is_mode_list = false;
         this.#state.is_mode_single = true;
@@ -259,11 +306,20 @@ class PlayerState {
     play_by_index = (index: number): void => {
         assert(index > 0 && index <= this.#entries.length, `Invalid playlist index '${index}'`);
 
-        const t = this.#entries[index - 1];
-        this.#state.video_id = t.video.id;
+        const i = index - 1;
+        const e = this.#entries[i];
+
+        this.#state.entry_i = i;
+        this.#state.video_id = e.video.id;
         this.#state.is_mode_list = true;
         this.#state.is_mode_single = false;
-        this.#s_curr_index = index - 1;
+
+        this.#s_curr_i = i;
+        this.#s_current.index = index;
+        this.#s_current.entry = e;
+        this.#s_current.unavailable = !(e.video.is_available && e.video.is_embeddable);
+        this.#s_current.unplayable = false;
+        this.#s_current.video = e.video;
         this.#play();
     };
 
@@ -278,12 +334,13 @@ class PlayerState {
                 valid.push(e);
             }
         }
-        this.#entries = value;
+
+        this.#entries = valid;
         this.#state.is_mode_list = true;
         this.#state.is_mode_single = false;
         this.#state.is_unplayable = false;
         this.#s_entries = [...valid];
-        this.#s_curr_index = 0;
+        this.#s_curr_i = 0;
     };
 
     shuffle = (): void => {
@@ -293,13 +350,13 @@ class PlayerState {
     };
 
     prev_track = (): void => {
-        const prev_i = (untrack(() => this.#s_curr_index) - 1) % this.#entries.length;
+        const prev_i = (this.#state.entry_i - 1) % this.#entries.length;
         this.play_by_index(prev_i + 1);
     };
 
     next_track = (): void => {
-        const prev_i = (untrack(() => this.#s_curr_index) + 1) % this.#entries.length;
-        this.play_by_index(prev_i + 1);
+        const next_i = (this.#state.entry_i + 1) % this.#entries.length;
+        this.play_by_index(next_i + 1);
     };
 
     toggle_play = (): void => {
@@ -324,16 +381,32 @@ class PlayerState {
         }
     };
 
+    seek_to = (value: number): void => {
+        assert(value >= 0 && value <= this.#state.time_duration, `Invalid duration passed in '${value}'`);
+        this.#player.seekTo(value, true);
+    };
+
+    seek_to_percentage = (value: number): void => {
+        assert(value >= 0 && value <= 100, `Invalid percent passed in '${value}'`);
+        const seconds = Math.floor(this.#state.time_duration * value * 0.01);
+        assert(seconds > 0 && seconds <= this.#state.time_duration, `Invalid duration passed in '${seconds}'`);
+        this.#player.seekTo(seconds, true);
+    };
+
+    set_repeat = (value: PlayerRepeat): void => {
+        this.#state.repeat = value;
+        this.#s_repeat = value;
+    };
+
     set_volume = (value: number): void => {
+        assert(value >= 0 && value <= 100, `Invalid volume passed in '${value}'`);
+        this.#state.volume = value;
         this.#player.setVolume(value);
         this.#s_volume = value;
     };
 
-    set_repeat = (value: number): void => {
-        this.#s_repeat = value;
-    };
-
-    move_to = (id: string): boolean => {
+    // eslint-disable-next-line no-unused-private-class-members
+    #move_to = (id: string): boolean => {
         if (this.#not_ready) {
             return false;
         }
@@ -351,13 +424,11 @@ class PlayerState {
 
     get is_muted(): boolean { return this.#s_is_muted; }
 
-    get progress(): number { return this.#s_progress.read(); }
-
     get volume(): number { return this.#s_volume; }
 
     get repeat(): number { return this.#s_repeat; }
 
-    get curr_entry(): Optional<Model.PlaylistEntry> { return this.#s_curr_entry; }
+    get current(): CurrentTrack { return this.#s_current; }
 
     get prev_entry(): Optional<Model.PlaylistEntry> { return this.#s_prev_entry; }
 
@@ -366,8 +437,6 @@ class PlayerState {
     get playlist(): Optional<Model.Playlist> { return this.#s_playlist; }
 
     get tracks(): Model.PlaylistEntry[] { return this.#s_entries; }
-
-    get curr_entry_is_unavailable(): boolean { return this.#s_is_unavailable.read(); }
 }
 
 
