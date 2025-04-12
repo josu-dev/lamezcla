@@ -66,6 +66,16 @@
       label: "Title Z to A",
       compare_fn: (a, b) => b.video.title.localeCompare(a.video.title),
     },
+    {
+      id: "duration_10",
+      label: "Duration longest",
+      compare_fn: (a, b) => b.video.total_seconds - a.video.total_seconds,
+    },
+    {
+      id: "duration_01",
+      label: "Duration shortest",
+      compare_fn: (a, b) => a.video.total_seconds - b.video.total_seconds,
+    },
   ] satisfies Tuple<SortByMode>;
 
   const DEFAULT_SORT_MODE = SORT_MODES[0];
@@ -84,6 +94,7 @@
 
   const pinned_state = use_pinned_ctx();
 
+  let channel = $derived(data.channel);
   let playlist = $derived(data.playlist);
   let playlist_is_pinned = $derived(pinned_state.is_pinned(playlist.id));
 
@@ -156,7 +167,12 @@
       <SourceLink type="playlist" id={playlist.id} title={playlist.title} size="size-5" />
     {/snippet}
     {#snippet children()}
-      Refreshed <HumanTime utc={playlist.updated_at} as_relative />
+      {#if channel}
+        <div class="font-bold text-foreground text-base"><a href="/{channel.id}">{channel.title}</a></div>
+      {/if}
+      <div>
+        Refreshed <HumanTime utc={playlist.updated_at} as_relative />
+      </div>
     {/snippet}
     {#snippet actions()}
       <ActionsMenu

@@ -1,9 +1,8 @@
 import * as localquery from '$lib/client/db/index.js';
 import type * as Model from '$lib/models/index.js';
 import type { VoidPromise } from '$lib/utils/index.js';
-import { now_utc, uuid } from '$lib/utils/index.js';
+import { create_context, now_utc, uuid } from '$lib/utils/index.js';
 import { SvelteSet } from 'svelte/reactivity';
-import { create_context, type UseContextArgs } from './shared.js';
 
 
 class FollowedState {
@@ -62,8 +61,8 @@ class FollowedState {
 const followed_ctx = create_context<FollowedState>('followed');
 
 export function use_followed_ctx(): FollowedState;
-export function use_followed_ctx(...args: UseContextArgs<typeof FollowedState>): FollowedState;
-export function use_followed_ctx(...args: UseContextArgs<typeof FollowedState> | []): FollowedState {
+export function use_followed_ctx(...args: ConstructorParameters<typeof FollowedState>): FollowedState;
+export function use_followed_ctx(...args: ConstructorParameters<typeof FollowedState> | []): FollowedState {
     if (args.length) {
         return followed_ctx.set(new FollowedState(...args));
     }

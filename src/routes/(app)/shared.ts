@@ -6,6 +6,8 @@ export type Query = {
     value: string;
 };
 
+const skip_playlist = new Set(['WL']);
+
 const ytlink_re =
     /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?.*v=(?<v_id1>[\w-]+)(?:.*&list=(?<pl_id1>[\w-]+))?|playlist\?.*list=(?<pl_id2>[\w-]+)|(?<handle>@[\w-]+)|channel\/(?<c_id1>[\w-]+))|youtu\.be\/(?<v_id2>[\w-]+))/i;
 
@@ -46,7 +48,7 @@ export function parse_query(v: string): Query {
         mode = "v";
         value = video_id;
     }
-    if (playlist_id?.length) {
+    if (playlist_id?.length && !skip_playlist.has(playlist_id)) {
         mode = "pl";
         value = playlist_id;
     } else if (handle?.length) {

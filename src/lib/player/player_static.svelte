@@ -6,13 +6,14 @@
   import Tracklist from "./player_tracklist.svelte";
 
   type Props = {
+    channel?: Model.Channel;
     playlist?: Model.Playlist;
     entries?: Model.PlaylistEntry[];
     video?: Model.Video;
     start_index?: number;
   };
 
-  let { playlist, entries, video, start_index = 1 }: Props = $props();
+  let { channel, playlist, entries, video, start_index = 1 }: Props = $props();
 
   let player_state = use_player_ctx();
 
@@ -51,7 +52,7 @@
 </script>
 
 <div class="flex w-full h-full">
-  <div class="flex flex-col w-full bg-none">
+  <div class="flex flex-col w-full">
     <div class="flex-none flex justify-center py-2">
       <h2 class="text-2xl mt-2 font-bold">
         {#if state.single}
@@ -84,12 +85,12 @@
               class="object-cover h-full bg-transparent"
             />
           </div>
-          <div class="text-center mt-8">
-            <h3 class="text-xl font-bold text-pretty leading-tight">{curr_video.title}</h3>
+          <div class="flex flex-col items-center mt-8">
+            <h3 class="text-xl font-bold text-pretty leading-tight select-text">{curr_video.title}</h3>
             <a
               href="/{curr_video.channel_id}"
               rel="noopener noreferrer"
-              class="block font-bold text-muted-foreground mt-1.5"
+              class="block font-bold text-muted-foreground mt-1.5 mx-auto"
             >
               {curr_video.channel_title}
             </a>
@@ -105,6 +106,7 @@
 
   {#if !state.single}
     <Tracklist
+      {channel}
       playlist={state.playlist}
       entries={player_state.tracks}
       current_entry={player_state.current.entry?.item.id}

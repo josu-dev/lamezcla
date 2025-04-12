@@ -23,8 +23,11 @@ export const load: PageLoad = async ({ params, fetch }) => {
         await localquery.insert_playlists([playlist]);
     }
 
+    const channel = await localquery.select_channel(playlist.channel_id);
+
     if (entries.length > 0) {
         return {
+            channel: channel,
             playlist: playlist,
             entries: entries
         };
@@ -47,6 +50,7 @@ export const load: PageLoad = async ({ params, fetch }) => {
     }
 
     return {
+        channel: channel,
         playlist: playlist,
         entries: entries
     };

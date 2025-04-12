@@ -69,7 +69,6 @@ export const actions: Actions = {
                 redirect_to = `/playlist/${p.id}`;
                 break;
             }
-
             case 'v': {
                 const r = await get_videos([query.value]);
                 if (r.is_err) {
