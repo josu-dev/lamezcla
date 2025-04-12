@@ -64,7 +64,10 @@ export const load: PageLoad = async ({ url, fetch }) => {
             video = (await localquery.select_video(video_id))!;
         }
 
+        const channel = await localquery.select_channel(video.channel_id);
+
         return {
+            channel: channel,
             single: true,
             video: video,
         } as const;
@@ -116,7 +119,10 @@ export const load: PageLoad = async ({ url, fetch }) => {
         }
     }
 
+    const channel = await localquery.select_channel(playlist.channel_id);
+
     return {
+        channel: channel,
         single: false,
         playlist: playlist,
         entries: entries,

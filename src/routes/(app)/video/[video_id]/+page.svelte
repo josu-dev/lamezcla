@@ -84,19 +84,24 @@
           </a>
           <div class="flex flex-col gap-2 justify-around py-2">
             <div class="flex">
-              <h3 class="text-xl font-semibold">{video.title}</h3>
+              <h3 class="text-base font-bold">{video.title}</h3>
             </div>
             <div class="text-foreground/80 space-y-1 [&_p>span]:font-semibold">
               <p>
                 <span>Channel:</span>
+                <a href="/{video.channel_id}" rel="noopener noreferrer" data-no-play class="hover:text-foreground">
+                  {video.channel_title}
+                </a>
                 <a
                   href={channel_url(video.channel_id)}
                   target="_blank"
-                  rel=""
+                  rel="noopener noreferrer"
                   data-no-play
                   class="hover:text-foreground"
                 >
-                  {video.channel_title}
+                  <span class="sr-only">
+                    {video.channel_title}
+                  </span>
                   <Icon.ExternalLink class="align-top size-4 inline-flex" />
                 </a>
               </p>

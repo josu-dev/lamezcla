@@ -4,13 +4,15 @@
   import { seconds_to_ddhhmmss } from "./utils.js";
 
   type Props = {
+    channel?: Model.Channel;
     playlist: Model.Playlist;
     entries: Model.PlaylistEntry[];
     current_entry?: Model.StringId;
     on_select?: (value: Model.PlaylistEntry, index: number) => void;
   };
 
-  let { playlist, entries, current_entry: curr_entry, on_select = () => {} }: Props = $props();
+  let { channel, playlist, entries, current_entry: curr_entry, on_select = () => {} }: Props = $props();
+
   let total_entries = $derived(entries.length);
   let total_time = $derived.by(() => {
     let total_s = 0;
@@ -29,7 +31,7 @@
 
     const humanReadable =
       (days ? days + " d " : "") +
-      (hours ? hours + " hs " : "") +
+      (hours ? hours + " h " : "") +
       (minutes ? minutes + " min " : "") +
       (seconds ? seconds + " s " : "");
 
@@ -43,16 +45,19 @@
   });
 </script>
 
-<aside class="max-w-96 w-full py-1 border-l border-border max-h-[calc(100dvh-3.5rem)] overflow-hidden flex flex-col">
+<aside class="max-w-96 w-full border-l border-border max-h-[calc(100dvh-3.5rem)] overflow-hidden flex flex-col">
   <div class="border-b px-2 py-2 border-border">
     <h2 class="text-xl font-bold">
       Current Playlist
       <SourceLink type="playlist" id={playlist.id} title={playlist.title} size="size-5" />
     </h2>
-    <div class="flex text-sm gap-x-2 text-muted-foreground font-semibold">
-      <div>{total_entries} tracks</div>
-      -
-      <div>{total_time.human}</div>
+    <div class="flex flex-col text-sm text-muted-foreground font-semibold mt-1">
+      {#if channel !== undefined}
+        <div class="font-bold text-ellipsis overflow-hidden text-nowrap">
+          <a href="/{channel.id}">{channel.title}</a>
+        </div>
+      {/if}
+      <div>{total_entries} tracks - {total_time.human}</div>
     </div>
   </div>
 

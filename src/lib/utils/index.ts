@@ -1,6 +1,9 @@
 export * from './asserts.js';
+export * from './context.js';
+export * from './fetch.js';
 export * from './response.js';
 export * from './results.js';
+export * from './state.svelte.js';
 
 export function noop() { }
 

@@ -5,5 +5,11 @@
 </script>
 
 <main class="grid h-site-content">
-  <PlayerStatic video={data.video} entries={data.entries} playlist={data.playlist} start_index={data.start_index} />
+  <PlayerStatic
+    channel={data.channel}
+    video={data.video}
+    entries={data.entries}
+    playlist={data.playlist}
+    start_index={data.start_index}
+  />
 </main>

@@ -1,7 +1,7 @@
 import * as localquery from '$lib/client/db/index.js';
 import type * as Model from '$lib/models/index.js';
 import type { Optional, VoidPromise } from '$lib/utils/index.js';
-import { create_context, type UseContextArgs } from './shared.js';
+import { create_context } from '$lib/utils/index.js';
 
 
 class ChannelState {
@@ -40,8 +40,8 @@ class ChannelState {
 const channel_ctx = create_context<ChannelState>('channel');
 
 export function use_channel_ctx(): ChannelState;
-export function use_channel_ctx(...args: UseContextArgs<typeof ChannelState>): ChannelState;
-export function use_channel_ctx(...args: UseContextArgs<typeof ChannelState> | []): ChannelState {
+export function use_channel_ctx(...args: ConstructorParameters<typeof ChannelState>): ChannelState;
+export function use_channel_ctx(...args: ConstructorParameters<typeof ChannelState> | []): ChannelState {
     if (args.length) {
         return channel_ctx.set(new ChannelState(...args));
     }

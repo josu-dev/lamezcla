@@ -1,9 +1,10 @@
-import { create_context, type UseContextArgs } from '$lib/client/state/shared.js';
 import type * as Model from "$lib/models/index.js";
-import { assert, type Optional } from '$lib/utils/index.js';
+import type { Optional } from '$lib/utils/index.js';
+import { assert, create_context } from '$lib/utils/index.js';
 import type * as IFrameAPI from "./iframe_api.js";
 // @ts-expect-error types missing, its fine
 import YoutubePlayer from "youtube-player";
+
 
 /**
  * Expose PlayerState constants for convenience. These constants can also be
@@ -443,8 +444,8 @@ class PlayerState {
 const player_ctx = create_context<PlayerState>('player');
 
 export function use_player_ctx(): PlayerState;
-export function use_player_ctx(...args: UseContextArgs<typeof PlayerState>): PlayerState;
-export function use_player_ctx(...args: UseContextArgs<typeof PlayerState> | []): PlayerState {
+export function use_player_ctx(...args: ConstructorParameters<typeof PlayerState>): PlayerState;
+export function use_player_ctx(...args: ConstructorParameters<typeof PlayerState> | []): PlayerState {
     if (args.length) {
         return player_ctx.set(new PlayerState(...args));
     }

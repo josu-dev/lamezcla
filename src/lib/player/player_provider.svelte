@@ -16,5 +16,5 @@
   use_player_ctx(safe_options);
 </script>
 
-<div class="invisible"><div id={safe_options.target_id}></div></div>
+<div class="sr-only invisible"><div id={safe_options.target_id}></div></div>
 {@render children()}

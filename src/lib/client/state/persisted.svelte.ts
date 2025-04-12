@@ -3,6 +3,7 @@ import { noop } from '$lib/utils/index.js';
 import { on } from 'svelte/events';
 import { createSubscriber } from 'svelte/reactivity';
 
+
 const default_window = browser && typeof window !== "undefined" ? window : undefined;
 
 type PersistedStateOptions<T> = {

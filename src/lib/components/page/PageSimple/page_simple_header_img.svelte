@@ -19,15 +19,13 @@
 
 {#snippet Image()}
   {@const is_16_9 = img.width / img.height === 16 / 9}
-  <div class={is_16_9 ? "h-16 aspect-video" : "size-16"}>
+  <div class={is_16_9 ? "h-24 aspect-video" : "size-16"}>
     <img src={img.url} width={img.width} height={img.height} {alt} class="rounded-md object-cover size-full" />
   </div>
 {/snippet}
 
-<div class="flex-none">
-  {#if children}
-    {@render children(Image)}
-  {:else}
-    {@render Image()}
-  {/if}
-</div>
+{#if children}
+  {@render children(Image)}
+{:else}
+  {@render Image()}
+{/if}

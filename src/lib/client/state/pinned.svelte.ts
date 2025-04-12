@@ -1,8 +1,8 @@
 import * as localquery from '$lib/client/db/index.js';
 import type * as Model from '$lib/models/index.js';
-import { now_utc, uuid, type VoidPromise } from '$lib/utils/index.js';
+import type { VoidPromise } from '$lib/utils/index.js';
+import { create_context, now_utc, uuid, } from '$lib/utils/index.js';
 import { SvelteSet } from 'svelte/reactivity';
-import { create_context, type UseContextArgs } from './shared.js';
 
 
 class PinnedState {
@@ -80,8 +80,8 @@ class PinnedState {
 const pinned_ctx = create_context<PinnedState>('pinned');
 
 export function use_pinned_ctx(): PinnedState;
-export function use_pinned_ctx(...args: UseContextArgs<typeof PinnedState>): PinnedState;
-export function use_pinned_ctx(...args: UseContextArgs<typeof PinnedState> | []): PinnedState {
+export function use_pinned_ctx(...args: ConstructorParameters<typeof PinnedState>): PinnedState;
+export function use_pinned_ctx(...args: ConstructorParameters<typeof PinnedState> | []): PinnedState {
     if (args.length) {
         return pinned_ctx.set(new PinnedState(...args));
     }
