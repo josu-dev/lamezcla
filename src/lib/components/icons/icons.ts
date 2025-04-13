@@ -14,6 +14,8 @@ export { default as ListVideo } from '@lucide/svelte/icons/list-video';
 export { default as LoaderCircle } from '@lucide/svelte/icons/loader-circle';
 export { default as Menu } from '@lucide/svelte/icons/menu';
 export { default as Music } from '@lucide/svelte/icons/music';
+export { default as PanelRightClose } from '@lucide/svelte/icons/panel-right-close';
+export { default as PanelRightOpen } from '@lucide/svelte/icons/panel-right-open';
 export { default as Pause } from '@lucide/svelte/icons/pause';
 export { default as Pin } from '@lucide/svelte/icons/pin';
 export { default as PinOff } from '@lucide/svelte/icons/pin-off';

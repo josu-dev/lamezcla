@@ -1,5 +1,5 @@
 <script lang="ts">
-  import * as Icon from "$lib/components/icons.js";
+  import { Icon } from "$lib/components/icons/index.js";
   import { channel_url, playlist_url, video_url } from "./shared.js";
 
   type SourceType = "channel" | "playlist" | "video";

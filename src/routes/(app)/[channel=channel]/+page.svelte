@@ -3,7 +3,7 @@
   import { use_followed_ctx, use_pinned_ctx } from "$client/context/index.js";
   import { refresh_local_channel_and_playlists } from "$client/data/refresh/index.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
-  import * as Icon from "$lib/components/icons.js";
+  import { Icon } from "$lib/components/icons/index.js";
   import type { SortMode } from "$lib/components/menus/index.js";
   import { ActionsMenu, SortMenu } from "$lib/components/menus/index.js";
   import * as PageSimple from "$lib/components/page/PageSimple/index.js";

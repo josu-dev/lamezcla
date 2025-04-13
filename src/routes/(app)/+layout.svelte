@@ -1,6 +1,6 @@
 <script lang="ts">
   import { use_followed_ctx, use_pinned_ctx } from "$client/context/index.js";
-  import * as Icon from "$lib/components/icons.js";
+  import { Icon } from "$lib/components/icons/index.js";
   import SiteSidebar from "$lib/components/SiteSidebar/SiteSidebar.svelte";
   import * as Player from "$lib/player/index.js";
   import type { Snippet } from "svelte";
