@@ -1,10 +1,10 @@
-import { get_channel, get_channel_by_handle, get_playlists, get_videos } from '$lib/youtube/index.js';
+import { youtube } from '$lib/provider/index.js';
 import { fail } from '@sveltejs/kit';
 import type { ErrorStatus } from 'sveltekit-superforms';
 import { message, superValidate, } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import * as v from 'valibot';
-import type { Actions } from './$types.js';
+import type { Actions, PageServerLoad } from './$types.js';
 import { parse_query } from './shared.js';
 
 
@@ -12,11 +12,11 @@ const search_schema = v.object({
     query: v.pipe(v.string(), v.minLength(2), v.maxLength(128))
 });
 
-export async function load({ fetch }) {
+export const load: PageServerLoad = async () => {
     const form = await superValidate(valibot(search_schema));
 
     return { form };
-}
+};
 
 export const actions: Actions = {
     search: async ({ request }) => {
@@ -34,7 +34,7 @@ export const actions: Actions = {
                 break;
             }
             case 'c': {
-                const r = await get_channel(query.value);
+                const r = await youtube.get_channel(query.value);
                 if (r.is_err) {
                     console.warn(r);
                     status = 400;
@@ -45,7 +45,7 @@ export const actions: Actions = {
                 break;
             }
             case 'ch': {
-                const r = await get_channel_by_handle(query.value);
+                const r = await youtube.get_channel_by_handle(query.value);
                 if (r.is_err) {
                     console.warn(r);
                     status = 400;
@@ -55,7 +55,7 @@ export const actions: Actions = {
                 break;
             }
             case 'pl': {
-                const r = await get_playlists([query.value]);
+                const r = await youtube.get_playlists([query.value]);
                 if (r.is_err) {
                     console.warn(r);
                     status = 400;
@@ -70,7 +70,7 @@ export const actions: Actions = {
                 break;
             }
             case 'v': {
-                const r = await get_videos([query.value]);
+                const r = await youtube.get_videos([query.value]);
                 if (r.is_err) {
                     console.warn(r);
                     status = 400;
@@ -103,6 +103,7 @@ export const actions: Actions = {
                 error: "some error happend"
             };
         }
+
         return message(form, msg, { status: status });
     }
 };

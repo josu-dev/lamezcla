@@ -1,9 +1,10 @@
+import { youtube } from '$lib/provider/index.js';
 import { response_error, response_json } from '$lib/utils/response.js';
-import { get_playlist_items_all } from '$lib/youtube/index.js';
 import type { RequestHandler } from './$types.js';
 
+
 export const GET: RequestHandler = async ({ params }) => {
-    const r = await get_playlist_items_all(params.playlist);
+    const r = await youtube.get_playlist_items_all(params.playlist);
     if (r.is_err) {
         console.error(r.error);
         return response_error(r.error.status);

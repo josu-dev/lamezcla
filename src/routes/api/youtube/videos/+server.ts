@@ -1,7 +1,8 @@
+import { youtube } from '$lib/provider/index.js';
 import { parse_json, response_error, response_json } from '$lib/utils/response.js';
-import { get_videos } from '$lib/youtube/index.js';
 import * as v from 'valibot';
 import type { RequestHandler } from './$types';
+
 
 const get_schema = v.object({
     ids: v.array(v.pipe(v.string(), v.nonEmpty()))
@@ -14,7 +15,7 @@ export const POST: RequestHandler = async ({ request }) => {
     }
 
     const ids = parsed.output.ids;
-    const r = await get_videos(ids);
+    const r = await youtube.get_videos(ids);
     if (r.is_err) {
         console.error(r.error);
         return response_error(r.error.status);

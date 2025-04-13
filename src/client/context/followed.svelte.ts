@@ -1,4 +1,4 @@
-import * as localquery from '$lib/client/db/index.js';
+import { localdb } from '$client/data/query/index.js';
 import type * as Model from '$lib/models/index.js';
 import type { VoidPromise } from '$lib/utils/index.js';
 import { create_context, now_utc, uuid } from '$lib/utils/index.js';
@@ -24,7 +24,7 @@ class FollowedState {
             followed_at: now,
             position: this.followed.length,
         };
-        await localquery.insert_followed_channel(item);
+        await localdb.upsert_followed_channel(item);
 
         const new_entry: Model.FollowedEntry = {
             id: item.id,
@@ -37,7 +37,7 @@ class FollowedState {
 
     async unfollow(value: Model.Channel): VoidPromise {
         const id = value.id;
-        await localquery.delete_followed_channel_by_channel(id);
+        await localdb.delete_followed_channel_by_channel(id);
 
         let i = 0;
         for (; i < this.followed.length; i++) {

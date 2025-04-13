@@ -12,6 +12,7 @@ export type Image = {
 
 export type Channel = {
     id: StringId;
+    v: number;
     handle?: string;
     title: string;
     img: undefined | Image;
@@ -20,7 +21,8 @@ export type Channel = {
 };
 
 export type Playlist = {
-    id: string;
+    id: StringId;
+    v: number;
     channel_id: string;
     description: string;
     img: undefined | Image;
@@ -32,7 +34,8 @@ export type Playlist = {
 };
 
 export type PlaylistItem = {
-    id: string;
+    id: StringId;
+    v: number;
     playlist_id: string;
     video_id: string;
     position: number;
@@ -41,6 +44,7 @@ export type PlaylistItem = {
 };
 
 export const VIDEO_FLAGS = {
+    NO_FLAGS: 0,
     IS_AVAILABLE: 1 << 0,
     IS_PUBLIC: 1 << 1,
     IS_UNLISTED: 1 << 2,
@@ -49,7 +53,7 @@ export const VIDEO_FLAGS = {
 } as const;
 
 export type VideoCompact = {
-    id: string;
+    id: StringId;
     flags: number,
     channel_id: string;
     channel_title: string;
@@ -60,7 +64,7 @@ export type VideoCompact = {
 };
 
 export type VideoCompactUnavailable = {
-    id: string,
+    id: StringId,
     flags: 0,
 };
 

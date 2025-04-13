@@ -1,11 +1,12 @@
 import { YOUTUBE_API_KEY } from '$env/static/private';
-import type * as Models from '$lib/models/youtube.js';
 import { VIDEO_FLAGS } from '$lib/models/youtube.js';
-import { duration_to_seconds } from '$lib/player/utils.js';
 import type { AsyncResult } from '$lib/utils/index.js';
-import { assert, err, now_utc, ok } from '$lib/utils/index.js';
-import type * as YTA from './api.types.js';
+import { assert, assert_exists, err, ok } from '$lib/utils/index.js';
+import type * as YApi from './api.types.js';
+import type * as Out from './out.types.js';
 
+
+export type * from './out.types.js';
 
 const MAX_RESULTS_PER_REQUEST = "50";
 const BASE_API = `https://youtube.googleapis.com/youtube/v3`;
@@ -20,7 +21,7 @@ function build_api_url(endpoint: string, params: Record<string, string>) {
     return url;
 }
 
-export async function fetch_api<T extends YTA.AnyResponse>(opts: YTA.FetchApiOptions<T>): AsyncResult<T, Response> {
+async function fetch_api<T extends YApi.AnyResponse>(opts: YApi.FetchApiOptions<T>): AsyncResult<T, Response> {
     const params = { ...opts.others, part: opts.part.join(','), key: YOUTUBE_API_KEY };
     const url = build_api_url(opts.endpoint, params);
     const r = await fetch(url);
@@ -34,22 +35,42 @@ export async function fetch_api<T extends YTA.AnyResponse>(opts: YTA.FetchApiOpt
     return ok(data);
 }
 
-function normalize_channel(value: YTA.Channel): Models.Channel {
+function normalize_channel(value: YApi.Channel): Out.Channel {
     const customUrl = value.snippet.customUrl;
     const safe_handle = customUrl === undefined ? undefined : customUrl.startsWith('@') ? customUrl : undefined;
-    const out: Models.Channel = {
+    const out: Out.Channel = {
         id: value.id,
         handle: safe_handle,
         title: value.snippet.title,
         img: value.snippet.thumbnails?.default,
         published_at: value.snippet.publishedAt,
-        updated_at: now_utc()
     };
     return out;
 }
 
-export async function get_channel(id: string): AsyncResult<Models.Channel, Response> {
-    const data = await fetch_api<YTA.ChannelListResponse>({
+function duration_to_seconds(duration: string): number {
+    const res = duration.match('PT(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)S)?');
+    assert_exists(res, `duration is malformed '${duration}'`);
+
+    let out = 0;
+    const h = res[1];
+    const m = res[2];
+    const s = res[3];
+    if (h) {
+        out += 3600 * +h;
+    }
+    if (m) {
+        out += 60 * +m;
+    }
+    if (s) {
+        out += +s;
+    }
+    return out;
+}
+
+
+export async function get_channel(id: string): AsyncResult<Out.Channel, Response> {
+    const data = await fetch_api<YApi.ChannelListResponse>({
         endpoint: ENDPOINT_CHANNEL,
         part: ['snippet', 'contentDetails', 'status'],
         others: {
@@ -66,8 +87,8 @@ export async function get_channel(id: string): AsyncResult<Models.Channel, Respo
     return ok(out);
 }
 
-export async function get_channel_by_handle(handle: string): AsyncResult<Models.Channel, Response> {
-    const data = await fetch_api<YTA.ChannelListResponse>({
+export async function get_channel_by_handle(handle: string): AsyncResult<Out.Channel, Response> {
+    const data = await fetch_api<YApi.ChannelListResponse>({
         endpoint: ENDPOINT_CHANNEL,
         part: ['snippet', 'contentDetails', 'status'],
         others: {
@@ -93,7 +114,7 @@ function _get_channel_playlists(channel_id: string, page_token: undefined | stri
         others.pageToken = page_token;
     }
 
-    return fetch_api<YTA.PlaylistListResponse>({
+    return fetch_api<YApi.PlaylistListResponse>({
         endpoint: ENDPOINT_PLAYLIST,
         part: ["snippet", "player", "status", "contentDetails"],
         others: others
@@ -110,7 +131,7 @@ function _get_channel_playlists(channel_id: string, page_token: undefined | stri
 // }
 
 export async function get_channel_playlists_all(channel_id: string) {
-    const out: Models.Playlist[] = [];
+    const out: Out.Playlist[] = [];
     let processed = 0;
     let next_page: undefined | string;
     while (true) {
@@ -126,7 +147,7 @@ export async function get_channel_playlists_all(channel_id: string) {
                 continue;
             }
 
-            const p: Models.Playlist = {
+            const p: Out.Playlist = {
                 id: item.id,
                 channel_id: item.snippet.channelId,
                 description: item.snippet.description,
@@ -134,7 +155,6 @@ export async function get_channel_playlists_all(channel_id: string) {
                 item_count: item.contentDetails.itemCount,
                 privacy_status: item.status.privacyStatus,
                 published_at: item.snippet.publishedAt,
-                updated_at: now_utc(),
                 title: item.snippet.title,
             };
             out.push(p);
@@ -161,7 +181,7 @@ async function _get_playlist_items(playlist_id: string, page_token: undefined | 
         others.pageToken = page_token;
     }
 
-    return fetch_api<YTA.PlaylistItemListResponse>({
+    return fetch_api<YApi.PlaylistItemListResponse>({
         endpoint: ENDPOINT_PLAYLIST_ITEMS,
         part: ["snippet", "contentDetails", "status"],
         others: others
@@ -178,7 +198,7 @@ async function _get_playlist_items(playlist_id: string, page_token: undefined | 
 // }
 
 export async function get_playlist_items_all(id: string) {
-    const out: Models.PlaylistItem[] = [];
+    const out: Out.PlaylistItem[] = [];
     let next_page: undefined | string;
     while (true) {
         const r = await _get_playlist_items(id, next_page);
@@ -188,7 +208,7 @@ export async function get_playlist_items_all(id: string) {
         const value = r.value;
 
         for (const item of value.items) {
-            const p: Models.PlaylistItem = {
+            const p: Out.PlaylistItem = {
                 id: item.id,
                 playlist_id: item.snippet.playlistId,
                 video_id: item.contentDetails.videoId,
@@ -218,7 +238,7 @@ function _get_playlists(ids: string[]) {
         maxResults: MAX_RESULTS_PER_REQUEST
     };
 
-    return fetch_api<YTA.PlaylistListResponse>({
+    return fetch_api<YApi.PlaylistListResponse>({
         endpoint: ENDPOINT_PLAYLIST,
         part: ["snippet", "player", "status", "contentDetails"],
         others: others
@@ -226,7 +246,7 @@ function _get_playlists(ids: string[]) {
 }
 
 export async function get_playlists(ids: string[]) {
-    const out: Models.Playlist[] = [];
+    const out: Out.Playlist[] = [];
     let i = 0;
     while (i < ids.length) {
         const slice = ids.slice(i, i + 50);
@@ -243,7 +263,7 @@ export async function get_playlists(ids: string[]) {
                 continue;
             }
 
-            const p: Models.Playlist = {
+            const p: Out.Playlist = {
                 id: item.id,
                 channel_id: item.snippet.channelId,
                 description: item.snippet.description,
@@ -251,7 +271,6 @@ export async function get_playlists(ids: string[]) {
                 item_count: item.contentDetails.itemCount,
                 privacy_status: item.status.privacyStatus,
                 published_at: item.snippet.publishedAt,
-                updated_at: now_utc(),
                 title: item.snippet.title,
             };
             out.push(p);
@@ -268,14 +287,14 @@ function _get_videos(ids: string[]) {
         maxResults: MAX_RESULTS_PER_REQUEST
     };
 
-    return fetch_api<YTA.VideoListResponse>({
+    return fetch_api<YApi.VideoListResponse>({
         endpoint: ENDPOINT_VIDEOS,
         part: ["contentDetails", "snippet", "player", "statistics", "status"],
         others: others
     });
 }
 
-export function extract_video_flags(video: YTA.Video): number {
+export function extract_video_flags(video: YApi.Video): number {
     let flags = 0;
 
     if (video.status !== undefined) {
@@ -303,7 +322,7 @@ export function extract_video_flags(video: YTA.Video): number {
     return flags;
 }
 
-function create_video_unavailable(id: string): Models.VideoCompactUnavailable {
+function create_video_unavailable(id: string): Out.VideoCompactUnavailable {
     return {
         id: id,
         flags: 0
@@ -311,8 +330,8 @@ function create_video_unavailable(id: string): Models.VideoCompactUnavailable {
 }
 
 export async function get_videos(ids: string[]) {
-    const out: Models.SomeVideo[] = [];
-    const id_to_vid: Map<string, Models.VideoCompact> = new Map();
+    const out: Out.SomeVideoCompact[] = [];
+    const id_to_vid: Map<string, Out.VideoCompact> = new Map();
     let i = 0;
     while (i < ids.length) {
         const slice = ids.slice(i, i + 50);
@@ -324,7 +343,7 @@ export async function get_videos(ids: string[]) {
 
         const value = r.value;
         for (const item of value.items) {
-            const v: Models.VideoCompact = {
+            const v: Out.VideoCompact = {
                 id: item.id,
                 flags: extract_video_flags(item),
                 channel_id: item.snippet.channelId,

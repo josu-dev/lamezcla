@@ -1,4 +1,4 @@
-import * as localquery from '$lib/client/db/index.js';
+import { localdb } from '$client/data/query/index.js';
 import type * as Model from '$lib/models/index.js';
 import type { VoidPromise } from '$lib/utils/index.js';
 import { create_context, now_utc, uuid, } from '$lib/utils/index.js';
@@ -26,7 +26,7 @@ class PinnedState {
             position: this.pinned.length,
             pinned_id: value.id,
         };
-        await localquery.insert_pinned_item(item);
+        await localdb.upsert_pinned_item(item);
 
         const new_entry: Model.PinnedEntry = {
             type: type,
@@ -39,7 +39,7 @@ class PinnedState {
 
     async unpin(entry: Model.PinnedEntry): VoidPromise {
         const id = entry.item.id;
-        await localquery.delete_pinned_item(id);
+        await localdb.delete_pinned_item(id);
 
         let i = 0;
         for (; i < this.pinned.length; i++) {
@@ -67,7 +67,7 @@ class PinnedState {
         }
 
         const entry = this.pinned[i];
-        await localquery.delete_pinned_item(entry.item.id);
+        await localdb.delete_pinned_item(entry.item.id);
         this.#pinned_ids.delete(entry.item.pinned_id);
         this.pinned.splice(i, 1);
     }

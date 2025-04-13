@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import { use_pinned_ctx } from "$lib/client/state/pinned.svelte.js";
+  import { use_pinned_ctx } from "$client/context/index.js";
+  import { refresh_local_playlist_and_items } from "$client/data/refresh/index.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import * as Icon from "$lib/components/icons.js";
   import type { SortMode } from "$lib/components/menus/index.js";
@@ -10,7 +11,7 @@
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import type * as Model from "$lib/models/index.js";
   import { seconds_to_ddhhmmss } from "$lib/player/utils.js";
-  import { uuid, type Tuple } from "$lib/utils/index.js";
+  import { use_async_callback, uuid, type Tuple } from "$lib/utils/index.js";
   import { Searcher } from "$lib/utils/searcher.js";
   import type { PageData } from "./$types.js";
 
@@ -94,15 +95,16 @@
 
   const pinned_state = use_pinned_ctx();
 
-  let channel = $derived(data.channel);
-  let playlist = $derived(data.playlist);
-  let playlist_is_pinned = $derived(pinned_state.is_pinned(playlist.id));
+  let data_channel = $derived(data.channel);
+  let data_playlist = $derived(data.playlist);
+  let data_entries = $derived(data.entries);
+  let playlist_is_pinned = $derived(pinned_state.is_pinned(data_playlist.id));
 
   let safe_entries = $derived.by(() => {
     const unavailable: Model.PlaylistEntry[] = [];
     const available: Model.PlaylistEntry[] = [];
 
-    for (const e of data.entries) {
+    for (const e of data_entries) {
       if (e.video.is_available) {
         available.push(e);
       } else {
@@ -142,14 +144,25 @@
   function on_play_video(id: string) {
     goto(`/play?v=${id}`);
   }
+
+  const refresh_playlist = use_async_callback({
+    fn: refresh_local_playlist_and_items,
+    on_err: (error) => {
+      console.error(error);
+    },
+    on_ok: (value) => {
+      data_playlist = value.playlist;
+      data_entries = value.entries;
+    },
+  });
 </script>
 
 <PageSimple.Root>
   <PageSimple.Header>
     {#snippet image()}
-      <PageSimple.HeaderImage img={playlist.img} alt="{playlist.title} playlist thumbnail">
+      <PageSimple.HeaderImage img={data_playlist.img} alt="{data_playlist.title} playlist thumbnail">
         {#snippet children(image)}
-          <a href="/play?l={playlist.id}" class="group relative">
+          <a href="/play?l={data_playlist.id}" class="group relative">
             {@render image()}
             <div
               class="absolute grid opacity-0 [&:is(:where(.group):hover:not(:has([data-no-play]:hover))_*)]:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
@@ -163,15 +176,15 @@
       </PageSimple.HeaderImage>
     {/snippet}
     {#snippet title()}
-      {playlist.title}
-      <SourceLink type="playlist" id={playlist.id} title={playlist.title} size="size-5" />
+      {data_playlist.title}
+      <SourceLink type="playlist" id={data_playlist.id} title={data_playlist.title} size="size-5" />
     {/snippet}
     {#snippet children()}
-      {#if channel}
-        <div class="font-bold text-foreground text-base"><a href="/{channel.id}">{channel.title}</a></div>
+      {#if data_channel}
+        <div class="font-bold text-foreground text-base"><a href="/{data_channel.id}">{data_channel.title}</a></div>
       {/if}
       <div>
-        Refreshed <HumanTime utc={playlist.updated_at} as_relative />
+        Refreshed <HumanTime utc={data_playlist.updated_at} as_relative />
       </div>
     {/snippet}
     {#snippet actions()}
@@ -179,12 +192,21 @@
         actions={[
           {
             id: uuid(),
+            label: "Refresh",
+            action: () => {
+              refresh_playlist.fn(data_playlist.id);
+            },
+            icon: refresh_playlist.running ? Icon.LoaderCircle : Icon.RefreshCw,
+            icon_props: { class: refresh_playlist.running ? "animate-spin" : "" },
+          },
+          {
+            id: uuid(),
             label: playlist_is_pinned ? "Unpin" : "Pin",
             action: () => {
               if (playlist_is_pinned) {
-                pinned_state.unpin_by_id(playlist.id);
+                pinned_state.unpin_by_id(data_playlist.id);
               } else {
-                pinned_state.pin("playlist", playlist);
+                pinned_state.pin("playlist", data_playlist);
               }
             },
             icon: playlist_is_pinned ? Icon.PinOff : Icon.Pin,

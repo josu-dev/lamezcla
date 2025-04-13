@@ -1,4 +1,6 @@
+import type { Result } from '$lib/utils/results.js';
 import { untrack } from 'svelte';
+
 
 export type MutableReader<T> = () => T;
 
@@ -46,4 +48,41 @@ export function effect_once(fn: () => (void | (() => void))): void {
         const cleanup = untrack(fn);
         return cleanup;
     });
+}
+
+type AsyncCallback<P extends any[], T, E> = (...args: P) => Promise<Result<T, E>>;
+
+type UseAsyncCallbackOptions<P extends any[], T, E, CB = AsyncCallback<P, T, E>> = {
+    fn: CB,
+    on_err: (error: E) => void,
+    on_ok: (value: T) => void;
+};
+
+export function use_async_callback<P extends any[], T, E>({ fn: cb, on_err, on_ok }: UseAsyncCallbackOptions<P, T, E>) {
+    let is_running = false;
+    let s_running = $state(false);
+
+    async function trigger(...args: P) {
+        if (is_running) {
+            return;
+        }
+        is_running = true;
+        s_running = true;
+        const r = await cb(...args);
+        if (r.is_err) {
+            on_err(r.error);
+        }
+        else {
+            on_ok(r.value);
+        }
+        is_running = false;
+        s_running = false;
+    }
+
+    return {
+        get running() {
+            return s_running;
+        },
+        fn: trigger
+    };
 }

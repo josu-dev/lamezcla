@@ -1,7 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { use_followed_ctx } from "$lib/client/state/followed.svelte.js";
-  import { use_pinned_ctx } from "$lib/client/state/pinned.svelte.js";
+  import { use_followed_ctx, use_pinned_ctx } from "$client/context/index.js";
   import * as Icon from "$lib/components/icons.js";
   import Section from "$lib/components/SiteSidebar/Section.svelte";
   import SectionItem from "$lib/components/SiteSidebar/SectionItem.svelte";
