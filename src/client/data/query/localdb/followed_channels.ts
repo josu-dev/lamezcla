@@ -1,7 +1,8 @@
-import type { DexieWithTables, } from '$lib/client/db/db.js';
 import type * as Model from '$lib/models/index.js';
 import type { ArrayPromise, VoidPromise } from '$lib/utils/index.js';
 import type { EntityTable } from 'dexie';
+import type { DexieWithTables } from './db.js';
+
 
 export type LocalFollowedChannel = Model.FollowedChannel;
 
@@ -16,7 +17,7 @@ export function set_db(instance: DexieWithTables) {
     db = instance;
 }
 
-export async function insert_followed_channel(value: Model.FollowedChannel): VoidPromise {
+export async function upsert_followed_channel(value: Model.FollowedChannel): VoidPromise {
     await db.followed_channels.put(value);
 }
 

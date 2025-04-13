@@ -1,15 +1,15 @@
+import { youtube } from '$lib/provider/index.js';
 import { response_error, response_json } from '$lib/utils/response.js';
-import { get_channel, get_channel_by_handle } from '$lib/youtube/index.js';
 import type { RequestHandler } from './$types.js';
 
 
 export const GET: RequestHandler = async ({ params }) => {
-    let get: typeof get_channel;
+    let get: typeof youtube.get_channel;
     if (params.channel.startsWith('@')) {
-        get = get_channel_by_handle;
+        get = youtube.get_channel_by_handle;
     }
     else {
-        get = get_channel;
+        get = youtube.get_channel;
     }
 
     const r = await get(params.channel);

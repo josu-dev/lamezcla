@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { use_pinned_ctx } from "$lib/client/state/pinned.svelte.js";
+  import { use_pinned_ctx } from "$client/context/pinned.svelte.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import * as Icon from "$lib/components/icons.js";
   import { ActionsMenu } from "$lib/components/menus/index.js";

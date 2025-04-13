@@ -51,7 +51,7 @@
         >
           <div class="grid place-items-center mr-2 size-8">
             {#if Icon}
-              <Icon class="" />
+              <Icon {...action.icon_props} />
             {/if}
           </div>
           <div class="flex flex-col">

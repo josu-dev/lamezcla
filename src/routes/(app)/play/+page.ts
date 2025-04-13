@@ -1,11 +1,8 @@
-import * as apiquery from '$lib/client/api/index.js';
-import * as localquery from '$lib/client/db/index.js';
+import { localapi, localdb } from '$client/data/query/index.js';
 import type { Err } from '$lib/utils/results.js';
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types.js';
 
-
-export const ssr = false;
 
 function throw_as_500(e: Err<unknown>, msg?: string): never {
     error(e.error instanceof Response ? e.error.status : 500, msg);
@@ -52,19 +49,19 @@ export const load: PageLoad = async ({ url, fetch }) => {
     }
 
     if (playlist_id === undefined) {
-        const cached_video = await localquery.select_video(video_id);
+        const cached_video = await localdb.select_video(video_id);
         let video = cached_video;
         if (video === undefined) {
-            const r = await apiquery.get_video(video_id, fetch);
+            const r = await localapi.get_video(video_id, fetch);
             if (r.is_err) {
                 throw_as_500(r);
             }
 
-            await localquery.insert_videos([r.value]);
-            video = (await localquery.select_video(video_id))!;
+            await localdb.upsert_videos([r.value]);
+            video = (await localdb.select_video(video_id))!;
         }
 
-        const channel = await localquery.select_channel(video.channel_id);
+        const channel = await localdb.select_channel(video.channel_id);
 
         return {
             channel: channel,
@@ -76,13 +73,13 @@ export const load: PageLoad = async ({ url, fetch }) => {
     const [
         cached_playlist, cached_entries
     ] = await Promise.all([
-        localquery.select_playlist(playlist_id),
-        localquery.select_playlist_entries(playlist_id)
+        localdb.select_playlist(playlist_id),
+        localdb.select_playlist_entries(playlist_id)
     ]);
 
     let playlist = cached_playlist;
     if (playlist === undefined) {
-        const r = await apiquery.get_playlist(playlist_id, fetch);
+        const r = await localapi.get_playlist(playlist_id, fetch);
         if (r.is_err) {
             throw_as_500(r);
         }
@@ -92,17 +89,17 @@ export const load: PageLoad = async ({ url, fetch }) => {
 
     let entries = cached_entries;
     if (entries.length === 0) {
-        const r = await apiquery.get_playlist_entries(playlist_id, fetch, playlist.channel_id);
+        const r = await localapi.get_playlist_entries(playlist_id, fetch);
         if (r.is_err) {
             throw_as_500(r);
         }
 
-        const { items, compact_videos } = r.value;
+        const { items, videos: some_compact_videos } = r.value;
         await Promise.all([
-            localquery.insert_playlists_items(items),
-            localquery.insert_videos(compact_videos),
+            localdb.upsert_playlists_items(items),
+            localdb.upsert_videos(some_compact_videos as any),
         ]);
-        entries = await localquery.select_playlist_entries(playlist_id);
+        entries = await localdb.select_playlist_entries(playlist_id);
 
         if (entries.length === 0) {
             error(400, `Playlist with '${playlist_id}' is empty`);
@@ -119,7 +116,7 @@ export const load: PageLoad = async ({ url, fetch }) => {
         }
     }
 
-    const channel = await localquery.select_channel(playlist.channel_id);
+    const channel = await localdb.select_channel(playlist.channel_id);
 
     return {
         channel: channel,

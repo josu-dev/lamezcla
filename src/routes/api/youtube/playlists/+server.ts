@@ -1,5 +1,5 @@
+import { youtube } from '$lib/provider/index.js';
 import { parse_json, response_error, response_json } from '$lib/utils/response.js';
-import { get_playlists } from '$lib/youtube/index.js';
 import * as v from 'valibot';
 import type { RequestHandler } from './$types';
 
@@ -15,7 +15,7 @@ export const POST: RequestHandler = async ({ request }) => {
     }
 
     const ids = parsed.output.ids;
-    const r = await get_playlists(ids);
+    const r = await youtube.get_playlists(ids);
     if (r.is_err) {
         console.error(r.error);
         return response_error(r.error.status);

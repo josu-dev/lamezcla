@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import { use_followed_ctx } from "$lib/client/state/followed.svelte.js";
-  import { use_pinned_ctx } from "$lib/client/state/pinned.svelte.js";
+  import { use_followed_ctx, use_pinned_ctx } from "$client/context/index.js";
+  import { refresh_local_channel_and_playlists } from "$client/data/refresh/index.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import * as Icon from "$lib/components/icons.js";
   import type { SortMode } from "$lib/components/menus/index.js";
@@ -10,7 +10,7 @@
   import SearchInput from "$lib/components/SearchInput.svelte";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import * as Model from "$lib/models/index.js";
-  import { uuid, type Tuple } from "$lib/utils/index.js";
+  import { use_async_callback, uuid, type Tuple } from "$lib/utils/index.js";
   import { Searcher } from "$lib/utils/searcher.js";
   import type { PageData } from "./$types.js";
 
@@ -59,21 +59,22 @@
 
   let { data }: Props = $props();
 
-  $effect(() => {
-    searcher.set(data.playlists);
-  });
-
   const followed_state = use_followed_ctx();
   const pinned_state = use_pinned_ctx();
 
-  let channel = $derived(data.channel);
-  let channel_is_followed = $derived(followed_state.is_followed(channel.id));
-  let channel_is_pinned = $derived(pinned_state.is_pinned(channel.id));
+  let data_channel = $derived(data.channel);
+  let channel_is_followed = $derived(followed_state.is_followed(data_channel.id));
+  let channel_is_pinned = $derived(pinned_state.is_pinned(data_channel.id));
+
+  let data_playlists = $derived(data.playlists);
+  $effect(() => {
+    searcher.set(data_playlists);
+  });
 
   let search_query = $state("");
   let filtered_playlists = $derived.by(() => {
     if (search_query === "") {
-      return [...data.playlists];
+      return data_playlists;
     }
 
     const out = searcher.search(search_query);
@@ -93,31 +94,51 @@
   function on_play_playlist(id: string) {
     goto(`/play?l=${id}`);
   }
+
+  const refresh_channel = use_async_callback({
+    fn: refresh_local_channel_and_playlists,
+    on_err: (error) => {
+      console.error(error);
+    },
+    on_ok: (value) => {
+      data_channel = value.channel;
+      data_playlists = value.playlists;
+    },
+  });
 </script>
 
 <PageSimple.Root>
   <PageSimple.Header>
     {#snippet image()}
-      <PageSimple.HeaderImage img={channel.img} alt="{channel.title} profile avatar" />
+      <PageSimple.HeaderImage img={data_channel.img} alt="{data_channel.title} profile avatar" />
     {/snippet}
     {#snippet title()}
-      {channel.title}
-      <SourceLink type="channel" id={channel.id} title={channel.title} size="size-5" />
+      {data_channel.title}
+      <SourceLink type="channel" id={data_channel.id} title={data_channel.title} size="size-5" />
     {/snippet}
     {#snippet children()}
-      Refreshed <HumanTime utc={channel.updated_at} as_relative />
+      Refreshed <HumanTime utc={data_channel.updated_at} as_relative /> {refresh_channel.running}
     {/snippet}
     {#snippet actions()}
       <ActionsMenu
         actions={[
           {
             id: uuid(),
+            label: "Refresh",
+            action: () => {
+              refresh_channel.fn(data_channel.id);
+            },
+            icon: refresh_channel.running ? Icon.LoaderCircle : Icon.RefreshCw,
+            icon_props: { class: refresh_channel.running ? "animate-spin" : "" },
+          },
+          {
+            id: uuid(),
             label: channel_is_followed ? "Unfollow" : "Follow",
             action: () => {
               if (channel_is_followed) {
-                followed_state.unfollow(channel);
+                followed_state.unfollow(data_channel);
               } else {
-                followed_state.follow(channel);
+                followed_state.follow(data_channel);
               }
             },
             icon: channel_is_followed ? Icon.UserX : Icon.UserPlus,
@@ -127,9 +148,9 @@
             label: channel_is_pinned ? "Unpin" : "Pin",
             action: () => {
               if (channel_is_pinned) {
-                pinned_state.unpin_by_id(channel.id);
+                pinned_state.unpin_by_id(data_channel.id);
               } else {
-                pinned_state.pin("channel", channel);
+                pinned_state.pin("channel", data_channel);
               }
             },
             icon: channel_is_pinned ? Icon.PinOff : Icon.Pin,

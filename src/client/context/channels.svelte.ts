@@ -1,4 +1,4 @@
-import * as localquery from '$lib/client/db/index.js';
+import { localdb } from '$client/data/query/index.js';
 import type * as Model from '$lib/models/index.js';
 import type { Optional, VoidPromise } from '$lib/utils/index.js';
 import { create_context } from '$lib/utils/index.js';
@@ -20,13 +20,13 @@ class ChannelState {
             }
         }
 
-        await localquery.insert_channel(value);
+        await localdb.upsert_channel(value);
         this.channels.push(value);
         this.channels.sort((a, b) => a.title.localeCompare(b.title));
     }
 
     async sync() {
-        const cs = await localquery.select_channels();
+        const cs = await localdb.select_channels();
         this.channels = cs;
         for (const c of cs) {
             if (c.id === this.channel?.id) {

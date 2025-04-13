@@ -1,22 +1,16 @@
-import type { DexieWithTables } from '$lib/client/db/db.js';
 import type * as Model from '$lib/models/index.js';
-import type { ArrayPromise, OptionalPromise } from '$lib/utils/index.js';
+import type { ArrayPromise, OptionalPromise, VoidPromise } from '$lib/utils/index.js';
 import { now_utc, } from '$lib/utils/index.js';
 import type { EntityTable } from 'dexie';
+import type { DexieWithTables } from './db.js';
 
 
-export type LocalChannel = {
-    id: string,
-    handle?: string;
-    img: undefined | Model.Image;
-    published_at: string;
-    title: string;
-    updated_at: string;
-};
+export type LocalChannel = Model.Channel;
 
 export type Table = EntityTable<LocalChannel, 'id'>;
 
 export const TABLE_NAME = 'channels';
+
 export const TABLE_INDEXES = 'id, handle, title';
 
 let db: DexieWithTables;
@@ -37,12 +31,11 @@ export async function select_channels(): ArrayPromise<Model.Channel> {
     return await db.channels.orderBy('title').toArray();
 }
 
-export async function insert_channel(channel: Model.Channel): Promise<string> {
+export async function upsert_channel(channel: Model.Channel): VoidPromise {
     const value: LocalChannel = { ...channel, updated_at: now_utc() };
-    return await db.channels.put(value);
+    await db.channels.put(value);
 }
 
-export async function delete_channel(id: string): Promise<boolean> {
+export async function delete_channel(id: string): VoidPromise {
     await db.channels.delete(id);
-    return true;
 }

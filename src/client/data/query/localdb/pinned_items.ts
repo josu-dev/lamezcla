@@ -1,14 +1,16 @@
-import type { DexieWithTables, } from '$lib/client/db/db.js';
-import { map_local_video_to_video } from '$lib/client/db/videos.js';
+import { map_local_video_to_video } from '$client/data/query/localdb/shared.js';
 import type * as Model from '$lib/models/index.js';
 import type { ArrayPromise, OptionalPromise, VoidPromise } from '$lib/utils/index.js';
 import type { EntityTable } from 'dexie';
+import type { DexieWithTables } from './db.js';
+
 
 export type LocalPinnedItem = Model.PinnedItem;
 
 export type Table = EntityTable<LocalPinnedItem, 'id'>;
 
 export const TABLE_NAME = 'pinned_items';
+
 export const TABLE_INDEXES = 'id, type, &pinned_id';
 
 let db: DexieWithTables;
@@ -25,7 +27,7 @@ export async function select_pinned_items(): ArrayPromise<Model.PinnedItem> {
     return await db.pinned_items.toArray();
 }
 
-export async function insert_pinned_item(value: Model.PinnedItem): VoidPromise {
+export async function upsert_pinned_item(value: Model.PinnedItem): VoidPromise {
     await db.pinned_items.put(value);
 }
 
