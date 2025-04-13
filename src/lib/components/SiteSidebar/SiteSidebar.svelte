@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state";
   import { use_followed_ctx, use_pinned_ctx } from "$client/context/index.js";
-  import * as Icon from "$lib/components/icons.js";
+  import { Icon } from "$lib/components/icons/index.js";
   import Section from "$lib/components/SiteSidebar/Section.svelte";
   import SectionItem from "$lib/components/SiteSidebar/SectionItem.svelte";
   import type * as Model from "$lib/models/index.js";

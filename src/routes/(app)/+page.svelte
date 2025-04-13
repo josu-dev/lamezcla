@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import Button from "$lib/components/el/Button.svelte";
   import Input from "$lib/components/el/Input.svelte";
-  import * as Icon from "$lib/components/icons.js";
+  import { Icon } from "$lib/components/icons/index.js";
   import type { ElEvent } from "$lib/utils/index.js";
   import type { Component } from "svelte";
   import { superForm } from "sveltekit-superforms";

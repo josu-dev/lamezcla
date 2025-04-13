@@ -1,7 +1,7 @@
 <script lang="ts">
   import { use_pinned_ctx } from "$client/context/pinned.svelte.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
-  import * as Icon from "$lib/components/icons.js";
+  import { Icon } from "$lib/components/icons/index.js";
   import { ActionsMenu } from "$lib/components/menus/index.js";
   import * as PageSimple from "$lib/components/page/PageSimple/index.js";
   import { channel_url } from "$lib/components/sources/shared.js";

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import * as Icon from "$lib/components/icons.js";
+  import { Icon } from "$lib/components/icons/index.js";
   import type { LucideComponent } from "@lucide/svelte";
   import { DropdownMenu } from "bits-ui";
   import type { Component, ComponentProps } from "svelte";

@@ -1,5 +1,5 @@
 <script lang="ts" generics="T">
-  import * as Icon from "$lib/components/icons.js";
+  import { Icon } from "$lib/components/icons/index.js";
   import { DropdownMenu } from "bits-ui";
   import type { SortMenuProps } from "./types.js";
 

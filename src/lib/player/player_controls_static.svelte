@@ -1,7 +1,8 @@
 <script lang="ts">
   import ButtonIcon from "$lib/components/el/ButtonIcon.svelte";
-  import * as Icon from "$lib/components/icons.js";
+  import { Icon } from "$lib/components/icons/index.js";
   import { Slider } from "bits-ui";
+  import { untrack } from "svelte";
   import { use_player_ctx } from "./player.svelte.js";
 
   type Props = {};
@@ -44,7 +45,7 @@
   }
 </script>
 
-<div class="px-4 py-1 flex flex-col bg-background border border-border rounded-md flex-none max-w-5xl mx-auto">
+<div class="px-2 py-1 flex flex-col bg-background border border-border rounded-md flex-none max-w-5xl mx-auto 2xl:px-4">
   <div class="py-0.5 group">
     <Slider.Root
       type="single"
@@ -73,9 +74,7 @@
   <div class="grid grid-cols-1 grid-rows-1 *:col-[1/1] *:row-[1/1] py-1">
     <div class="flex justify-self-start gap-x-1">
       <div class="text-xs">
-        {format_time(current.time_current)}
-        /
-        {format_time(current.time_duration)}
+        {format_time(current.time_current)} / {format_time(current.time_duration)}
       </div>
     </div>
 
@@ -110,31 +109,51 @@
         {/if}
       </ButtonIcon>
     </div>
-    <div class="flex justify-self-end gap-x-1">
-      <ButtonIcon onclick={player.toggle_mute} title={player.is_muted ? "Unmute" : "Mute"} size="md">
-        {#if player.is_muted}
-          <Icon.VolumeX />
-        {:else if player.volume > 70}
-          <Icon.Volume2 />
-        {:else if player.volume > 20}
-          <Icon.Volume1 />
-        {:else}
-          <Icon.Volume />
-        {/if}
-      </ButtonIcon>
-      <label for="input-volume-desktop" class="sr-only">Volume</label>
-      <input
-        type="range"
-        id="input-volume-desktop"
-        title="Volume"
-        min="0"
-        max="100"
-        defaultValue={player.volume}
-        oninput={(ev) => {
-          player.set_volume(ev.currentTarget.valueAsNumber);
-        }}
-        class="rounded-md accent-primary h-1 my-auto w-24 [::-webkit-slider-thumb]:appareance-none"
-      />
+
+    <div class="flex justify-self-end">
+      <div class="lg:hidden flex items-center">
+        <!-- TODO: implement dropup menu -->
+        <ButtonIcon onclick={() => {}} title={"Open actions"} size="sm">
+          <Icon.EllipsisVertical />
+        </ButtonIcon>
+      </div>
+      <div class="hidden lg:block">
+        <div class="flex h-full gap-x-1 group/volume items-center">
+          <ButtonIcon onclick={player.toggle_mute} title={player.is_muted ? "Unmute" : "Mute"} size="sm">
+            {#if player.is_muted}
+              <Icon.VolumeX />
+            {:else if player.volume > 70}
+              <Icon.Volume2 />
+            {:else if player.volume > 20}
+              <Icon.Volume1 />
+            {:else}
+              <Icon.Volume />
+            {/if}
+          </ButtonIcon>
+          <Slider.Root
+            type="single"
+            value={untrack(() => player.volume)}
+            onValueChange={(v) => {
+              player.set_volume(v);
+            }}
+            min={0}
+            max={100}
+            aria-label="Volume"
+            title="Volume"
+            class="relative flex w-24 touch-none items-center h-4 cursor-pointer"
+          >
+            {#snippet children()}
+              <span class="relative h-[3px] w-full cursor-pointer bg-white">
+                <Slider.Range class="bg-primary absolute h-full" />
+              </span>
+              <Slider.Thumb
+                index={0}
+                class="opacity-0 group-hover/volume:opacity-100 focus-visible:opacity-100 bg-foreground size-3 rounded-full"
+              />
+            {/snippet}
+          </Slider.Root>
+        </div>
+      </div>
     </div>
   </div>
 </div>
