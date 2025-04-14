@@ -39,6 +39,7 @@ export type PlayerStateOptions = {
     repeat: PlayerRepeat;
     volume: number;
     persist: boolean;
+    persist_key: string;
     skip_on_unavailable: boolean;
 };
 

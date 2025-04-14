@@ -1,14 +1,16 @@
 import type * as Model from "$lib/models/index.js";
 import type { Optional } from '$lib/utils/index.js';
-import { assert, create_context } from '$lib/utils/index.js';
+import { assert, create_context, noop } from '$lib/utils/index.js';
 import type * as IFrameAPI from "./iframe_api.js";
+import type { PlayerRepeat, PlayerStateOptions, PlayerStateOptionsInit } from './internal.js';
 import { PLAYER_STATE, } from './internal.js';
-import type{  PlayerRepeat, PlayerStateOptions, PlayerStateOptionsInit } from './internal.js';
 // @ts-expect-error library types missing
 import YoutubePlayer from "youtube-player";
 
 
 const IFRAME_POLL_INTERVAL = 500;
+
+type DefaultOptions = Omit<PlayerStateOptions, 'target_id' | 'persist_key'>;
 
 const DEFAULT_OPTS = {
     height: 0,
@@ -22,8 +24,7 @@ const DEFAULT_OPTS = {
     volume: 25,
     persist: true,
     skip_on_unavailable: true,
-} satisfies Omit<PlayerStateOptions, 'target_id'>;
-
+} satisfies DefaultOptions;
 
 type PlayerInternalState = {
     entry_i: number;
@@ -60,6 +61,73 @@ type CurrentTrack = {
     entry?: Model.PlaylistEntry,
 });
 
+type PersistedConfig = {
+    is_muted: boolean;
+    volume: number;
+};
+
+type PersistConfigFn = (key: keyof PersistedConfig) => void;
+
+function get_persisted_config(base: PlayerStateOptions): PersistedConfig {
+    if (typeof localStorage === 'undefined') {
+        return {
+            is_muted: base.muted,
+            volume: base.volume
+        };
+    }
+
+    const value = localStorage.getItem(base.persist_key);
+    if (value === null) {
+        return {
+            is_muted: base.muted,
+            volume: base.volume
+        };
+    }
+
+    try {
+        return JSON.parse(value);
+    }
+    catch (exc) {
+        console.error(exc);
+        return {
+            is_muted: base.muted,
+            volume: base.volume
+        };
+    }
+}
+
+function set_persisted_config(persist_key: string, key: keyof PersistedConfig, state: PlayerInternalState): void {
+    if (typeof localStorage === 'undefined') {
+        return;
+    }
+
+    let to_save: null | PersistedConfig = JSON.parse(localStorage.getItem(persist_key) ?? 'null');
+    if (to_save == null || typeof to_save !== 'object') {
+        to_save = {
+            is_muted: state.is_muted,
+            volume: state.volume,
+        };
+    }
+
+    // @ts-expect-error unchecked key but should be fine
+    to_save[key] = state[key];
+    localStorage.setItem(persist_key, JSON.stringify(to_save));
+}
+
+function resolve_options(init: PlayerStateOptionsInit, base: DefaultOptions): PlayerStateOptions {
+    const persist_key = 'youtube-player-' + init.target_id;
+    const out: PlayerStateOptions = { ...base, ...init, persist_key };
+    if (!out.persist) {
+        return out;
+    }
+
+    const persisted = get_persisted_config(out);
+    out.muted = persisted.is_muted;
+    out.volume = persisted.volume;
+
+    return out;
+}
+
 
 class PlayerState {
     // @ts-expect-error its initilized inside effect
@@ -71,6 +139,7 @@ class PlayerState {
 
     #opts: PlayerStateOptions;
     #state: PlayerInternalState;
+    #persist_config: PersistConfigFn;
     #entries: Model.PlaylistEntry[];
 
     #s_playlist: undefined | Model.Playlist = $state();
@@ -107,7 +176,7 @@ class PlayerState {
 
     constructor(options: PlayerStateOptionsInit) {
         this.#not_ready = true;
-        this.#opts = { ...DEFAULT_OPTS, ...options };
+        this.#opts = resolve_options(options, DEFAULT_OPTS);
         this.#state = {
             entry_i: -1,
             is_mode_single: false,
@@ -122,7 +191,11 @@ class PlayerState {
             video_id: undefined,
             volume: this.#opts.volume,
         };
+        this.#persist_config = (this.#opts.persist ? (key) => set_persisted_config(this.#opts.persist_key, key, this.#state) : noop);
         this.#entries = [];
+
+        this.#s_is_muted = this.#opts.muted;
+        this.#s_volume = this.#opts.volume;
 
         const player_options = {
             height: this.#opts.height,
@@ -137,8 +210,6 @@ class PlayerState {
             },
         } satisfies IFrameAPI.PlayerOptions;
 
-        this.#s_is_muted = this.#opts.muted;
-
         $effect(() => {
             const player = YoutubePlayer(this.#opts.target_id, player_options);
             player.on("ready", this.#player_on_ready);
@@ -146,7 +217,6 @@ class PlayerState {
             player.on("stateChange", this.#player_on_state_change);
             player.on("playbackRateChange", this.#player_on_playback_rate_change);
             player.on("playbackQualityChange", this.#player_on_playback_quality_change);
-
 
             return () => {
                 this.#not_ready = true;
@@ -350,6 +420,7 @@ class PlayerState {
             this.#state.is_muted = true;
             this.#s_is_muted = true;
         }
+        this.#persist_config('is_muted');
     };
 
     seek_to = (value: number): void => {
@@ -374,6 +445,7 @@ class PlayerState {
         this.#state.volume = value;
         this.#player.setVolume(value);
         this.#s_volume = value;
+        this.#persist_config('volume');
     };
 
     // eslint-disable-next-line no-unused-private-class-members
