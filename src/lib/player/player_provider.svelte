@@ -1,20 +1,23 @@
 <script lang="ts">
-  import type { Snippet } from "svelte";
-  import type { PlayerStateProps } from "./player.svelte.js";
+  import type { PlayerProviderProps, PlayerStateOptionsInit } from "$lib/player/internal.js";
   import { use_player_ctx } from "./player.svelte.js";
 
-  type Props = {
-    children: Snippet;
-    options?: Partial<PlayerStateProps>;
+  let { children, audio_only = false, options }: PlayerProviderProps = $props();
+
+  const default_target_id = $props.id();
+
+  const render_iframe = options?.target_id === undefined;
+  const palyer_opts: PlayerStateOptionsInit = {
+    target_id: default_target_id,
+    height: 64,
+    width: 64,
+    ...options,
   };
 
-  let { children, options = {} }: Props = $props();
-
-  const id = $props.id();
-  const safe_options: Partial<PlayerStateProps> = { target_id: id, height: 64, width: 64, ...options };
-
-  use_player_ctx(safe_options);
+  use_player_ctx(palyer_opts);
 </script>
 
-<div class="sr-only invisible"><div id={safe_options.target_id}></div></div>
+{#if render_iframe}
+  <div class={audio_only ? "sr-only invisible" : ""}><div id={palyer_opts.target_id}></div></div>
+{/if}
 {@render children()}

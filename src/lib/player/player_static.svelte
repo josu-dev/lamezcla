@@ -1,23 +1,15 @@
 <script lang="ts">
   import { Icon } from "$lib/components/icons/index.js";
-  import type * as Model from "$lib/models/index.js";
-  import { effect_once } from "$lib/utils/state.svelte.js";
+  import { effect_once } from "$lib/utils/index.js";
   import { Dialog } from "bits-ui";
+  import type { PlayerStaticProps } from "./internal.js";
   import { use_player_ctx } from "./player.svelte.js";
   import ControlsStatic from "./player_controls_static.svelte";
   import Tracklist from "./player_tracklist.svelte";
 
-  type Props = {
-    channel?: Model.Channel;
-    playlist?: Model.Playlist;
-    entries?: Model.PlaylistEntry[];
-    video?: Model.Video;
-    start_index?: number;
-  };
+  let { channel, playlist, entries, video, start_index = 1 }: PlayerStaticProps = $props();
 
-  let { channel, playlist, entries, video, start_index = 1 }: Props = $props();
-
-  let player_state = use_player_ctx();
+  const player = use_player_ctx();
 
   let state = $derived.by(() => {
     if (video !== undefined) {
@@ -36,18 +28,18 @@
   });
 
   let title = $derived(state.single ? "" : state.playlist!.title);
-  let curr_video = $derived(state.single ? state.video : player_state.current.video);
+  let curr_video = $derived(state.single ? state.video : player.current.video);
 
   effect_once(() => {
     if (state.single) {
-      if (player_state.current.video?.id !== state.video.id) {
-        player_state.play(state.video.id);
+      if (player.current.video?.id !== state.video.id) {
+        player.play(state.video.id);
       }
     } else {
-      if (player_state.playlist?.id !== state.playlist.id) {
-        player_state.set_playlist(state.playlist);
-        player_state.set_entries(state.entries);
-        player_state.play_by_index(state.start_index);
+      if (player.playlist?.id !== state.playlist.id) {
+        player.set_playlist(state.playlist);
+        player.set_entries(state.entries);
+        player.play_by_index(state.start_index);
       }
     }
   });
@@ -67,7 +59,7 @@
       </h2>
     </div>
     <div class="flex-1 grid place-items-center">
-      {#if player_state.current.unavailable}
+      {#if player.current.unavailable}
         <div class="text-red-500 font-bold">Not available</div>
       {:else if curr_video}
         <div class="flex flex-col items-center max-w-[min(80%,36rem)]">
@@ -121,10 +113,10 @@
               <Tracklist
                 {channel}
                 playlist={state.playlist}
-                entries={player_state.tracks}
-                current_entry={player_state.current.entry?.item.id}
+                entries={player.tracks}
+                current_entry={player.current.entry?.item.id}
                 on_select={(_, i) => {
-                  player_state.play_by_index(i);
+                  player.play_by_index(i);
                 }}
               />
               <Dialog.Close class="absolute right-2 top-2 rounded-md active:scale-[0.98]" title="Close tracklist">
@@ -142,10 +134,10 @@
       <Tracklist
         {channel}
         playlist={state.playlist}
-        entries={player_state.tracks}
-        current_entry={player_state.current.entry?.item.id}
+        entries={player.tracks}
+        current_entry={player.current.entry?.item.id}
         on_select={(_, i) => {
-          player_state.play_by_index(i);
+          player.play_by_index(i);
         }}
       />
     </div>

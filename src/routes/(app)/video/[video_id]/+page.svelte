@@ -1,13 +1,12 @@
 <script lang="ts">
-  import { use_pinned_ctx } from "$client/context/pinned.svelte.js";
+  import { use_pinned_ctx } from "$client/context/index.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import { Icon } from "$lib/components/icons/index.js";
   import { ActionsMenu } from "$lib/components/menus/index.js";
   import * as PageSimple from "$lib/components/page/PageSimple/index.js";
   import { channel_url } from "$lib/components/sources/shared.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
-  import { seconds_to_ddhhmmss } from "$lib/player/utils.js";
-  import { uuid } from "$lib/utils/index.js";
+  import { seconds_to_ddhhmmss, uuid } from "$lib/utils/index.js";
   import type { PageData } from "./$types.js";
 
   type Props = {

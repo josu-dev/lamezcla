@@ -3,11 +3,10 @@
   import { Icon } from "$lib/components/icons/index.js";
   import { Slider } from "bits-ui";
   import { untrack } from "svelte";
+  import type { PlayerControlsStaticProps } from "./internal.js";
   import { use_player_ctx } from "./player.svelte.js";
 
-  type Props = {};
-
-  let {}: Props = $props();
+  let {}: PlayerControlsStaticProps = $props();
 
   const player = use_player_ctx();
   const current = $derived(player.current);
@@ -20,21 +19,21 @@
   let is_dragging = $state(false);
   let detached_progress = $derived(is_dragging ? undefined : current.time_current);
 
-  let unset_drag_timeout: undefined | number;
+  let unset_is_dragging_id: undefined | number;
 
   function set_is_dragging() {
     is_dragging = true;
   }
 
   function unset_is_dragging() {
-    clearTimeout(unset_drag_timeout);
-    unset_drag_timeout = setTimeout(() => {
+    clearTimeout(unset_is_dragging_id);
+    unset_is_dragging_id = setTimeout(() => {
       is_dragging = false;
     }, 500);
   }
 
   function format_time(value: number): string {
-    const h = Math.floor((value % 86_400) / 3_600);
+    const h = Math.floor(value / 3_600);
     const m = Math.floor((value % 3_600) / 60);
     const s = value % 60;
 
