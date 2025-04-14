@@ -17,7 +17,7 @@
   use_pinned_ctx(data.pinned);
 </script>
 
-<Player.Provider>
+<Player.Provider audio_only>
   <div class="flex flex-col h-full">
     <header class="flex h-14 flex-none px-4 border-b border-border">
       <div class="flex items-center">

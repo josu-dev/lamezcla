@@ -1,17 +1,9 @@
 <script lang="ts">
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
-  import type * as Model from "$lib/models/index.js";
-  import { seconds_to_ddhhmmss } from "./utils.js";
+  import type { PlayerTracklistProps } from "$lib/player/internal.js";
+  import { seconds_to_hhmmss } from "$lib/utils/misc.js";
 
-  type Props = {
-    channel?: Model.Channel;
-    playlist: Model.Playlist;
-    entries: Model.PlaylistEntry[];
-    current_entry?: Model.StringId;
-    on_select?: (value: Model.PlaylistEntry, index: number) => void;
-  };
-
-  let { channel, playlist, entries, current_entry: curr_entry, on_select = () => {} }: Props = $props();
+  let { channel, playlist, entries, current_entry: curr_entry, on_select = () => {} }: PlayerTracklistProps = $props();
 
   let total_entries = $derived(entries.length);
   let total_time = $derived.by(() => {
@@ -91,7 +83,7 @@
               </div>
             </div>
             <div class="justify-self-end text-xs tracking-wide">
-              {seconds_to_ddhhmmss(e.video.total_seconds)}
+              {seconds_to_hhmmss(e.video.total_seconds)}
             </div>
           </div>
         </button>

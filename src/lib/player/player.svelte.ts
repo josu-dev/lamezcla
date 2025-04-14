@@ -2,61 +2,28 @@ import type * as Model from "$lib/models/index.js";
 import type { Optional } from '$lib/utils/index.js';
 import { assert, create_context } from '$lib/utils/index.js';
 import type * as IFrameAPI from "./iframe_api.js";
-// @ts-expect-error types missing, its fine
+import { PLAYER_STATE, } from './internal.js';
+import type{  PlayerRepeat, PlayerStateOptions, PlayerStateOptionsInit } from './internal.js';
+// @ts-expect-error library types missing
 import YoutubePlayer from "youtube-player";
 
 
-/**
- * Expose PlayerState constants for convenience. These constants can also be
- * accessed through the global YT object after the YouTube IFrame API is instantiated.
- *
- * @see https://developers.google.com/youtube/iframe_api_reference#onStateChange
- */
-const PLAYER_STATE = {
-    UNSTARTED: -1,
-    ENDED: 0,
-    PLAYING: 1,
-    PAUSED: 2,
-    BUFFERING: 3,
-    CUED: 5,
-} as const;
+const IFRAME_POLL_INTERVAL = 500;
 
-const POLL_IFRAME_INTERVAL = 500;
-
-export type PlayerStateProps = {
-    target_id: string | undefined;
-    height: number;
-    width: number;
-    autoplay: boolean;
-    controls: boolean;
-    loop: boolean;
-    muted: boolean;
-    start: number;
-    skip_on_unavailable: boolean;
-    volume: number;
-};
-
-const DEFAULT_PROPS = {
-    target_id: undefined,
+const DEFAULT_OPTS = {
     height: 0,
     width: 0,
     autoplay: true,
     controls: false,
-    loop: false,
     muted: false,
-    skip_on_unavailable: true,
+    repeat: 0,
     start: 0,
+    end: undefined,
     volume: 25,
-} satisfies PlayerStateProps;
+    persist: true,
+    skip_on_unavailable: true,
+} satisfies Omit<PlayerStateOptions, 'target_id'>;
 
-/**
- * How the current track should repeat
- *
- * - 0 No repeat
- * - 1 Repeat in loop
- * - 2 Repear once
- */
-export type PlayerRepeat = 0 | 1 | 2;
 
 type PlayerInternalState = {
     entry_i: number;
@@ -93,15 +60,16 @@ type CurrentTrack = {
     entry?: Model.PlaylistEntry,
 });
 
+
 class PlayerState {
     // @ts-expect-error its initilized inside effect
     #player: IFrameAPI.PlayerInstance;
     #not_ready: boolean;
     // @ts-expect-error its initilized inside effect
     #iframe: HTMLIFrameElement;
-    #poll_iframe_id: Optional<number>;
+    #iframe_poll_id: Optional<number>;
 
-    #props: Required<PlayerStateProps>;
+    #opts: PlayerStateOptions;
     #state: PlayerInternalState;
     #entries: Model.PlaylistEntry[];
 
@@ -137,53 +105,55 @@ class PlayerState {
     #s_repeat = $state(0);
     #s_volume = $state(25);
 
-    constructor(props: Partial<PlayerStateProps>) {
+    constructor(options: PlayerStateOptionsInit) {
         this.#not_ready = true;
-        this.#props = { ...DEFAULT_PROPS, ...props };
+        this.#opts = { ...DEFAULT_OPTS, ...options };
         this.#state = {
             entry_i: -1,
             is_mode_single: false,
             is_mode_list: false,
-            is_muted: this.#props.muted,
+            is_muted: this.#opts.muted,
             is_paused: false,
             is_playing: false,
             is_unplayable: true,
-            repeat: 0,
+            repeat: this.#opts.repeat,
             time_current: 0,
             time_duration: 100,
             video_id: undefined,
-            volume: this.#props.volume,
+            volume: this.#opts.volume,
         };
         this.#entries = [];
 
-        const options = {
-            height: this.#props.height,
-            width: this.#props.width,
+        const player_options = {
+            height: this.#opts.height,
+            width: this.#opts.width,
             playerVars: {
-                autoplay: this.#props.autoplay ? 1 : 0,
-                controls: this.#props.controls ? 1 : 0,
-                loop: this.#props.loop ? 1 : 0,
-                start: this.#props.start,
+                autoplay: this.#opts.autoplay ? 1 : 0,
+                controls: this.#opts.controls ? 1 : 0,
+                loop: this.#opts.repeat === 1 ? 1 : 0,
+                start: this.#opts.start,
+                end: this.#opts.end,
                 enablejsapi: 1,
             },
         } satisfies IFrameAPI.PlayerOptions;
 
-        this.#s_is_muted = this.#props.muted;
+        this.#s_is_muted = this.#opts.muted;
 
         $effect(() => {
-            const player = YoutubePlayer(this.#props.target_id, options);
+            const player = YoutubePlayer(this.#opts.target_id, player_options);
             player.on("ready", this.#player_on_ready);
             player.on("error", this.#player_on_error);
             player.on("stateChange", this.#player_on_state_change);
             player.on("playbackRateChange", this.#player_on_playback_rate_change);
             player.on("playbackQualityChange", this.#player_on_playback_quality_change);
 
+
             return () => {
                 this.#not_ready = true;
                 if (this.#player !== undefined) {
                     this.#player.destroy();
                 }
-                clearInterval(this.#poll_iframe_id);
+                clearInterval(this.#iframe_poll_id);
             };
         });
     }
@@ -198,7 +168,7 @@ class PlayerState {
         if (this.#state.is_muted) {
             this.#player.mute();
         }
-        this.#poll_iframe_id = setInterval(this.#on_iframe_poll, POLL_IFRAME_INTERVAL);
+        this.#iframe_poll_id = setInterval(this.#on_iframe_poll, IFRAME_POLL_INTERVAL);
 
         // autoplay
         this.#play();
@@ -209,7 +179,7 @@ class PlayerState {
             return;
         }
 
-        if (this.#state.is_mode_list && this.#props.skip_on_unavailable) {
+        if (this.#state.is_mode_list && this.#opts.skip_on_unavailable) {
             this.next_track();
             return;
         }
@@ -289,7 +259,7 @@ class PlayerState {
         // this is needed because the loadVideoById function always starts playing,
         // even if you have set autoplay to 1 whereas the cueVideoById function
         // never starts autoplaying
-        if (this.#props.autoplay) {
+        if (this.#opts.autoplay) {
             this.#player.loadVideoById(this.#state.video_id);
         } else {
             this.#player.cueVideoById(this.#state.video_id);
@@ -444,10 +414,11 @@ class PlayerState {
 const player_ctx = create_context<PlayerState>('player');
 
 export function use_player_ctx(): PlayerState;
-export function use_player_ctx(...args: ConstructorParameters<typeof PlayerState>): PlayerState;
-export function use_player_ctx(...args: ConstructorParameters<typeof PlayerState> | []): PlayerState {
-    if (args.length) {
-        return player_ctx.set(new PlayerState(...args));
+export function use_player_ctx(opts: PlayerStateOptionsInit): PlayerState;
+export function use_player_ctx(opts?: PlayerStateOptionsInit): PlayerState {
+    if (opts === undefined) {
+        return player_ctx.get();
     }
-    return player_ctx.get();
+
+    return player_ctx.set(new PlayerState(opts));
 }

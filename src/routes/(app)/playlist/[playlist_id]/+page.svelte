@@ -10,9 +10,8 @@
   import SearchInput from "$lib/components/SearchInput.svelte";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import type * as Model from "$lib/models/index.js";
-  import { seconds_to_ddhhmmss } from "$lib/player/utils.js";
-  import { use_async_callback, uuid, type Tuple } from "$lib/utils/index.js";
-  import { Searcher } from "$lib/utils/searcher.js";
+  import type { Tuple } from "$lib/utils/index.js";
+  import { Searcher, seconds_to_ddhhmmss, use_async_callback, uuid } from "$lib/utils/index.js";
   import type { PageData } from "./$types.js";
 
   type Props = {
