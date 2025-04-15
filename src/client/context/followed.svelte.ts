@@ -58,6 +58,8 @@ class FollowedState {
     }
 }
 
+export type { FollowedState };
+
 const followed_ctx = create_context<FollowedState>('followed');
 
 export function use_followed_ctx(): FollowedState;
