@@ -77,6 +77,8 @@ class PinnedState {
     }
 }
 
+export type { PinnedState };
+
 const pinned_ctx = create_context<PinnedState>('pinned');
 
 export function use_pinned_ctx(): PinnedState;

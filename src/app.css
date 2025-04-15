@@ -79,10 +79,10 @@
     }
 
     .h-site-header {
-        height: calc(var(--site-header-height));
+        height: calc(var(--spacing-site-header));
     }
 
     .h-site-content {
-        height: calc(100dvh-var(--site-header-height));
+        height: calc(100dvh-var(--spacing-site-header));
     }
 }

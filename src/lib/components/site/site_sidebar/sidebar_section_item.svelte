@@ -1,17 +1,5 @@
 <script lang="ts" generics="Item extends Record<string, any>">
-  import type { Snippet } from "svelte";
-
-  type Props = {
-    href?: string;
-    item?: Item;
-    left_icon?: Snippet;
-    right_icon?: Snippet;
-    title: string;
-    subtitle?: Snippet;
-    is_selected?: boolean;
-    on_selected?: (ev: MouseEvent) => void;
-    class?: string;
-  };
+  import type { SidebarSectionItemProps } from "./internal.js";
 
   let {
     item,
@@ -23,7 +11,7 @@
     on_selected,
     is_selected = false,
     class: classes = "",
-  }: Props = $props();
+  }: SidebarSectionItemProps<Item> = $props();
 </script>
 
 <li>

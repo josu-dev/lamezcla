@@ -47,8 +47,8 @@
 
 <div class="flex w-full h-full relative">
   <div class="flex flex-col flex-1">
-    <div class="flex-none flex justify-center py-2">
-      <h2 class="text-2xl mt-2 font-bold">
+    <div class="flex-none flex justify-center pt-6">
+      <h2 class="text-2xl font-bold">
         {#if state.single}
           {title}
         {:else}
@@ -58,6 +58,7 @@
         {/if}
       </h2>
     </div>
+
     <div class="flex-1 grid place-items-center">
       {#if player.current.unavailable}
         <div class="text-red-500 font-bold">Not available</div>
@@ -79,7 +80,7 @@
               class="object-cover h-full bg-transparent"
             />
           </div>
-          <div class="flex flex-col items-center mt-8 text-center">
+          <div class="flex flex-col items-center mt-6 lg:mt-8 text-center">
             <h3 class="text-xl font-bold text-pretty leading-tight select-text">{curr_video.title}</h3>
             <a
               href="/{curr_video.channel_id}"

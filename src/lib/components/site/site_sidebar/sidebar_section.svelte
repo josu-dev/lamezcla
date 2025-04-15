@@ -1,12 +1,7 @@
 <script lang="ts">
-  import type { Snippet } from "svelte";
+  import type { SidebarSectionProps } from "./internal.js";
 
-  type Props = {
-    title: string;
-    children: Snippet;
-  };
-
-  let { title, children }: Props = $props();
+  let { title, children }: SidebarSectionProps = $props();
 </script>
 
 <section class="border-b border-border py-4 px-2">
