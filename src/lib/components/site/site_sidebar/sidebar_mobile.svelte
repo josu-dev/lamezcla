@@ -40,10 +40,10 @@
 
   <Dialog.Portal>
     <Dialog.Overlay
-      class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80"
+      class="fixed inset-0 z-50 bg-black/80 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0"
     />
     <Dialog.Content
-      class="bg-background fixed z-50 top-0 bottom-0 left-0 border-r border-border w-xsm max-w-full !duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left-full data-[state=open]:slide-in-from-left-full"
+      class="bg-background fixed z-50 top-0 bottom-0 left-0 border-r border-border w-xsm max-w-full !duration-200 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left-full data-[state=open]:animate-in data-[state=open]:slide-in-from-left-full"
     >
       <div class="flex h-site-header flex-none px-2 border-b border-border">
         <div class="flex items-center mr-1">

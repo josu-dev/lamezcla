@@ -19,7 +19,7 @@
 
 {#snippet Image()}
   {@const is_16_9 = img.width / img.height === 16 / 9}
-  <div class={is_16_9 ? "h-24 aspect-video" : "size-16"}>
+  <div class={is_16_9 ? "h-28 aspect-video" : "size-28"}>
     <img src={img.url} width={img.width} height={img.height} {alt} class="rounded-md object-cover size-full" />
   </div>
 {/snippet}

@@ -117,7 +117,16 @@
       <SourceLink type="channel" id={data_channel.id} title={data_channel.title} size="size-5" />
     {/snippet}
     {#snippet children()}
-      Refreshed <HumanTime utc={data_channel.updated_at} as_relative /> {refresh_channel.running}
+      <div class="font-bold text-foreground text-base select-text">{data_channel.handle}</div>
+      <div class="font-normal">
+        <div>
+          <!-- {data_playlists.length} playlists -->
+          Created <HumanTime utc={data_channel.published_at} as_relative />
+        </div>
+        <div>
+          Refreshed <HumanTime utc={data_channel.updated_at} as_relative />
+        </div>
+      </div>
     {/snippet}
     {#snippet actions()}
       <ActionsMenu

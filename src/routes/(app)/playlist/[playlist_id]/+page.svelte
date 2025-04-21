@@ -11,7 +11,7 @@
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import type * as Model from "$lib/models/index.js";
   import type { Tuple } from "$lib/utils/index.js";
-  import { Searcher, seconds_to_ddhhmmss, use_async_callback, uuid } from "$lib/utils/index.js";
+  import { Searcher, seconds_to_ddhhmmss, seconds_to_human, use_async_callback, uuid } from "$lib/utils/index.js";
   import type { PageData } from "./$types.js";
 
   type Props = {
@@ -116,6 +116,14 @@
       unavailable,
     };
   });
+  let playlist_total_time = $derived.by(() => {
+    let out = 0;
+    for (const e of safe_entries.available) {
+      out += e.video.total_seconds;
+    }
+
+    return out;
+  });
 
   $effect(() => {
     searcher.set(safe_entries.available);
@@ -182,8 +190,13 @@
       {#if data_channel}
         <div class="font-bold text-foreground text-base"><a href="/{data_channel.id}">{data_channel.title}</a></div>
       {/if}
-      <div>
-        Refreshed <HumanTime utc={data_playlist.updated_at} as_relative />
+      <div class="font-normal">
+        <div>
+          {safe_entries.available.length} tracks, about {seconds_to_human(playlist_total_time)}
+        </div>
+        <div>
+          Refreshed <HumanTime utc={data_playlist.updated_at} as_relative />
+        </div>
       </div>
     {/snippet}
     {#snippet actions()}
