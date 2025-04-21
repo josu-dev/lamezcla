@@ -71,6 +71,11 @@ export type PlayerStaticProps = PropsNoChildren<{
     start_index?: number;
 }>;
 
+export type PlayerControlsGlobalProps = PropsNoChildren<{
+    hide?: boolean;
+    hide_on_routes?: string[];
+}>;
+
 export type PlayerControlsStaticProps = PropsNoChildren;
 
 export type PlayerTracklistProps = PropsNoChildren<{

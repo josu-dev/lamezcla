@@ -31,11 +31,9 @@
           <span>lamezcla</span>
         </a>
       </div>
-      <div></div>
-      <div></div>
     </header>
 
-    <div class="flex">
+    <div class="flex content-container">
       <div class="hidden lg:block">
         <SiteSidebar.Static />
       </div>
@@ -44,5 +42,19 @@
         {@render children()}
       </div>
     </div>
+
+    <Player.ControlsGlobal hide_on_routes={["/play"]} />
   </div>
 </Player.Provider>
+
+<style lang="postcss">
+  @reference "tailwindcss";
+
+  .content-container :global {
+    height: var(--spacing-page-content);
+
+    &:has(+ [data-player-controls-global]) {
+      --spacing-page-content: var(--spacing-site-content-min);
+    }
+  }
+</style>

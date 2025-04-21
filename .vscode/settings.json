@@ -6,5 +6,8 @@
     "typescript.preferences.preferTypeOnlyAutoImports": true,
     "javascript.updateImportsOnFileMove.enabled": "prompt",
     "typescript.updateImportsOnFileMove.enabled": "prompt",
-    "svelte.plugin.svelte.format.config.singleQuote": false
+    "svelte.plugin.svelte.format.config.singleQuote": false,
+    "search.exclude": {
+        "**/pnpm-lock.yaml": true
+    }
 }

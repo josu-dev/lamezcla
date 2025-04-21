@@ -94,7 +94,9 @@
       {/if}
     </div>
 
-    <div class="py-4 px-4">
+    <div
+      class="px-4 flex flex-col bg-background border-t border-border w-full h-site-player-controls justify-end 2xl:px-6"
+    >
       <ControlsStatic />
     </div>
   </div>

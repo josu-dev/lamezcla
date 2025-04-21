@@ -5,7 +5,7 @@
   let {}: SidebarStaticProps = $props();
 </script>
 
-<aside class="w-64 border-r border-border flex min-h-site-content max-h-site-content flex-col flex-none">
+<aside class="w-64 border-r border-border flex min-h-page-content max-h-page-content flex-col flex-none">
   <h2 class="sr-only">Menu sections</h2>
 
   <SidebarContent />
