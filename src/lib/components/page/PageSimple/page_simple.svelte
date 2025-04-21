@@ -8,6 +8,6 @@
   let { children }: Props = $props();
 </script>
 
-<div class="flex flex-col h-site-content">
+<div class="flex flex-col h-page-content">
   {@render children()}
 </div>

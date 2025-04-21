@@ -20,7 +20,7 @@
   });
 </script>
 
-<aside class="max-w-sm border-l border-border h-full max-h-site-content overflow-hidden flex flex-col 2xl:max-w-md">
+<aside class="max-w-sm border-l border-border h-full max-h-page-content overflow-hidden flex flex-col 2xl:max-w-md">
   <div class="border-b px-2 py-2 border-border">
     <h2 class="text-xl font-bold">
       Current playlist

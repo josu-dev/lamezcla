@@ -16,10 +16,10 @@
     {@render image?.()}
   </div>
   <div>
-    <h1 class="text-4xl font-bold line-clamp-2">
+    <h1 class="text-3xl font-bold line-clamp-2">
       {@render title()}
     </h1>
-    <div class="text-sm font-semibold text-muted mt-1 space-y-0.5">
+    <div class="text-sm font-semibold text-muted mt-0.5 space-y-0.5">
       {@render children?.()}
     </div>
   </div>

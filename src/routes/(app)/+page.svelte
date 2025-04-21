@@ -56,14 +56,14 @@
   };
 </script>
 
-<main class="flex flex-col items-center h-full">
-  <h1 class="text-4xl font-bold mt-[1em]">lamezcla</h1>
+<main class="grid grid-rows-[30%_auto_1fr] place-items-center h-full">
+  <h1 class="text-4xl font-bold self-end">lamezcla</h1>
 
-  <form action="?/search" method="post" use:enhance class="flex flex-col min-w-80 mt-8">
+  <form action="?/search" method="post" use:enhance class="flex flex-col w-80 mt-8">
     <div class="flex flex-col gap-1">
       <label for="input-query" class="flex text-center">
         <span class="font-medium"
-          >Enter a <span class="font-bold">@handle</span> or a <span class="font-bold">YT link</span></span
+          >Enter a <span class="font-bold">@handle</span> or <span class="font-bold">YT link</span></span
         >
       </label>
       <Input

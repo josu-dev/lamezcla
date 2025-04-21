@@ -32,7 +32,7 @@
         </div>
         {@render subtitle?.()}
       </div>
-      <div class="rounded-md overflow-hidden p-0.5">
+      <div class="rounded-md overflow-hidden p-0.5 hidden group-hover:block">
         {@render right_icon?.()}
       </div>
     </div>

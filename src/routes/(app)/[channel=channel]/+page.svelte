@@ -183,7 +183,7 @@
       />
     {/snippet}
     {#snippet children()}
-      <ul class="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-2">
+      <ul class="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-2 pb-4">
         {#each playlists.displayed as playlist (playlist.id)}
           {@const is_pinned = pinned_state.is_pinned(playlist.id)}
           <li class="flex flex-col flex-1">
