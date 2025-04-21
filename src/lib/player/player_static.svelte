@@ -109,7 +109,9 @@
           </div>
         </Dialog.Trigger>
         <Dialog.Portal>
-          <Dialog.Content class="bg-background fixed z-50 top-site-header bottom-0 right-0 h-site-content">
+          <Dialog.Content
+            class="bg-background fixed z-50 top-site-header bottom-0 right-0 h-site-content !duration-200 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right-full data-[state=open]:animate-in data-[state=open]:slide-in-from-right-full"
+          >
             <div class="relative h-full">
               <Tracklist
                 {channel}

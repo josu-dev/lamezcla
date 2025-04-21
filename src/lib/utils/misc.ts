@@ -43,6 +43,21 @@ export function seconds_to_hhmmss(value: number): string {
     return s + '';
 }
 
+export function seconds_to_human(value: number): string {
+    const days = Math.floor(value / 86400);
+    const hours = Math.floor((value % 86400) / 3600);
+    const minutes = Math.floor((value % 3600) / 60);
+    const seconds = value % 60;
+
+    const out =
+        (days ? days + " d " : "") +
+        (hours ? hours + " hr " : "") +
+        (minutes ? minutes + " min " : "") +
+        (seconds ? seconds + " sec" : "");
+
+    return out;
+}
+
 export function uuid() {
     return crypto.randomUUID();
 }

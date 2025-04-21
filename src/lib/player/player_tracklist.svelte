@@ -1,7 +1,7 @@
 <script lang="ts">
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import type { PlayerTracklistProps } from "$lib/player/internal.js";
-  import { seconds_to_hhmmss } from "$lib/utils/misc.js";
+  import { seconds_to_hhmmss, seconds_to_human } from "$lib/utils/index.js";
 
   let { channel, playlist, entries, current_entry: curr_entry, on_select = () => {} }: PlayerTracklistProps = $props();
 
@@ -16,24 +16,7 @@
       total_s += t.video.total_seconds;
     }
 
-    const days = Math.floor(total_s / 86400);
-    const hours = Math.floor((total_s % 86400) / 3600);
-    const minutes = Math.floor((total_s % 3600) / 60);
-    const seconds = total_s % 60;
-
-    const humanReadable =
-      (days ? days + " d " : "") +
-      (hours ? hours + " h " : "") +
-      (minutes ? minutes + " min " : "") +
-      (seconds ? seconds + " s " : "");
-
-    return {
-      d: days,
-      h: hours,
-      m: minutes,
-      s: seconds,
-      human: humanReadable.trim(),
-    };
+    return total_s;
   });
 </script>
 
@@ -43,13 +26,13 @@
       Current playlist
       <SourceLink type="playlist" id={playlist.id} title={playlist.title} size="size-5" />
     </h2>
-    <div class="flex flex-col text-sm text-muted-foreground font-semibold *:mt-0.5">
+    <div class="flex flex-col text-sm text-muted-foreground font-semibold mt-0.5">
       {#if channel !== undefined}
         <div class="font-bold text-ellipsis overflow-hidden text-nowrap">
           <a href="/{channel.id}">{channel.title}</a>
         </div>
       {/if}
-      <div>{total_entries} tracks<span class="inline-block px-2">-</span>{total_time.human}</div>
+      <div>{total_entries} tracks, {seconds_to_human(total_time)}</div>
     </div>
   </div>
 
