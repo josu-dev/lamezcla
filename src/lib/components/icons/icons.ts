@@ -7,6 +7,8 @@ export { default as ArrowDownAZ } from '@lucide/svelte/icons/arrow-down-z-a';
 export { default as ArrowDownUp } from '@lucide/svelte/icons/arrow-up-down';
 export { default as EllipsisVertical } from '@lucide/svelte/icons/ellipsis-vertical';
 export { default as ExternalLink } from '@lucide/svelte/icons/external-link';
+export { default as Eye } from '@lucide/svelte/icons/eye';
+export { default as EyeOff } from '@lucide/svelte/icons/eye-off';
 export { default as House } from '@lucide/svelte/icons/house';
 export { default as Library } from '@lucide/svelte/icons/library';
 export { default as ListOrdered } from '@lucide/svelte/icons/list-ordered';

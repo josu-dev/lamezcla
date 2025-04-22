@@ -1,4 +1,4 @@
-import { map_local_video_to_video } from '$client/data/query/localdb/shared.js';
+import { map_local_video_to_video } from '$client/data/shared.js';
 import type * as Model from '$lib/models/index.js';
 import type { ArrayPromise, OptionalPromise, VoidPromise } from '$lib/utils/index.js';
 import type { EntityTable } from 'dexie';

@@ -33,7 +33,7 @@ export const load: PageLoad = async ({ params, fetch }) => {
         save_channel = true;
     }
 
-    const refresh_entries = save_playlist || channel.v > playlist.v || entries.length === 0 || playlist.v > entries[0].item.v;
+    const refresh_entries = save_playlist || channel.v > playlist.v || entries.length === 0;
 
     if (channel.v > playlist.v) {
         playlist.v = channel.v;
@@ -49,7 +49,6 @@ export const load: PageLoad = async ({ params, fetch }) => {
         const { items, videos } = r_entries.value;
         const items_ids: Set<string> = new Set();
         for (const item of items) {
-            item.v = playlist.v;
             items_ids.add(item.id);
         }
         const items_to_delete: string[] = [];

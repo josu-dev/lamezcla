@@ -1,8 +1,8 @@
+import { map_local_video_to_video } from '$client/data/shared.js';
 import type * as Model from '$lib/models/youtube.js';
 import type { OptionalPromise, VoidPromise } from '$lib/utils/index.js';
 import type { EntityTable } from 'dexie';
 import type { DexieWithTables } from './db.js';
-import { map_local_video_to_video } from './shared.js';
 
 
 export type LocalVideo = Model.VideoCompact;

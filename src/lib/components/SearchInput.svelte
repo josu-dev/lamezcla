@@ -10,15 +10,15 @@
   const id = $props.id();
 </script>
 
-<div class="flex items-center gap-2">
-  <label for={id} class="cursor-pointer">
+<div class="flex items-center group">
+  <label for={id} class="cursor-pointer pr-2">
     <span class="sr-only">{label}</span>
     <Icon.Search />
   </label>
   <input
     {id}
     name={id}
-    class="bg-background text-foreground w-full max-w-40 pb-0 px-1 pt-px border-t-transparent border-x-0 border-b border-t-0 border-border focus:ring-0 focus:border-muted {classes}"
+    class="bg-transparent group-hover:border-muted text-foreground w-full max-w-40 pb-0 px-1 pt-px border-t-transparent border-x-0 border-b border-t-0 border-border focus:ring-0 focus:border-muted {classes}"
     {...restprops}
   />
 </div>

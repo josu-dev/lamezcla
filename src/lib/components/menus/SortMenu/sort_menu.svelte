@@ -9,7 +9,7 @@
 <DropdownMenu.Root>
   <DropdownMenu.Trigger
     onclick={(ev) => ev.stopPropagation()}
-    class=" hover:bg-accent rounded-md inline-flex gap-x-2 py-0.5 px-2 text-base active:scale-[0.98]"
+    class=" hover:bg-accent rounded-md inline-flex gap-x-2 py-0.5 px-1.5 text-base active:scale-[0.98]"
   >
     <Icon.ArrowDownUp class="" /><span class="">Sort</span>
   </DropdownMenu.Trigger>

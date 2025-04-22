@@ -94,45 +94,50 @@
 
   const pinned_state = use_pinned_ctx();
 
-  let data_channel = $derived(data.channel);
+  const data_channel = $derived(data.channel);
   let data_playlist = $derived(data.playlist);
   let data_entries = $derived(data.entries);
-  let playlist_is_pinned = $derived(pinned_state.is_pinned(data_playlist.id));
+  const playlist_is_pinned = $derived(pinned_state.is_pinned(data_playlist.id));
 
-  let safe_entries = $derived.by(() => {
-    const unavailable: Model.PlaylistEntry[] = [];
+  const entries_cache = $derived.by(() => {
+    const all: Model.PlaylistEntry[] = new Array(data_entries.length);
     const available: Model.PlaylistEntry[] = [];
+    const unavailable: Model.PlaylistEntry[] = [];
+    let available_total_time = 0;
 
-    for (const e of data_entries) {
-      if (e.video.is_available) {
+    for (let i = 0; i < data_entries.length; i++) {
+      const e = data_entries[i];
+      all[i] = e;
+      if (e.item.is_available) {
         available.push(e);
+        available_total_time += e.video.total_seconds;
       } else {
         unavailable.push(e);
       }
     }
 
     return {
+      all: all,
       available,
+      available_total_time,
       unavailable,
     };
   });
-  let playlist_total_time = $derived.by(() => {
-    let out = 0;
-    for (const e of safe_entries.available) {
-      out += e.video.total_seconds;
-    }
 
-    return out;
-  });
+  let some_track_unavailable = $derived(entries_cache.unavailable.length > 0);
+  let show_unavailable = $state(false);
+  const playlist_total_time = $derived(entries_cache.available_total_time);
+
+  const base_entries = $derived(show_unavailable ? entries_cache.all : entries_cache.available);
 
   $effect(() => {
-    searcher.set(safe_entries.available);
+    searcher.set(base_entries);
   });
 
   let search_query = $state("");
-  let filtered_entries = $derived.by(() => {
+  const entries_filtered = $derived.by(() => {
     if (search_query === "") {
-      return [...safe_entries.available];
+      return base_entries;
     }
 
     const out = searcher.search(search_query);
@@ -140,12 +145,9 @@
   });
 
   let sort_by: SortByMode = $state(DEFAULT_SORT_MODE);
-  let entries = $derived.by(() => {
-    const displayed = filtered_entries.toSorted(sort_by.compare_fn);
-
-    return {
-      displayed: displayed,
-    };
+  let entries_displayed = $derived.by(() => {
+    const out = entries_filtered.toSorted(sort_by.compare_fn);
+    return out;
   });
 
   function on_play_video(id: string) {
@@ -192,11 +194,18 @@
       {/if}
       <div class="font-normal">
         <div>
-          {safe_entries.available.length} tracks, about {seconds_to_human(playlist_total_time)}
+          Created <HumanTime utc={data_channel.published_at} as_relative />
         </div>
         <div>
-          Refreshed <HumanTime utc={data_playlist.updated_at} as_relative />
+          {entries_cache.all.length} tracks,
+          {#if some_track_unavailable}
+            {entries_cache.available.length} available,
+          {/if}
+          about {seconds_to_human(playlist_total_time)}
         </div>
+        <!-- <div>
+          Last refresh <HumanTime utc={data_playlist.updated_at} as_relative />
+        </div> -->
       </div>
     {/snippet}
     {#snippet actions()}
@@ -224,12 +233,13 @@
             icon: playlist_is_pinned ? Icon.PinOff : Icon.Pin,
           },
         ]}
-      />{/snippet}
+      />
+    {/snippet}
   </PageSimple.Header>
 
   <PageSimple.Content>
     {#snippet title()}
-      Tracks {entries.displayed.length}
+      Tracks {entries_displayed.length}
     {/snippet}
     {#snippet actions()}
       <SearchInput label="Search video" oninput={(ev) => (search_query = ev.currentTarget.value)} maxlength={32} />
@@ -240,23 +250,89 @@
           sort_by = mode;
         }}
       />
+      {#if some_track_unavailable}
+        {@const title = show_unavailable ? "Hide unavailable tracks" : "Show unavailable tracks"}
+        <button
+          {title}
+          onclick={() => (show_unavailable = !show_unavailable)}
+          class="hover:bg-accent rounded-md inline-flex gap-x-2 py-0.5 px-1.5"
+        >
+          <span class="sr-only">{title}</span>
+          {#if show_unavailable}
+            <Icon.EyeOff />
+          {:else}
+            <Icon.Eye />
+          {/if}
+        </button>
+      {/if}
     {/snippet}
     {#snippet children()}
-      {#if safe_entries.unavailable.length > 0}
-        <div class="px-4 pb-2">
-          <p class="text-sm font-semibold text-muted">{safe_entries.unavailable.length} unavailable tracks</p>
-        </div>
-      {/if}
-      <ul class="grid grid-cols-[repeat(1,minmax(auto,64rem))] pb-4">
-        {#each entries.displayed as { item, video } (item.id)}
-          {@const is_pinned = pinned_state.is_pinned(video.id)}
+      <ul class="grid grid-cols-[repeat(1,minmax(auto,64rem))]">
+        {#each entries_displayed as { item, video } (item.id)}
           <li class="flex flex-col flex-1">
-            <button
-              onclick={() => {
-                on_play_video(video.id);
-              }}
-              class="group text-left flex w-full"
-            >
+            {#if item.is_available}
+              {@const is_pinned = pinned_state.is_pinned(video.id)}
+              <button
+                onclick={() => {
+                  on_play_video(video.id);
+                }}
+                class="group text-left flex w-full"
+              >
+                <div class="flex gap-4 px-4 py-2 w-full">
+                  <div class="relative flex-none">
+                    <img
+                      src={video.img?.url}
+                      width={video.img?.width}
+                      height={video.img?.height}
+                      alt="{video.title} video thumbnail"
+                      class="rounded-md w-full aspect-video object-fill"
+                    />
+                    <div
+                      class="absolute grid opacity-0 [&:is(:where(.group):hover:not(:has([data-no-play]:hover))_*)]:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
+                    >
+                      <div class="flex items-center gap-2 text-2xl font-bold">
+                        <Icon.Play class="size-8 stroke-3" /> Play
+                      </div>
+                    </div>
+                    <div class="absolute bottom-2 right-2">
+                      <span class="bg-accent px-1.5 py-1 rounded-md text-xs font-semibold tracking-wider">
+                        {seconds_to_ddhhmmss(video.total_seconds)}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flex">
+                      <h3 class="text-lg font-semibold mt-2">{video.title}</h3>
+                    </div>
+                    <p class="mt-1 text-sm font-semibold text-muted">
+                      <a href="/{video.channel_id}" data-no-play class="hover:text-foreground">
+                        {video.channel_title}
+                      </a>
+                      -
+                      <span><HumanTime as_relative utc={video.published_at} /></span>
+                    </p>
+                  </div>
+                  <div class="flex items-center ml-auto" data-no-play>
+                    <ActionsMenu
+                      actions={[
+                        {
+                          id: uuid(),
+                          label: "Pin",
+                          action: () => {
+                            if (is_pinned) {
+                              pinned_state.unpin_by_id(video.id);
+                            } else {
+                              pinned_state.pin("video", video);
+                            }
+                          },
+                          icon: is_pinned ? Icon.PinOff : Icon.Pin,
+                        },
+                      ]}
+                    />
+                  </div>
+                </div>
+              </button>
+            {:else}
               <div class="flex gap-4 px-4 py-2 w-full">
                 <div class="relative flex-none">
                   <img
@@ -264,53 +340,24 @@
                     width={video.img?.width}
                     height={video.img?.height}
                     alt="{video.title} video thumbnail"
-                    class="rounded-md w-full aspect-video object-fill"
+                    class="rounded-md w-[320px] aspect-video object-fill"
                   />
-                  <div
-                    class="absolute grid opacity-0 [&:is(:where(.group):hover:not(:has([data-no-play]:hover))_*)]:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
-                  >
-                    <div class="flex items-center gap-2 text-2xl font-bold">
-                      <Icon.Play class="size-8 stroke-3" /> Play
-                    </div>
-                  </div>
-                  <div class="absolute bottom-2 right-2">
-                    <span class="bg-accent px-1.5 py-1 rounded-md text-xs font-semibold tracking-wider">
-                      {seconds_to_ddhhmmss(video.total_seconds)}
-                    </span>
-                  </div>
                 </div>
                 <div>
                   <div class="flex">
-                    <h3 class="text-lg font-semibold mt-2">{video.title}</h3>
+                    <h3 class="text-lg font-semibold mt-2">
+                      {#if item.is_deleted}
+                        Deleted track
+                      {:else if item.is_private}
+                        Privated track
+                      {:else}
+                        Unavailable track
+                      {/if}
+                    </h3>
                   </div>
-                  <p class="mt-1 text-sm font-semibold text-muted">
-                    <a href="/{video.channel_id}" data-no-play class="hover:text-foreground">
-                      {video.channel_title}
-                    </a>
-                    -
-                    <span><HumanTime as_relative utc={video.published_at} /></span>
-                  </p>
-                </div>
-                <div class="flex items-center ml-auto" data-no-play>
-                  <ActionsMenu
-                    actions={[
-                      {
-                        id: uuid(),
-                        label: "Pin",
-                        action: () => {
-                          if (is_pinned) {
-                            pinned_state.unpin_by_id(video.id);
-                          } else {
-                            pinned_state.pin("video", video);
-                          }
-                        },
-                        icon: is_pinned ? Icon.PinOff : Icon.Pin,
-                      },
-                    ]}
-                  />
                 </div>
               </div>
-            </button>
+            {/if}
           </li>
         {/each}
       </ul>
