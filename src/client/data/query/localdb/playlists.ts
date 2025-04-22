@@ -1,7 +1,7 @@
-import { map_local_video_to_video, unavailable_video } from '$client/data/query/localdb/shared.js';
-import type * as Model from '$lib/models/youtube.js';
+import { is_video_compact_unavailable, map_local_video_to_video, normalize_playlist_entries } from '$client/data/shared.js';
+import type * as Model from '$lib/models/index.js';
 import type { ArrayPromise, OptionalPromise, VoidPromise } from '$lib/utils/index.js';
-import { now_utc, } from '$lib/utils/index.js';
+import { now_utc } from '$lib/utils/index.js';
 import type { EntityTable } from 'dexie';
 import type { DexieWithTables, } from './db.js';
 
@@ -53,38 +53,27 @@ export async function delete_playlists(ids: string[]): VoidPromise {
 }
 
 export async function select_playlist_entries(id: string): Promise<Model.PlaylistEntry[]> {
-    const items = await db.playlists_items.where('playlist_id').equals(id).toArray();
-    if (items.length === 0) {
+    const compact_items = await db.playlists_items.where('playlist_id').equals(id).toArray();
+    if (compact_items.length === 0) {
         return [];
     }
 
-    items.sort((a, b) => a.position - b.position);
+    compact_items.sort((a, b) => a.position - b.position);
 
     const ids = [];
-    for (const v of items) {
+    for (const v of compact_items) {
         ids.push(v.video_id);
     }
-    const videos = await db.videos.where('id').anyOf(ids).toArray();
+    const compact_videos = await db.videos.where('id').anyOf(ids).toArray();
     const video_id_to_video: Map<string, Model.Video> = new Map();
-    for (const video of videos) {
+    for (const video of compact_videos) {
+        if (is_video_compact_unavailable(video)) {
+            continue;
+        }
         video_id_to_video.set(video.id, map_local_video_to_video(video));
     }
-    const out: Model.PlaylistEntry[] = [];
-    for (const item of items) {
-        const v = video_id_to_video.get(item.video_id);
-        if (v === undefined) {
-            out.push({
-                item: item,
-                video: unavailable_video(item.video_id)
-            });
-        }
-        else {
-            out.push({
-                item: item,
-                video: v
-            });
-        }
-    }
+
+    const out = normalize_playlist_entries(compact_items, video_id_to_video);
 
     return out;
 }

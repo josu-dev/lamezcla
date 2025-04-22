@@ -33,14 +33,29 @@ export type Playlist = {
     title: string;
 };
 
-export type PlaylistItem = {
+export const PLAYLIST_ITEM_FLAGS = {
+    IS_UNAVAILABLE: 0,
+    IS_DELETED: 1 << 0,
+    IS_PUBLIC: 1 << 1,
+    IS_UNLISTED: 1 << 2,
+    IS_PRIVATE: 1 << 3,
+} as const;
+
+export type PlaylistItemCompact = {
     id: StringId;
-    v: number;
+    flags: number;
     playlist_id: string;
     video_id: string;
     position: number;
-    privacy_status: string;
     published_at: string;
+};
+
+export type PlaylistItem = PlaylistItemCompact & {
+    is_available: boolean;
+    is_deleted: boolean;
+    is_public: boolean;
+    is_private: boolean;
+    is_unlisted: boolean;
 };
 
 export const VIDEO_FLAGS = {

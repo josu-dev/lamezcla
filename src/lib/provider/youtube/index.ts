@@ -197,8 +197,28 @@ async function _get_playlist_items(playlist_id: string, page_token: undefined | 
 //     return ok(out);
 // }
 
+export function extract_playlist_item_flags(item: YApi.PlaylistItem): number {
+    let flags = 0;
+
+    if (item.status !== undefined) {
+        switch (item.status.privacyStatus) {
+            case 'public':
+                flags |= VIDEO_FLAGS.IS_PUBLIC;
+                break;
+            case 'unlisted':
+                flags |= VIDEO_FLAGS.IS_UNLISTED;
+                break;
+            case 'private':
+                flags |= VIDEO_FLAGS.IS_PRIVATE;
+                break;
+        }
+    }
+
+    return flags;
+}
+
 export async function get_playlist_items_all(id: string) {
-    const out: Out.PlaylistItem[] = [];
+    const out: Out.PlaylistItemCompact[] = [];
     let next_page: undefined | string;
     while (true) {
         const r = await _get_playlist_items(id, next_page);
@@ -208,12 +228,12 @@ export async function get_playlist_items_all(id: string) {
         const value = r.value;
 
         for (const item of value.items) {
-            const p: Out.PlaylistItem = {
+            const p: Out.PlaylistItemCompact = {
                 id: item.id,
+                flags: extract_playlist_item_flags(item),
                 playlist_id: item.snippet.playlistId,
                 video_id: item.contentDetails.videoId,
                 position: item.snippet.position,
-                privacy_status: item.status.privacyStatus,
                 published_at: item.snippet.publishedAt,
             };
             out.push(p);

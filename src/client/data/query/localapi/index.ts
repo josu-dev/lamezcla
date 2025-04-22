@@ -82,15 +82,10 @@ export async function get_playlist_entries(id: string, fetch: FetchFn) {
         return r_items;
     }
 
-    const items: ApiModel.PlaylistItem[] = (r_items.value as any).data;
-    const out_items: Model.PlaylistItem[] = [];
+    const compact_items: ApiModel.PlaylistItemCompact[] = (r_items.value as any).data;
     const ids: string[] = [];
-    for (const item of items) {
+    for (const item of compact_items) {
         ids.push(item.video_id);
-        out_items.push({
-            ...item,
-            v: 1
-        });
     }
 
     const r_videos = await try_fetch({
@@ -105,7 +100,7 @@ export async function get_playlist_entries(id: string, fetch: FetchFn) {
 
     const compact_videos: ApiModel.SomeVideoCompact[] = (r_videos.value as any).data;
     const out = {
-        items: out_items,
+        items: compact_items,
         videos: compact_videos,
     };
     return ok(out);

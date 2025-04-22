@@ -63,18 +63,38 @@
   const pinned_state = use_pinned_ctx();
 
   let data_channel = $derived(data.channel);
-  let channel_is_followed = $derived(followed_state.is_followed(data_channel.id));
-  let channel_is_pinned = $derived(pinned_state.is_pinned(data_channel.id));
-
   let data_playlists = $derived(data.playlists);
+
+  const channel_is_followed = $derived(followed_state.is_followed(data_channel.id));
+  const channel_is_pinned = $derived(pinned_state.is_pinned(data_channel.id));
+
+  const playlists_cache = $derived.by(() => {
+    const all: Model.Playlist[] = new Array(data_playlists.length);
+    const empty: Model.Playlist[] = [];
+
+    for (let i = 0; i < data_playlists.length; i++) {
+      const p = data_playlists[i];
+      all[i] = p;
+      if (p.item_count < 1) {
+        empty.push(p);
+      }
+    }
+
+    return {
+      all: all,
+      empty: empty,
+    };
+  });
+
+  const some_playlist_empty = $derived(playlists_cache.empty.length > 0);
   $effect(() => {
-    searcher.set(data_playlists);
+    searcher.set(playlists_cache.all);
   });
 
   let search_query = $state("");
-  let filtered_playlists = $derived.by(() => {
+  const playlists_filtered = $derived.by(() => {
     if (search_query === "") {
-      return data_playlists;
+      return playlists_cache.all;
     }
 
     const out = searcher.search(search_query);
@@ -82,13 +102,9 @@
   });
 
   let sort_by: SortByMode = $state(DEFAULT_SORT_MODE);
-
-  let playlists = $derived.by(() => {
-    const displayed = filtered_playlists.toSorted(sort_by.compare_fn);
-
-    return {
-      displayed: displayed,
-    };
+  let playlists_displayed = $derived.by(() => {
+    const out = playlists_filtered.toSorted(sort_by.compare_fn);
+    return out;
   });
 
   function on_play_playlist(id: string) {
@@ -120,12 +136,14 @@
       <div class="font-bold text-foreground text-base select-text">{data_channel.handle}</div>
       <div class="font-normal">
         <div>
-          <!-- {data_playlists.length} playlists -->
           Created <HumanTime utc={data_channel.published_at} as_relative />
         </div>
         <div>
-          Refreshed <HumanTime utc={data_channel.updated_at} as_relative />
+          {data_playlists.length} playlists{#if some_playlist_empty}, {playlists_cache.empty.length} empty{/if}
         </div>
+        <!-- <div>
+          Last refresh <HumanTime utc={data_channel.updated_at} as_relative />
+        </div> -->
       </div>
     {/snippet}
     {#snippet actions()}
@@ -165,12 +183,13 @@
             icon: channel_is_pinned ? Icon.PinOff : Icon.Pin,
           },
         ]}
-      />{/snippet}
+      />
+    {/snippet}
   </PageSimple.Header>
 
   <PageSimple.Content>
     {#snippet title()}
-      Playlists {playlists.displayed.length}
+      Playlists {playlists_displayed.length}
     {/snippet}
     {#snippet actions()}
       <SearchInput label="Search playlist" oninput={(ev) => (search_query = ev.currentTarget.value)} maxlength={32} />
@@ -183,11 +202,11 @@
       />
     {/snippet}
     {#snippet children()}
-      <ul class="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-2 pb-4">
-        {#each playlists.displayed as playlist (playlist.id)}
+      <ul class="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-2">
+        {#each playlists_displayed as playlist (playlist.id)}
           {@const is_pinned = pinned_state.is_pinned(playlist.id)}
           <li class="flex flex-col flex-1">
-            <button class="group text-left flex flex-1" onclick={() => on_play_playlist(playlist.id)}>
+            <button class="group text-left flex mr-auto" onclick={() => on_play_playlist(playlist.id)}>
               <div class="flex flex-col px-4 py-2">
                 <div class="relative">
                   <img

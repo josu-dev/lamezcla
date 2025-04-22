@@ -4,7 +4,7 @@ import type { EntityTable } from 'dexie';
 import type { DexieWithTables } from './db.js';
 
 
-export type LocalPlaylistItem = Model.PlaylistItem;
+export type LocalPlaylistItem = Model.PlaylistItemCompact;
 
 export type Table = EntityTable<LocalPlaylistItem, 'id'>;
 
@@ -18,12 +18,13 @@ export function set_db(instance: DexieWithTables) {
     db = instance;
 }
 
-export async function select_playlists_items_by_playlist(id: string): ArrayPromise<Model.PlaylistItem> {
-    const out = await db.playlists_items.where('playlist_id').equals(id).toArray();
-    return out;
+export async function select_playlists_items_by_playlist(id: string): ArrayPromise<Model.PlaylistItemCompact> {
+    const ou = await db.playlists_items.where('playlist_id').equals(id).toArray();
+
+    return ou;
 }
 
-export async function upsert_playlists_items(value: Model.PlaylistItem[]): VoidPromise {
+export async function upsert_playlists_items(value: Model.PlaylistItemCompact[]): VoidPromise {
     await db.playlists_items.bulkPut(value);
 }
 

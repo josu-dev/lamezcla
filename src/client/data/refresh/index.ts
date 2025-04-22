@@ -1,5 +1,5 @@
 import { localapi, localdb } from '$client/data/query/index.js';
-import { is_video_compact_unavailable, map_local_video_to_video, unavailable_video } from '$client/data/query/localdb/shared.js';
+import { is_video_compact_unavailable, map_local_video_to_video, normalize_playlist_entries, unavailable_video } from '$client/data/shared.js';
 import type * as Model from '$lib/models/index.js';
 import type { AsyncResult } from '$lib/utils/results.js';
 import { ok } from '$lib/utils/results.js';
@@ -90,7 +90,7 @@ export async function refresh_local_playlist_and_items(id: string) {
     }
 
     const playlist_new = r_playlist.value;
-    const { items: items_new, videos: some_compact_videos } = r_entries.value;
+    const { items: compact_items, videos: some_compact_videos } = r_entries.value;
 
     let version = playlist_local === undefined ? 1 : playlist_local.v;
     if (channel_local !== undefined) {
@@ -99,8 +99,7 @@ export async function refresh_local_playlist_and_items(id: string) {
     playlist_new.v = version;
 
     const items_ids_new: Set<string> = new Set();
-    for (const item of items_new) {
-        item.v = version;
+    for (const item of compact_items) {
         items_ids_new.add(item.id);
     }
 
@@ -132,27 +131,13 @@ export async function refresh_local_playlist_and_items(id: string) {
         video_id_to_video.set(video.id, video);
     }
 
+    const entries_out = normalize_playlist_entries(compact_items, video_id_to_video);
+
     await Promise.all([
         localdb.upsert_playlist(playlist_new),
-        localdb.upsert_playlists_items(items_new),
-        localdb.upsert_videos(compact_videos),
+        localdb.upsert_playlists_items(compact_items),
+        localdb.upsert_videos(compact_videos)
     ]);
-
-    const entries_out: Model.PlaylistEntry[] = [];
-    for (const item of items_new) {
-        const v = video_id_to_video.get(item.video_id);
-        if (v === undefined) {
-            entries_out.push({
-                item: item,
-                video: unavailable_video(item.video_id)
-            });
-        } else {
-            entries_out.push({
-                item: item,
-                video: v
-            });
-        }
-    }
 
     const out = {
         playlist: playlist_new,
