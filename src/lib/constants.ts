@@ -2,7 +2,6 @@ export const SITE_NAME = "lamezcla";
 
 export const DEFAULT_SEO = {
     icon: '/favicon.svg',
-    // manifest: '/manifest.webmanifest',
     manifest: undefined,
     site_name: SITE_NAME,
     theme_color: '#f0b100',
@@ -18,3 +17,7 @@ export const DEFAULT_SEO = {
     image: undefined,
     language_tag: 'en'
 } as const;
+
+export const GITHUB_USERNAME = "josu-dev";
+
+export const GITHUB_REPOSITORY = 'https://github.com/josu-dev/lamezcla';

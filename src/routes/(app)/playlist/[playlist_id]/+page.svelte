@@ -6,8 +6,8 @@
   import { Icon } from "$lib/components/icons/index.js";
   import type { SortMode } from "$lib/components/menus/index.js";
   import { ActionsMenu, SortMenu } from "$lib/components/menus/index.js";
-  import * as PageSimple from "$lib/components/page/PageSimple/index.js";
   import SearchInput from "$lib/components/SearchInput.svelte";
+  import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import type * as Model from "$lib/models/index.js";
   import type { Tuple } from "$lib/utils/index.js";
@@ -166,6 +166,8 @@
   });
 </script>
 
+<Metadata description="Just have a look at the vibes of '{data_playlist.title}' tracks." />
+
 <PageSimple.Root>
   <PageSimple.Header>
     {#snippet image()}
@@ -278,7 +280,7 @@
                 }}
                 class="group text-left flex w-full"
               >
-                <div class="flex gap-4 px-4 py-2 w-full">
+                <div class="flex flex-col gap-4 px-4 py-2 w-full sm:flex-row">
                   <div class="relative flex-none">
                     <img
                       src={video.img?.url}
@@ -300,35 +302,37 @@
                       </span>
                     </div>
                   </div>
-                  <div>
-                    <div class="flex">
-                      <h3 class="text-lg font-semibold mt-2">{video.title}</h3>
+                  <div class="flex gap-4 flex-1">
+                    <div>
+                      <div class="flex">
+                        <h3 class="text-lg font-semibold mt-2">{video.title}</h3>
+                      </div>
+                      <p class="mt-1 text-sm font-semibold text-muted">
+                        <a href="/{video.channel_id}" data-no-play class="hover:text-foreground">
+                          {video.channel_title}
+                        </a>
+                        -
+                        <span><HumanTime as_relative utc={video.published_at} /></span>
+                      </p>
                     </div>
-                    <p class="mt-1 text-sm font-semibold text-muted">
-                      <a href="/{video.channel_id}" data-no-play class="hover:text-foreground">
-                        {video.channel_title}
-                      </a>
-                      -
-                      <span><HumanTime as_relative utc={video.published_at} /></span>
-                    </p>
-                  </div>
-                  <div class="flex items-center ml-auto" data-no-play>
-                    <ActionsMenu
-                      actions={[
-                        {
-                          id: uuid(),
-                          label: "Pin",
-                          action: () => {
-                            if (is_pinned) {
-                              pinned_state.unpin_by_id(video.id);
-                            } else {
-                              pinned_state.pin("video", video);
-                            }
+                    <div class="flex items-center ml-auto" data-no-play>
+                      <ActionsMenu
+                        actions={[
+                          {
+                            id: uuid(),
+                            label: "Pin",
+                            action: () => {
+                              if (is_pinned) {
+                                pinned_state.unpin_by_id(video.id);
+                              } else {
+                                pinned_state.pin("video", video);
+                              }
+                            },
+                            icon: is_pinned ? Icon.PinOff : Icon.Pin,
                           },
-                          icon: is_pinned ? Icon.PinOff : Icon.Pin,
-                        },
-                      ]}
-                    />
+                        ]}
+                      />
+                    </div>
                   </div>
                 </div>
               </button>

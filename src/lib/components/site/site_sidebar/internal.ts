@@ -21,7 +21,8 @@ export type SidebarMobileProps = PropsNoChildren;
 export type SidebarContentProps = PropsNoChildren;
 
 export type SidebarSectionProps = PropsWithChildren<{
-    title: string;
+    title?: string;
+    class?: string;
 }>;
 
 export type SidebarSectionItemProps<T extends Record<string, any>> = {
