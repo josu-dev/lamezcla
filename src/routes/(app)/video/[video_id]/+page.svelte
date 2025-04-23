@@ -3,7 +3,7 @@
   import HumanTime from "$lib/components/HumanTime.svelte";
   import { Icon } from "$lib/components/icons/index.js";
   import { ActionsMenu } from "$lib/components/menus/index.js";
-  import * as PageSimple from "$lib/components/page/PageSimple/index.js";
+  import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import { channel_url } from "$lib/components/sources/shared.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import { seconds_to_ddhhmmss, uuid } from "$lib/utils/index.js";
@@ -17,21 +17,23 @@
 
   const pinned_state = use_pinned_ctx();
 
-  let video = $derived(data.video);
-  let video_is_pinned = $derived(pinned_state.is_pinned(video.id));
+  let data_video = $derived(data.video);
+  const video_is_pinned = $derived(pinned_state.is_pinned(data_video.id));
 </script>
+
+<Metadata description="Just have a look at some details of '{data_video.title}' video." />
 
 <PageSimple.Root>
   <PageSimple.Header>
     {#snippet image()}
-      <PageSimple.HeaderImage img={video.img} alt="{video.title} video thumbnail" />
+      <PageSimple.HeaderImage img={data_video.img} alt="{data_video.title} video thumbnail" />
     {/snippet}
     {#snippet title()}
-      {video.title}
-      <SourceLink type="video" id={video.id} title={video.title} size="size-5" />
+      {data_video.title}
+      <SourceLink type="video" id={data_video.id} title={data_video.title} size="size-5" />
     {/snippet}
     {#snippet children()}
-      Uploaded <HumanTime utc={video.published_at} as_relative />
+      Uploaded <HumanTime utc={data_video.published_at} as_relative />
     {/snippet}
     {#snippet actions()}
       <ActionsMenu
@@ -41,9 +43,9 @@
             label: video_is_pinned ? "Unpin" : "Pin",
             action: () => {
               if (video_is_pinned) {
-                pinned_state.unpin_by_id(video.id);
+                pinned_state.unpin_by_id(data_video.id);
               } else {
-                pinned_state.pin("video", video);
+                pinned_state.pin("video", data_video);
               }
             },
             icon: video_is_pinned ? Icon.PinOff : Icon.Pin,
@@ -54,7 +56,7 @@
 
   <PageSimple.Content>
     {#snippet title()}
-      {#if video.is_available}
+      {#if data_video.is_available}
         Video details
       {:else}
         <span class="text-4xl font-normal">
@@ -63,14 +65,14 @@
       {/if}
     {/snippet}
     {#snippet children()}
-      {#if video.is_available}
+      {#if data_video.is_available}
         <div class="flex gap-4 px-4 py-2 w-full">
-          <a href="/play?v={video.id}" class="relative group">
+          <a href="/play?v={data_video.id}" class="relative group">
             <img
-              src={video.img?.url}
-              width={video.img?.width}
-              height={video.img?.height}
-              alt="{video.title} video thumbnail"
+              src={data_video.img?.url}
+              width={data_video.img?.width}
+              height={data_video.img?.height}
+              alt="{data_video.title} video thumbnail"
               class="rounded-md w-full aspect-video object-fill"
             />
             <div
@@ -83,38 +85,38 @@
           </a>
           <div class="flex flex-col gap-2 justify-around py-2">
             <div class="flex">
-              <h3 class="text-base font-bold">{video.title}</h3>
+              <h3 class="text-base font-bold">{data_video.title}</h3>
             </div>
             <div class="text-foreground/80 space-y-1 [&_p>span]:font-semibold">
               <p>
                 <span>Channel:</span>
-                <a href="/{video.channel_id}" rel="noopener noreferrer" data-no-play class="hover:text-foreground">
-                  {video.channel_title}
+                <a href="/{data_video.channel_id}" rel="noopener noreferrer" data-no-play class="hover:text-foreground">
+                  {data_video.channel_title}
                 </a>
                 <a
-                  href={channel_url(video.channel_id)}
+                  href={channel_url(data_video.channel_id)}
                   target="_blank"
                   rel="noopener noreferrer"
                   data-no-play
                   class="hover:text-foreground"
                 >
                   <span class="sr-only">
-                    {video.channel_title}
+                    {data_video.channel_title}
                   </span>
                   <Icon.ExternalLink class="align-top size-4 inline-flex" />
                 </a>
               </p>
               <p>
                 <span>Duration:</span>
-                {seconds_to_ddhhmmss(video.total_seconds)}
+                {seconds_to_ddhhmmss(data_video.total_seconds)}
               </p>
               <p>
                 <span>Published:</span>
-                <HumanTime utc={video.published_at} />
+                <HumanTime utc={data_video.published_at} />
               </p>
               <p>
                 <span>Visibility:</span>
-                {video.is_public ? "Public" : video.is_unlisted ? "Unlisted" : "Private"}
+                {data_video.is_public ? "Public" : data_video.is_unlisted ? "Unlisted" : "Private"}
               </p>
             </div>
           </div>

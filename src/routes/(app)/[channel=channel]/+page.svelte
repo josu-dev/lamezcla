@@ -6,8 +6,8 @@
   import { Icon } from "$lib/components/icons/index.js";
   import type { SortMode } from "$lib/components/menus/index.js";
   import { ActionsMenu, SortMenu } from "$lib/components/menus/index.js";
-  import * as PageSimple from "$lib/components/page/PageSimple/index.js";
   import SearchInput from "$lib/components/SearchInput.svelte";
+  import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import * as Model from "$lib/models/index.js";
   import { use_async_callback, uuid, type Tuple } from "$lib/utils/index.js";
@@ -122,6 +122,12 @@
     },
   });
 </script>
+
+<Metadata
+  description="Just search what playlists '{data_channel.title}' has to offer.{playlists_cache.all.length === 0
+    ? " Sadly there isn't any playlist."
+    : ` Select one of ${playlists_cache.all.length}.`}"
+/>
 
 <PageSimple.Root>
   <PageSimple.Header>

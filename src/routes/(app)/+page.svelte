@@ -3,6 +3,7 @@
   import Button from "$lib/components/el/Button.svelte";
   import Input from "$lib/components/el/Input.svelte";
   import { Icon } from "$lib/components/icons/index.js";
+  import { Metadata } from "$lib/components/site/index.js";
   import type { ElEvent } from "$lib/utils/index.js";
   import type { Component } from "svelte";
   import { superForm } from "sveltekit-superforms";
@@ -55,6 +56,8 @@
     v: Icon.Music,
   };
 </script>
+
+<Metadata description="Just search any public playlists to enjoy all the tracks they have well SHUFFLED." />
 
 <main class="grid grid-rows-[30%_auto_1fr] place-items-center h-full">
   <h1 class="text-4xl font-bold self-end">lamezcla</h1>

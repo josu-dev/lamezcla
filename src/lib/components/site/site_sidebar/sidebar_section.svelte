@@ -1,14 +1,18 @@
 <script lang="ts">
   import type { SidebarSectionProps } from "./internal.js";
 
-  let { title, children }: SidebarSectionProps = $props();
+  let { title, children, class: classes = "" }: SidebarSectionProps = $props();
 </script>
 
-<section class="border-b border-border py-4 px-2">
-  <div class="px-2">
-    <h3 class="font-bold text-lg">{title}</h3>
-  </div>
-  <ul class="mt-2">
+<section class="not-last:border-b border-border py-4 px-2 {classes}">
+  {#if title === undefined}
     {@render children()}
-  </ul>
+  {:else}
+    <div class="px-2">
+      <h3 class="font-bold text-lg">{title}</h3>
+    </div>
+    <ul class="mt-2">
+      {@render children()}
+    </ul>
+  {/if}
 </section>
