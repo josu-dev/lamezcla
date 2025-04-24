@@ -5,7 +5,7 @@
     image?: Snippet;
     title: Snippet;
     children?: Snippet;
-    actions: Snippet;
+    actions?: Snippet;
   };
 
   let { image, title, children, actions }: Props = $props();
@@ -24,6 +24,6 @@
     </div>
   </div>
   <div class="ml-auto self-center">
-    {@render actions()}
+    {@render actions?.()}
   </div>
 </header>

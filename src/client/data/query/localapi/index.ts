@@ -1,8 +1,15 @@
 import type * as Model from '$lib/models/index.js';
 import type * as ApiModel from '$lib/provider/youtube/index.js';
-import type { FetchFn } from '$lib/utils/fetch.js';
-import { err, now_utc, ok, try_fetch } from '$lib/utils/index.js';
+import type { FetchFn, TryFetchError } from '$lib/utils/index.js';
+import { err, now_utc, ok, throw_http_error, try_fetch } from '$lib/utils/index.js';
 
+
+export function load_error(value: TryFetchError, msg: { [K: number]: string, other: string; }): never {
+    if (value.type === 'response') {
+        throw_http_error(value.value, msg[value.value.status] ?? msg.other);
+    }
+    throw_http_error(500, msg.other);
+}
 
 export async function get_channel(id: string, fetch: FetchFn) {
     const r = await try_fetch({
@@ -60,7 +67,7 @@ export async function get_playlist(id: string, fetch: FetchFn) {
 
     const playlists: ApiModel.Playlist[] = (r.value as any).data;
     if (playlists.length === 0) {
-        return err(new Response(null, { status: 404 }));
+        return err({ type: "response" as const, value: new Response(null, { status: 404 }) });
     }
 
     const out: Model.Playlist = {
@@ -119,12 +126,12 @@ export async function get_video(id: string, fetch: FetchFn) {
 
     const videos: ApiModel.SomeVideoCompact[] = (r_video.value as any).data;
     if (videos.length === 0) {
-        return err(new Response(null, { status: 404 }));
+        return err({ type: "response" as const, value: new Response(null, { status: 404 }) });
     }
 
     const video = videos[0];
     if (video.flags === 0) {
-        return err(new Response(null, { status: 404 }));
+        return err({ type: "response" as const, value: new Response(null, { status: 404 }) });
     }
 
     const out: Model.VideoCompact = {

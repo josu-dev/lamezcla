@@ -8,6 +8,6 @@
   let { children }: Props = $props();
 </script>
 
-<div class="flex flex-col h-page-content overflow-x-clip overflow-y-auto [scrollbar-gutter:stable] isolate">
+<main class="flex flex-col h-page-content overflow-x-clip overflow-y-auto [scrollbar-gutter:stable] isolate">
   {@render children()}
-</div>
+</main>

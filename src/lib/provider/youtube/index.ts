@@ -21,7 +21,15 @@ function build_api_url(endpoint: string, params: Record<string, string>) {
     return url;
 }
 
-async function fetch_api<T extends YApi.AnyResponse>(opts: YApi.FetchApiOptions<T>): AsyncResult<T, Response> {
+type FetchApiErrValue<T extends YApi.AnyResponse> = Response;
+
+type FetchApiOkValue<T extends YApi.AnyResponse> = T | (
+    Omit<T, 'items'> & {
+        items?: [],
+        empty: true;
+    });
+
+async function fetch_api<T extends YApi.AnyResponse>(opts: YApi.FetchApiOptions<T>): AsyncResult<FetchApiOkValue<T>, FetchApiErrValue<T>> {
     const params = { ...opts.others, part: opts.part.join(','), key: YOUTUBE_API_KEY };
     const url = build_api_url(opts.endpoint, params);
     const r = await fetch(url);
@@ -31,6 +39,9 @@ async function fetch_api<T extends YApi.AnyResponse>(opts: YApi.FetchApiOptions<
     }
 
     const data: T = await r.json();
+    if (data.items === undefined || data.items.length === 0) {
+        return ok({ ...data, items: [], empty: true });
+    }
 
     return ok(data);
 }
@@ -69,7 +80,7 @@ function duration_to_seconds(duration: string): number {
 }
 
 
-export async function get_channel(id: string): AsyncResult<Out.Channel, Response> {
+export async function get_channel(id: string): AsyncResult<undefined | Out.Channel, FetchApiErrValue<YApi.ChannelListResponse>> {
     const data = await fetch_api<YApi.ChannelListResponse>({
         endpoint: ENDPOINT_CHANNEL,
         part: ['snippet', 'contentDetails', 'status'],
@@ -80,6 +91,9 @@ export async function get_channel(id: string): AsyncResult<Out.Channel, Response
     if (data.is_err) {
         return data;
     }
+    if ('empty' in data.value) {
+        return ok(undefined);
+    }
 
     const channel = data.value.items[0];
     const out = normalize_channel(channel);
@@ -87,7 +101,7 @@ export async function get_channel(id: string): AsyncResult<Out.Channel, Response
     return ok(out);
 }
 
-export async function get_channel_by_handle(handle: string): AsyncResult<Out.Channel, Response> {
+export async function get_channel_by_handle(handle: string): AsyncResult<undefined | Out.Channel, FetchApiErrValue<YApi.ChannelListResponse>> {
     const data = await fetch_api<YApi.ChannelListResponse>({
         endpoint: ENDPOINT_CHANNEL,
         part: ['snippet', 'contentDetails', 'status'],
@@ -97,6 +111,9 @@ export async function get_channel_by_handle(handle: string): AsyncResult<Out.Cha
     });
     if (data.is_err) {
         return data;
+    }
+    if ('empty' in data.value) {
+        return ok(undefined);
     }
 
     const channel = data.value.items[0];
@@ -141,6 +158,10 @@ export async function get_channel_playlists_all(channel_id: string) {
         }
 
         const value = r.value;
+        if ('empty' in value) {
+            break;
+        }
+
         for (const item of value.items) {
             processed += 1;
             if (item.snippet.title.length === 0 && item.contentDetails.itemCount === 0) {
@@ -225,7 +246,11 @@ export async function get_playlist_items_all(id: string) {
         if (r.is_err) {
             return r;
         }
+
         const value = r.value;
+        if ('empty' in value) {
+            break;
+        }
 
         for (const item of value.items) {
             const p: Out.PlaylistItemCompact = {
@@ -277,6 +302,9 @@ export async function get_playlists(ids: string[]) {
         }
 
         const value = r.value;
+        if ('empty' in value) {
+            break;
+        }
 
         for (const item of value.items) {
             if (item.snippet.title.length === 0 && item.contentDetails.itemCount === 0) {
@@ -362,6 +390,10 @@ export async function get_videos(ids: string[]) {
         }
 
         const value = r.value;
+        if ('empty' in value) {
+            break;
+        }
+
         for (const item of value.items) {
             const v: Out.VideoCompact = {
                 id: item.id,

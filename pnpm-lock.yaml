@@ -17,6 +17,9 @@ importers:
       dexie:
         specifier: ^4.0.11
         version: 4.0.11
+      svelte-french-toast:
+        specifier: 2.0.0-alpha.0
+        version: 2.0.0-alpha.0(svelte@5.25.9)
       youtube-player:
         specifier: ^5.6.0
         version: 5.6.0
@@ -1394,11 +1397,21 @@ packages:
       svelte:
         optional: true
 
+  svelte-french-toast@2.0.0-alpha.0:
+    resolution: {integrity: sha512-81wcVaY9UZ/0JuzLEizMSoIXqNbX7yhfTZavBuw94T3cnT2HmJ9O+qXY/c91h9FkeMwboo0KHZVmzOEQVTXDFg==}
+    peerDependencies:
+      svelte: ^5.0.0
+
   svelte-toolbelt@0.7.1:
     resolution: {integrity: sha512-HcBOcR17Vx9bjaOceUvxkY3nGmbBmCBBbuWLLEWO6jtmWH8f/QoWmbyUfQZrpDINH39en1b8mptfPQT9VKQ1xQ==}
     engines: {node: '>=18', pnpm: '>=8.7.0'}
     peerDependencies:
       svelte: ^5.0.0
+
+  svelte-writable-derived@3.1.1:
+    resolution: {integrity: sha512-w4LR6/bYZEuCs7SGr+M54oipk/UQKtiMadyOhW0PTwAtJ/Ai12QS77sLngEcfBx2q4H8ZBQucc9ktSA5sUGZWw==}
+    peerDependencies:
+      svelte: ^3.2.1 || ^4.0.0-next.1 || ^5.0.0-next.94
 
   svelte@5.25.9:
     resolution: {integrity: sha512-/SSLuHty7ktD8WwDDy3bjuijeNK+9etPz5lzPwe+AariSvk/8s9YLtot3j9/W6CK2iGH347S5RHXAE4HavJS+Q==}
@@ -2819,11 +2832,20 @@ snapshots:
     optionalDependencies:
       svelte: 5.25.9
 
+  svelte-french-toast@2.0.0-alpha.0(svelte@5.25.9):
+    dependencies:
+      svelte: 5.25.9
+      svelte-writable-derived: 3.1.1(svelte@5.25.9)
+
   svelte-toolbelt@0.7.1(svelte@5.25.9):
     dependencies:
       clsx: 2.1.1
       runed: 0.23.4(svelte@5.25.9)
       style-to-object: 1.0.8
+      svelte: 5.25.9
+
+  svelte-writable-derived@3.1.1(svelte@5.25.9):
+    dependencies:
       svelte: 5.25.9
 
   svelte@5.25.9:

@@ -1,6 +1,5 @@
 import { youtube } from '$lib/provider/index.js';
 import { fail } from '@sveltejs/kit';
-import type { ErrorStatus } from 'sveltekit-superforms';
 import { message, superValidate, } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import * as v from 'valibot';
@@ -26,84 +25,70 @@ export const actions: Actions = {
         }
 
         const query = parse_query(form.data.query);
-        let status: undefined | ErrorStatus;
+        let status: number = 200;
         let redirect_to: string = '';
-        switch (query.mode) {
-            case '': {
-                status = 400;
-                break;
+        if (query.mode === '') {
+            status = 400;
+        }
+        else if (query.mode === 'pl') {
+            const r = await youtube.get_playlists([query.value]);
+            if (r.is_err) {
+                status = r.error.status;
             }
-            case 'c': {
-                const r = await youtube.get_channel(query.value);
-                if (r.is_err) {
-                    console.warn(r);
-                    status = 400;
-                }
-                else {
-                    redirect_to = `/${r.value.id}`;
-                }
-                break;
+            else if (r.value.length === 0) {
+                status = 404;
             }
-            case 'ch': {
-                const r = await youtube.get_channel_by_handle(query.value);
-                if (r.is_err) {
-                    console.warn(r);
-                    status = 400;
-                    break;
-                }
-                redirect_to = `/${r.value.handle}`;
-                break;
+            else {
+                redirect_to = `/playlist/${r.value[0].id}`;
             }
-            case 'pl': {
-                const r = await youtube.get_playlists([query.value]);
-                if (r.is_err) {
-                    console.warn(r);
-                    status = 400;
-                    break;
-                }
-                if (r.value.length === 0) {
-                    status = 404;
-                    break;
-                }
-                const p = r.value[0];
-                redirect_to = `/playlist/${p.id}`;
-                break;
+        }
+        else if (query.mode === 'c' || query.mode === 'ch') {
+            const r = await (query.mode === 'c' ? youtube.get_channel : youtube.get_channel_by_handle)(query.value);
+            if (r.is_err) {
+                status = r.error.status;
             }
-            case 'v': {
-                const r = await youtube.get_videos([query.value]);
-                if (r.is_err) {
-                    console.warn(r);
-                    status = 400;
-                    break;
-                }
-                if (r.value.length === 0) {
-                    status = 404;
-                    break;
-                }
-                const v = r.value[0];
-                redirect_to = `/video/${v.id}`;
-                break;
+            else if (r.value === undefined) {
+                status = 404;
+            }
+            else {
+                redirect_to = `/${r.value.id}`;
+            }
+        }
+        else {
+            const r = await youtube.get_videos([query.value]);
+            if (r.is_err) {
+                status = r.error.status;
+            }
+            else if (r.value.length === 0) {
+                status = 404;
+            }
+            else {
+                redirect_to = `/video/${r.value[0].id}`;
             }
         }
 
-        let msg: any;
-        if (status === undefined) {
-            msg = {
+        if (status !== 200) {
+            return message(
+                form,
+                {
+                    query: query,
+                    is_redirect: false,
+                    is_error: true,
+                    error: "Something happend, try again later",
+                    status: status,
+                },
+                { status: status as any }
+            );
+        }
+
+        return message(
+            form,
+            {
                 query: query,
                 is_redirect: true,
                 is_error: false,
                 redirect_to: redirect_to
-            };
-        }
-        else {
-            msg = {
-                query: query,
-                is_redirect: false,
-                is_error: true,
-                error: "some error happend"
-            };
-        }
-
-        return message(form, msg, { status: status });
+            }
+        );
     }
 };

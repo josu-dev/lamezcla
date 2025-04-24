@@ -1,5 +1,4 @@
 import { localapi, localdb } from '$client/data/query/index.js';
-import { throw_as_500 } from '$lib/utils/response.js';
 import type { PageLoad } from './$types.js';
 
 
@@ -12,24 +11,30 @@ export const load: PageLoad = async ({ params, fetch }) => {
     ]);
     let save_playlist = false;
     if (playlist === undefined) {
-        const r_playlist = await localapi.get_playlist(params.playlist_id, fetch);
-        if (r_playlist.is_err) {
-            throw_as_500(r_playlist, `Playlist with id '${params.playlist_id}' couldn't be loaded`);
+        const r = await localapi.get_playlist(params.playlist_id, fetch);
+        if (r.is_err) {
+            localapi.load_error(r.error, {
+                404: `Playlist with id '${params.playlist_id}' not found`,
+                other: `Playlist with id '${params.playlist_id}' couldn't be loaded`
+            });
         }
 
-        playlist = r_playlist.value;
+        playlist = r.value;
         save_playlist = true;
     }
 
     let channel = await localdb.select_channel(playlist.channel_id);
     let save_channel = false;
     if (channel === undefined) {
-        const r_channel = await localapi.get_channel(playlist.channel_id, fetch);
-        if (r_channel.is_err) {
-            throw_as_500(r_channel, `Channel with id '${playlist.channel_id}' couldn't be loaded`);
+        const r = await localapi.get_channel(playlist.channel_id, fetch);
+        if (r.is_err) {
+            localapi.load_error(r.error, {
+                404: `Channel with id '${playlist.channel_id}' not found`,
+                other: `Channel with id '${playlist.channel_id}' couldn't be loaded`
+            });
         }
 
-        channel = r_channel.value;
+        channel = r.value;
         save_channel = true;
     }
 
@@ -41,12 +46,15 @@ export const load: PageLoad = async ({ params, fetch }) => {
     }
 
     if (refresh_entries) {
-        const r_entries = await localapi.get_playlist_entries(params.playlist_id, fetch);
-        if (r_entries.is_err) {
-            throw_as_500(r_entries, `Playlist items of playlist with id '${params.playlist_id}' couldn't be loaded`);
+        const r = await localapi.get_playlist_entries(params.playlist_id, fetch);
+        if (r.is_err) {
+            localapi.load_error(r.error, {
+                404: `Items of playlist with id '${params.playlist_id}' couldn't be loaded`,
+                other: `Items of playlist with id '${params.playlist_id}' couldn't be loaded`
+            });
         }
 
-        const { items, videos } = r_entries.value;
+        const { items, videos } = r.value;
         const items_ids: Set<string> = new Set();
         for (const item of items) {
             items_ids.add(item.id);
