@@ -4,6 +4,7 @@
   import Input from "$lib/components/el/Input.svelte";
   import { Icon } from "$lib/components/icons/index.js";
   import { Metadata } from "$lib/components/site/index.js";
+  import { toast } from "$lib/components/Toaster.svelte";
   import type { ElEvent } from "$lib/utils/index.js";
   import type { Component } from "svelte";
   import { superForm } from "sveltekit-superforms";
@@ -12,31 +13,47 @@
 
   let { data } = $props();
 
-  const { form, enhance } = superForm(data.form, {
-    onError: (ev) => {
-      console.error(ev);
-    },
-    onUpdated: (ev) => {
-      if (!ev.form.valid) {
-        console.error("something happend", ev);
-        return;
-      }
-
-      const msg = ev.form.message;
-      if (msg.is_error) {
-        console.error(msg);
-        return;
-      }
-
-      const redirect_to = msg.redirect_to;
-      goto(redirect_to);
-    },
-  });
-
   let query: Query = $state.raw({
     raw: "",
     mode: "",
     value: "",
+  });
+
+  const { enhance } = superForm(data.form, {
+    onSubmit({ cancel }) {
+      if (query.mode === "") {
+        toast.error("Enter a valid text");
+        cancel();
+        return;
+      }
+    },
+    onError: ({ result }) => {
+      if (typeof result.error === "string") {
+        toast.error(result.error);
+      }
+    },
+    onUpdated: ({ form }) => {
+      const message = form.message;
+      if (!form.valid || message.is_error) {
+        let msg = "";
+        if (form.errors._errors !== undefined) {
+          msg = String(form.errors._errors);
+        } else if (message.is_error) {
+          if (message.status === 404) {
+            msg = `Nothing found with '${message.query.raw}'`;
+          } else {
+            msg = message.error;
+          }
+        }
+
+        toast.error(msg);
+        console.warn(form);
+        return;
+      }
+
+      const redirect_to = message.redirect_to;
+      goto(redirect_to);
+    },
   });
 
   function on_input(ev: ElEvent<Event, HTMLInputElement>) {
@@ -82,8 +99,8 @@
     <div class="mx-auto mt-4">
       {#if query.mode}
         {@const Icon = mode_to_icon[query.mode]}
-        <Button title="Search" class="flex items-center pl-2.5 pr-2 py-1 gap-2">
-          Search <Icon class="" />
+        <Button title="Search" class="flex items-center px-2 py-1 gap-2 text-base">
+          <Icon class="" /> Search
         </Button>
       {:else}
         <span class="text-muted">

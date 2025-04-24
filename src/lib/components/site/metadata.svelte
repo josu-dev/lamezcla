@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { base } from '$app/paths';
-  import { page } from '$app/state';
-  import { DEFAULT_SEO } from '$lib/constants.js';
-  import type { Snippet } from 'svelte';
+  import { base } from "$app/paths";
+  import { page } from "$app/state";
+  import { DEFAULT_SEO } from "$lib/constants.js";
+  import type { Snippet } from "svelte";
 
   type Props = {
     /**
      * Specifies the preferred version of the page when multiple versions are available.
      * @default 'current'
      */
-    canonical?: 'current' | (string & {});
+    canonical?: "current" | (string & {});
     /**
      * Defines the character encoding for the page.
      * @default 'utf-8'
@@ -113,12 +113,12 @@
      *
      * If not provided, the value is inferred from the `og_article` property.
      */
-    type?: 'article' | 'website';
+    type?: "article" | "website";
     /**
      * Specifies the URL of the page.
      * @default 'current'
      */
-    url?: 'current' | (string & {});
+    url?: "current" | (string & {});
     /**
      * Additional meta tags or links to be added to the head
      */
@@ -126,15 +126,15 @@
   };
 
   let {
-    canonical = 'current',
-    // charset = "utf-8",
+    canonical = "current",
+    charset,
     description,
-    icon = DEFAULT_SEO.icon,
+    icon,
     locale = DEFAULT_SEO.language_tag,
     manifest = DEFAULT_SEO.manifest,
     og_article,
     og_description,
-    og_determiner = 'auto',
+    og_determiner = "auto",
     og_image = DEFAULT_SEO.image,
     nofollow = false,
     noindex = false,
@@ -144,30 +144,30 @@
     title_default = DEFAULT_SEO.title_default,
     title_template = DEFAULT_SEO.title_template,
     type,
-    url = 'current',
-    children
+    url = "current",
+    children,
   }: Props = $props();
 
-  let title_to_render = title
-    ? title_template
-      ? title_template.replace('%s', title)
-      : title
-    : title_default;
-  let robots = `${noindex ? 'noindex' : 'index'}, ${nofollow ? 'nofollow' : 'follow'}`;
+  let title_to_render = title ? (title_template ? title_template.replace("%s", title) : title) : title_default;
+  let robots = `${noindex ? "noindex" : "index"}, ${nofollow ? "nofollow" : "follow"}`;
 
-  let currentUrl = $derived(page.url.origin + (page.url.pathname === '/' ? '' : page.url.pathname));
+  let currentUrl = $derived(page.url.origin + (page.url.pathname === "/" ? "" : page.url.pathname));
 
   function safe_local_url(url: string) {
-    return url.startsWith('/') ? base + url : url;
+    return url.startsWith("/") ? base + url : url;
   }
 </script>
 
 <svelte:head>
-  <!-- <meta {charset} /> -->
+  {#if icon}
+    <meta {charset} />
+  {/if}
   <title>{title_to_render}</title>
   <meta name="description" content={description} />
-  <link rel="canonical" href={canonical === 'current' ? currentUrl : canonical} />
-  <link rel="icon" href={safe_local_url(icon)} />
+  <link rel="canonical" href={canonical === "current" ? currentUrl : canonical} />
+  {#if icon}
+    <link rel="icon" href={safe_local_url(icon)} />
+  {/if}
   {#if manifest}
     <link rel="manifest" href={safe_local_url(manifest)} />
   {/if}
@@ -178,8 +178,8 @@
   {/if}
   <meta property="og:site_name" content={site_name} />
   <meta property="og:title" content={title_to_render} />
-  <meta property="og:type" content={type || (og_article ? 'article' : 'website')} />
-  <meta property="og:url" content={url === 'current' ? currentUrl : url} />
+  <meta property="og:type" content={type || (og_article ? "article" : "website")} />
+  <meta property="og:url" content={url === "current" ? currentUrl : url} />
   <meta property="og:description" content={og_description ?? description} />
   <meta property="og:locale" content={locale} />
   {#if og_image}

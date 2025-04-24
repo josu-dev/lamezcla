@@ -1,12 +1,7 @@
 import { localapi, localdb } from '$client/data/query/index.js';
-import type { Err } from '$lib/utils/results.js';
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types.js';
 
-
-function throw_as_500(e: Err<unknown>, msg?: string): never {
-    error(e.error instanceof Response ? e.error.status : 500, msg);
-}
 
 function extract_params(url: URL) {
     const raw_video_id = url.searchParams.get('v');
@@ -54,7 +49,10 @@ export const load: PageLoad = async ({ url, fetch }) => {
         if (video === undefined) {
             const r = await localapi.get_video(video_id, fetch);
             if (r.is_err) {
-                throw_as_500(r);
+                localapi.load_error(r.error, {
+                    404: `Video with id '${video_id}' not found`,
+                    other: `Video with id '${video_id}' couldn't be loaded`
+                });
             }
 
             await localdb.upsert_videos([r.value]);
@@ -81,7 +79,10 @@ export const load: PageLoad = async ({ url, fetch }) => {
     if (playlist === undefined) {
         const r = await localapi.get_playlist(playlist_id, fetch);
         if (r.is_err) {
-            throw_as_500(r);
+            localapi.load_error(r.error, {
+                404: `Playlist with id '${playlist_id}' not found`,
+                other: `Playlist with id '${playlist_id}' couldn't be loaded`
+            });
         }
 
         playlist = r.value;
@@ -91,7 +92,9 @@ export const load: PageLoad = async ({ url, fetch }) => {
     if (entries.length === 0) {
         const r = await localapi.get_playlist_entries(playlist_id, fetch);
         if (r.is_err) {
-            throw_as_500(r);
+            localapi.load_error(r.error, {
+                other: `Entries of playlist with '${playlist_id}' couldn't be loaded`
+            });
         }
 
         const { items, videos: some_compact_videos } = r.value;

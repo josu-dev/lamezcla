@@ -62,7 +62,7 @@
           </a>
         </div>
       </div>
-      <div class="max-h-site-content flex flex-col">
+      <div class="min-h-site-content max-h-site-content flex flex-col">
         <SidebarContent />
       </div>
     </Dialog.Content>

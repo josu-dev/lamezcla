@@ -112,8 +112,13 @@
   <Section class="mt-auto">
     {#snippet children()}
       <div>
-        <div class="flex gap-1 text-sm text-muted">
-          <a href={GITHUB_REPOSITORY} target="_blank" rel="noopener noreferrer" class="inline-flex gap-2 px-1">
+        <div class="flex gap-1 text-sm">
+          <a
+            href={GITHUB_REPOSITORY}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex gap-2 px-1 text-muted hover:text-foreground"
+          >
             <svg
               role="img"
               viewBox="0 0 24 24"

@@ -1,4 +1,5 @@
-import { err, ok } from '$lib/utils/results.js';
+import type { AsyncResult } from './results.js';
+import { err, ok } from './results.js';
 
 
 export type FetchFn = typeof fetch;
@@ -11,7 +12,21 @@ type TryFetchOptions = {
     parse_json?: boolean,
 };
 
-export async function try_fetch<T = unknown>({ fetch: user_fetch = fetch, url, json, init, parse_json }: TryFetchOptions) {
+export type TryFetchError = {
+    type: 'response',
+    value: Response,
+} | {
+    type: 'exception',
+    value: unknown,
+} | {
+    type: 'content_not_json',
+    value: Error,
+} | {
+    type: 'invalid_json',
+    value: unknown,
+};
+
+export async function try_fetch<T = unknown>({ fetch: user_fetch = fetch, url, json, init, parse_json }: TryFetchOptions): AsyncResult<T | Response, TryFetchError> {
     const is_json = json !== undefined;
     if (init === undefined) {
         init = {};
@@ -26,18 +41,18 @@ export async function try_fetch<T = unknown>({ fetch: user_fetch = fetch, url, j
         r = await user_fetch(url, init);
     }
     catch (ex) {
-        return err(ex);
+        return err({ type: "exception", value: ex });
     }
 
     if (!r.ok) {
-        return err(r);
+        return err({ type: "response", value: r });
     }
 
     if (parse_json) {
         const content_type = r.headers.get('Content-Type');
         const has_json_header = content_type?.toLowerCase() === 'application/json';
         if (!has_json_header) {
-            return err(new Error(`Expected json, received '${content_type}'`));
+            return err({ type: 'content_not_json', value: new Error(`Expected json, received '${content_type}'`) });
         }
 
         let out;
@@ -45,7 +60,7 @@ export async function try_fetch<T = unknown>({ fetch: user_fetch = fetch, url, j
             out = await r.json();
         }
         catch (ex) {
-            return err(ex);
+            return err({ type: 'invalid_json', value: ex });
         }
 
         return ok<T>(out);
