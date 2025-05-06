@@ -10,7 +10,7 @@
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import * as Model from "$lib/models/index.js";
-  import { is_play_prevented, use_async_callback, uuid, type Tuple } from "$lib/utils/index.js";
+  import { is_play_prevented, use_async_callback, uuidv4, type Tuple } from "$lib/utils/index.js";
   import { Searcher } from "$lib/utils/searcher.js";
   import type { PageData } from "./$types.js";
 
@@ -156,7 +156,7 @@
       <ActionsMenu
         actions={[
           {
-            id: uuid(),
+            id: uuidv4(),
             label: "Refresh",
             action: () => {
               refresh_channel.fn(data_channel.id);
@@ -165,7 +165,7 @@
             icon_props: { class: refresh_channel.running ? "animate-spin" : "" },
           },
           {
-            id: uuid(),
+            id: uuidv4(),
             label: channel_is_followed ? "Unfollow" : "Follow",
             action: () => {
               if (channel_is_followed) {
@@ -177,7 +177,7 @@
             icon: channel_is_followed ? Icon.UserX : Icon.UserPlus,
           },
           {
-            id: uuid(),
+            id: uuidv4(),
             label: channel_is_pinned ? "Unpin" : "Pin",
             action: () => {
               if (channel_is_pinned) {
@@ -250,7 +250,7 @@
                       <ActionsMenu
                         actions={[
                           {
-                            id: uuid(),
+                            id: uuidv4(),
                             label: is_pinned ? "Unpin" : "Pin",
                             action: () => {
                               if (is_pinned) {

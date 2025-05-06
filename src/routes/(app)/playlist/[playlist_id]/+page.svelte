@@ -17,7 +17,7 @@
     seconds_to_hhmmss,
     seconds_to_human,
     use_async_callback,
-    uuid,
+    uuidv4,
   } from "$lib/utils/index.js";
   import type { PageData } from "./$types.js";
 
@@ -221,7 +221,7 @@
       <ActionsMenu
         actions={[
           {
-            id: uuid(),
+            id: uuidv4(),
             label: "Refresh",
             action: () => {
               refresh_playlist.fn(data_playlist.id);
@@ -230,7 +230,7 @@
             icon_props: { class: refresh_playlist.running ? "animate-spin" : "" },
           },
           {
-            id: uuid(),
+            id: uuidv4(),
             label: playlist_is_pinned ? "Unpin" : "Pin",
             action: () => {
               if (playlist_is_pinned) {
@@ -329,7 +329,7 @@
                       <ActionsMenu
                         actions={[
                           {
-                            id: uuid(),
+                            id: uuidv4(),
                             label: "Pin",
                             action: () => {
                               if (is_pinned) {

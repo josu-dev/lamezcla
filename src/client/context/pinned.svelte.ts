@@ -1,7 +1,7 @@
 import { localdb } from '$client/data/query/index.js';
 import type * as Model from '$lib/models/index.js';
 import type { VoidPromise } from '$lib/utils/index.js';
-import { create_context, now_utc, uuid, } from '$lib/utils/index.js';
+import { create_context, now_utc, uuidv4, } from '$lib/utils/index.js';
 import { SvelteSet } from 'svelte/reactivity';
 
 
@@ -19,7 +19,7 @@ class PinnedState {
     async pin<T extends Model.PinnedItemType>(type: T, value: Model.PinnedItemValueMap[T]): VoidPromise {
         const now = now_utc();
         const item: Model.PinnedItem = {
-            id: uuid(),
+            id: uuidv4(),
             type: type,
             pinned_at: now,
             updated_at: now,
