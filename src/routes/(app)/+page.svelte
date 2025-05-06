@@ -107,7 +107,7 @@
           {#if query.raw}
             Type more...
           {:else}
-            Type something...
+            Type something
           {/if}
         </span>
       {/if}

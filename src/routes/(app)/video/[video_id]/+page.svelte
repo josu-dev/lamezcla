@@ -4,7 +4,6 @@
   import { Icon } from "$lib/components/icons/index.js";
   import { ActionsMenu } from "$lib/components/menus/index.js";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
-  import { channel_url } from "$lib/components/sources/shared.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import { seconds_to_ddhhmmss, uuid } from "$lib/utils/index.js";
   import type { PageData } from "./$types.js";
@@ -26,13 +25,29 @@
 <PageSimple.Root>
   <PageSimple.Header>
     {#snippet image()}
-      <PageSimple.HeaderImage img={data_video.img} alt="{data_video.title} video thumbnail" />
+      <PageSimple.HeaderImage img={data_video.img} alt="{data_video.title} video thumbnail">
+        {#snippet children(image)}
+          <a href="/play?v={data_video.id}" class="group relative">
+            {@render image()}
+            <div
+              class="absolute grid opacity-0 [&:is(:where(.group):hover:not(:has([data-no-play]:hover))_*)]:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
+            >
+              <div class="flex items-center gap-2 text-lg font-bold">
+                <Icon.Play class="size-5 stroke-3" /> Play
+              </div>
+            </div>
+          </a>
+        {/snippet}
+      </PageSimple.HeaderImage>
     {/snippet}
     {#snippet title()}
       {data_video.title}
       <SourceLink type="video" id={data_video.id} title={data_video.title} size="size-5" />
     {/snippet}
     {#snippet children()}
+      <div class="font-bold text-foreground text-base">
+        <a href="/{data_video.channel_id}">{data_video.channel_title}</a>
+      </div>
       Uploaded <HumanTime utc={data_video.published_at} as_relative />
     {/snippet}
     {#snippet actions()}
@@ -67,22 +82,6 @@
     {#snippet children()}
       {#if data_video.is_available}
         <div class="flex gap-4 px-4 py-2 w-full">
-          <a href="/play?v={data_video.id}" class="relative group">
-            <img
-              src={data_video.img?.url}
-              width={data_video.img?.width}
-              height={data_video.img?.height}
-              alt="{data_video.title} video thumbnail"
-              class="rounded-md w-full aspect-video object-fill"
-            />
-            <div
-              class="absolute grid opacity-0 [&:is(:where(.group):hover:not(:has([data-no-play]:hover))_*)]:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
-            >
-              <div class="flex items-center gap-2 text-2xl font-bold">
-                <Icon.Play class="size-8 stroke-3" /> Play
-              </div>
-            </div>
-          </a>
           <div class="flex flex-col gap-2 justify-around py-2">
             <div class="flex">
               <h3 class="text-base font-bold">{data_video.title}</h3>
@@ -92,18 +91,6 @@
                 <span>Channel:</span>
                 <a href="/{data_video.channel_id}" rel="noopener noreferrer" data-no-play class="hover:text-foreground">
                   {data_video.channel_title}
-                </a>
-                <a
-                  href={channel_url(data_video.channel_id)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-no-play
-                  class="hover:text-foreground"
-                >
-                  <span class="sr-only">
-                    {data_video.channel_title}
-                  </span>
-                  <Icon.ExternalLink class="align-top size-4 inline-flex" />
                 </a>
               </p>
               <p>

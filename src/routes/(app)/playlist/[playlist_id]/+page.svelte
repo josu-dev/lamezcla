@@ -11,7 +11,14 @@
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import type * as Model from "$lib/models/index.js";
   import type { Tuple } from "$lib/utils/index.js";
-  import { Searcher, seconds_to_ddhhmmss, seconds_to_human, use_async_callback, uuid } from "$lib/utils/index.js";
+  import {
+    is_play_prevented,
+    Searcher,
+    seconds_to_hhmmss,
+    seconds_to_human,
+    use_async_callback,
+    uuid,
+  } from "$lib/utils/index.js";
   import type { PageData } from "./$types.js";
 
   type Props = {
@@ -275,7 +282,10 @@
             {#if item.is_available}
               {@const is_pinned = pinned_state.is_pinned(video.id)}
               <button
-                onclick={() => {
+                onclick={(e) => {
+                  if (is_play_prevented(e)) {
+                    return;
+                  }
                   on_play_video(video.id);
                 }}
                 class="group text-left flex w-full"
@@ -298,7 +308,7 @@
                     </div>
                     <div class="absolute bottom-2 right-2">
                       <span class="bg-accent px-1.5 py-1 rounded-md text-xs font-semibold tracking-wider">
-                        {seconds_to_ddhhmmss(video.total_seconds)}
+                        {seconds_to_hhmmss(video.total_seconds)}
                       </span>
                     </div>
                   </div>

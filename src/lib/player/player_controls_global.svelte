@@ -25,7 +25,7 @@
 </script>
 
 {#if is_hidden && dev}
-  <div class="fixed bottom-0 right-0 bg-red-500 py-2 px-1">HIDDEN</div>
+  <div class="fixed top-0 right-0 bg-red-500 py-2 px-1 text-xs">HIDDEN</div>
 {/if}
 
 <div
@@ -58,7 +58,7 @@
       </div>
     {/if}
   </div>
-  <div class="self-end">
+  <div class="mt-[9px]">
     <PlayerControlsStatic />
   </div>
 </div>

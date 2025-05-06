@@ -147,7 +147,7 @@ class PlayerState {
     #s_current: CurrentTrack = $state({
         index: -1,
         time_current: 0,
-        time_duration: 100,
+        time_duration: 60,
         time_percentage: 0,
         unplayable: true,
         unavailable: false,
@@ -187,7 +187,7 @@ class PlayerState {
             is_unplayable: true,
             repeat: this.#opts.repeat,
             time_current: 0,
-            time_duration: 100,
+            time_duration: 60,
             video_id: undefined,
             volume: this.#opts.volume,
         };
@@ -314,8 +314,8 @@ class PlayerState {
             return;
         }
 
-        const time = this.#player.getCurrentTime() ?? 100;
-        const duration = this.#player.getDuration() ?? 100;
+        const time = this.#player.getCurrentTime() ?? 0;
+        const duration = this.#player.getDuration() || 60;
         this.#s_current.time_current = this.#state.time_current = Math.floor(time);
         this.#s_current.time_duration = this.#state.time_duration = Math.ceil(duration);
         this.#s_current.time_percentage = time / duration;

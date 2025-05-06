@@ -231,7 +231,7 @@ export type Video = {
         hasCustomThumbnail: boolean;
     },
     status: {
-        uploadStatus: string,
+        uploadStatus: 'deleted' | 'failed' | 'processed' | 'rejected' | 'uploaded',
         failureReason: string,
         rejectionReason: string,
         privacyStatus: string,
