@@ -5,7 +5,7 @@
   import { ActionsMenu } from "$lib/components/menus/index.js";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
-  import { seconds_to_ddhhmmss, uuid } from "$lib/utils/index.js";
+  import { seconds_to_ddhhmmss, uuidv4 } from "$lib/utils/index.js";
   import type { PageData } from "./$types.js";
 
   type Props = {
@@ -54,7 +54,7 @@
       <ActionsMenu
         actions={[
           {
-            id: uuid(),
+            id: uuidv4(),
             label: video_is_pinned ? "Unpin" : "Pin",
             action: () => {
               if (video_is_pinned) {

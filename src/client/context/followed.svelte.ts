@@ -1,7 +1,7 @@
 import { localdb } from '$client/data/query/index.js';
 import type * as Model from '$lib/models/index.js';
 import type { VoidPromise } from '$lib/utils/index.js';
-import { create_context, now_utc, uuid } from '$lib/utils/index.js';
+import { create_context, now_utc, uuidv4 } from '$lib/utils/index.js';
 import { SvelteSet } from 'svelte/reactivity';
 
 
@@ -19,7 +19,7 @@ class FollowedState {
     async follow(value: Model.Channel): VoidPromise {
         const now = now_utc();
         const item: Model.FollowedChannel = {
-            id: uuid(),
+            id: uuidv4(),
             channel_id: value.id,
             followed_at: now,
             position: this.followed.length,

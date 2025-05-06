@@ -66,6 +66,7 @@ export function seconds_to_human(value: number): string {
     return out;
 }
 
-export function uuid() {
-    return crypto.randomUUID();
+export function uuidv4(): string {
+    const out = crypto.randomUUID?.() ?? Array.from(crypto.getRandomValues(new Uint8Array(18)), b => b.toString(16).padStart(2, '0')).join('');
+    return out;
 }
