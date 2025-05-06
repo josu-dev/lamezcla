@@ -57,7 +57,6 @@
         </div>
         <div class="flex items-center">
           <a href="/" class="flex items-center text-3xl font-medium">
-            <Icon.Shuffle class="block size-6 mb-0.5 mr-2" />
             <span>lamezcla</span>
           </a>
         </div>

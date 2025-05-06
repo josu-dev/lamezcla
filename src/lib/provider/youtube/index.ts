@@ -53,29 +53,66 @@ function normalize_channel(value: YApi.Channel): Out.Channel {
         id: value.id,
         handle: safe_handle,
         title: value.snippet.title,
-        img: value.snippet.thumbnails?.default,
+        img: value.snippet.thumbnails?.medium,
         published_at: value.snippet.publishedAt,
     };
     return out;
 }
 
+const SECONDS_PER_HOUR = 3600;
+const SECONDS_PER_DAY = 24 * 3600;
+const SECONDS_PER_WEEK = 7 * 24 * 3600;
+const SECONDS_PER_MONTH = 30 * 24 * 3600;
+const SECONDS_PER_YEAR = 365 * 24 * 3600;
+
+/**
+ * @see https://en.wikipedia.org/wiki/ISO_8601#Durations
+ */
+const duration_re = /^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)(?:[.,]\d+)?S)?)?$/;
+
+/**
+ * Reduce a duration string into equivalent seconds.
+ * - 1 year equals 365 days
+ * - 1 month equals 30 days
+ *
+ * @see https://en.wikipedia.org/wiki/ISO_8601#Durations
+ */
 function duration_to_seconds(duration: string): number {
-    const res = duration.match('PT(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)S)?');
+    const res = duration_re.exec(duration);
     assert_exists(res, `duration is malformed '${duration}'`);
 
+    const years = res[1];
+    const months = res[2];
+    const weeks = res[3];
+    const days = res[4];
+    const hours = res[5];
+    const minutes = res[6];
+    const seconds = res[7];
+
     let out = 0;
-    const h = res[1];
-    const m = res[2];
-    const s = res[3];
-    if (h) {
-        out += 3600 * +h;
+    if (years) {
+        out += +years * SECONDS_PER_YEAR;
     }
-    if (m) {
-        out += 60 * +m;
+    if (months) {
+        out += +months * SECONDS_PER_MONTH;
     }
-    if (s) {
-        out += +s;
+    if (weeks) {
+        out += +weeks * SECONDS_PER_WEEK;
     }
+    if (days) {
+        out += +days * SECONDS_PER_DAY;
+    }
+    if (hours) {
+        out += +hours * SECONDS_PER_HOUR;
+    }
+    if (minutes) {
+        out += +minutes * 60;
+    }
+    if (seconds) {
+        out += +seconds;
+    }
+    out = Math.ceil(out);
+
     return out;
 }
 
@@ -337,7 +374,7 @@ function _get_videos(ids: string[]) {
 
     return fetch_api<YApi.VideoListResponse>({
         endpoint: ENDPOINT_VIDEOS,
-        part: ["contentDetails", "snippet", "player", "statistics", "status"],
+        part: ["contentDetails", "snippet", "player", "statistics", "status", "liveStreamingDetails"],
         others: others
     });
 }
@@ -346,7 +383,7 @@ export function extract_video_flags(video: YApi.Video): number {
     let flags = 0;
 
     if (video.status !== undefined) {
-        if (video.status.uploadStatus === 'processed' || video.processingDetails.processingStatus === 'uploaded') {
+        if (video.status.uploadStatus === 'processed' || video.status.uploadStatus === 'uploaded') {
             flags |= VIDEO_FLAGS.IS_AVAILABLE;
         }
 

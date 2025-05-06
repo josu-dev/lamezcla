@@ -10,7 +10,7 @@
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import * as Model from "$lib/models/index.js";
-  import { use_async_callback, uuid, type Tuple } from "$lib/utils/index.js";
+  import { is_play_prevented, use_async_callback, uuid, type Tuple } from "$lib/utils/index.js";
   import { Searcher } from "$lib/utils/searcher.js";
   import type { PageData } from "./$types.js";
 
@@ -212,7 +212,15 @@
         {#each playlists_displayed as playlist (playlist.id)}
           {@const is_pinned = pinned_state.is_pinned(playlist.id)}
           <li class="flex flex-col flex-1">
-            <button class="group text-left flex mr-auto" onclick={() => on_play_playlist(playlist.id)}>
+            <button
+              class="group text-left flex mr-auto"
+              onclick={(e) => {
+                if (is_play_prevented(e)) {
+                  return;
+                }
+                on_play_playlist(playlist.id);
+              }}
+            >
               <div class="flex flex-col px-4 py-2">
                 <div class="relative">
                   <img

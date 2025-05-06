@@ -1,6 +1,14 @@
 import { assert } from './asserts.js';
 
 
+export function is_play_prevented(e: Event) {
+    const source_el = e.target as HTMLElement;
+    const listener_el = e.currentTarget as HTMLElement;
+    const no_play_el = source_el.closest('[data-no-play]');
+    const out = listener_el.contains(no_play_el);
+    return out;
+}
+
 export function noop() { }
 
 export function now_utc() {
