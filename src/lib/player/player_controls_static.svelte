@@ -1,7 +1,8 @@
 <script lang="ts">
   import ButtonIcon from "$lib/components/el/ButtonIcon.svelte";
   import { Icon } from "$lib/components/icons/index.js";
-  import { Slider } from "bits-ui";
+  import { ev_prevent_default } from "$lib/utils/misc.js";
+  import { DropdownMenu, Slider } from "bits-ui";
   import { untrack } from "svelte";
   import type { PlayerControlsStaticProps } from "./internal.js";
   import { use_player_ctx } from "./player.svelte.js";
@@ -110,14 +111,8 @@
     </div>
 
     <div class="flex justify-self-end">
-      <div class="lg:hidden flex items-center">
-        <!-- TODO: implement dropup menu -->
-        <ButtonIcon onclick={() => {}} title={"Open actions"} size="sm">
-          <Icon.EllipsisVertical />
-        </ButtonIcon>
-      </div>
-      <div class="hidden lg:block">
-        <div class="flex h-full gap-x-1 group/volume items-center">
+      {#snippet VolumeBar()}
+        <div class="flex h-full gap-x-1 items-center">
           <ButtonIcon onclick={player.toggle_mute} title={player.is_muted ? "Unmute" : "Mute"} size="sm">
             {#if player.is_muted}
               <Icon.VolumeX />
@@ -145,13 +140,35 @@
               <span class="relative h-[3px] w-full cursor-pointer bg-white">
                 <Slider.Range class="bg-primary absolute h-full" />
               </span>
-              <Slider.Thumb
-                index={0}
-                class="opacity-0 group-hover/volume:opacity-100 focus-visible:opacity-100 bg-foreground size-3 rounded-full"
-              />
+              <Slider.Thumb index={0} class="bg-foreground size-2.5 rounded-full" />
             {/snippet}
           </Slider.Root>
         </div>
+      {/snippet}
+      <div class="lg:hidden flex items-center">
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            {#snippet child({ props })}
+              <ButtonIcon onclick={() => {}} title={"Open actions"} size="sm" {...props}>
+                <Icon.EllipsisVertical />
+              </ButtonIcon>
+            {/snippet}
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content
+            class="border-border px-1 bg-background w-full min-w-48 max-w-64 rounded-md border py-2
+      data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+            sideOffset={8}
+            align="end"
+            side="top"
+          >
+            <DropdownMenu.Item onSelect={ev_prevent_default} class="">
+              {@render VolumeBar()}
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
+      </div>
+      <div class="hidden lg:block">
+        {@render VolumeBar()}
       </div>
     </div>
   </div>

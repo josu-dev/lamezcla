@@ -1,6 +1,10 @@
 import { assert } from './asserts.js';
 
 
+export function ev_prevent_default(ev: Event) {
+    ev.preventDefault();
+}
+
 export function is_play_prevented(e: Event) {
     const source_el = e.target as HTMLElement;
     const listener_el = e.currentTarget as HTMLElement;

@@ -276,7 +276,7 @@
       {/if}
     {/snippet}
     {#snippet children()}
-      <ul class="grid grid-cols-[repeat(1,minmax(auto,64rem))]">
+      <ul class="grid grid-cols-[repeat(1,minmax(auto,64rem))] gap-y-8 sm:gap-y-0">
         {#each entries_displayed as { item, video } (item.id)}
           <li class="flex flex-col flex-1">
             {#if item.is_available}

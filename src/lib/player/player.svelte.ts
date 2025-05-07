@@ -317,7 +317,7 @@ class PlayerState {
         const time = this.#player.getCurrentTime() ?? 0;
         const duration = this.#player.getDuration() || 60;
         this.#s_current.time_current = this.#state.time_current = Math.floor(time);
-        this.#s_current.time_duration = this.#state.time_duration = Math.ceil(duration);
+        this.#s_current.time_duration = this.#state.time_duration = Math.floor(duration);
         this.#s_current.time_percentage = time / duration;
     };
 
@@ -382,6 +382,21 @@ class PlayerState {
         this.#state.is_unplayable = false;
         this.#s_entries = [...valid];
         this.#s_curr_i = 0;
+    };
+
+    set_video = (value: Model.Video): void => {
+        this.#entries = [];
+        this.#state.is_mode_list = false;
+        this.#state.is_mode_list = true;
+        this.#state.is_unplayable = false;
+
+        this.#s_playlist = undefined;
+        this.#s_entries = [];
+        this.#s_current.index = -1;
+        this.#s_current.entry = undefined;
+        this.#s_current.unavailable = !(value.is_available && value.is_embeddable);
+        this.#s_current.unplayable = false;
+        this.#s_current.video = value;
     };
 
     shuffle = (): void => {

@@ -29,13 +29,13 @@
 {/if}
 
 <div
-  class="h-site-player-controls border-border border-t px-4 z-10 hidden grid-cols-[auto_1fr] gap-x-4 bg-background data-player-controls-global:grid"
+  class="h-site-player-controls border-border border-t px-2 z-10 hidden grid-cols-1 md:grid-cols-[auto_1fr] gap-x-2 bg-background data-player-controls-global:grid"
   data-player-controls-global={is_hidden ? undefined : ""}
 >
-  <div class="self-center">
+  <div class="self-center hidden md:block">
     {#if curr_video}
       <div class="flex justify-center gap-x-2 items-center">
-        <a href={player_link} class="block rounded-md aspect-video h-14 overflow-clip">
+        <a href={player_link} class="hidden rounded-md aspect-video h-14 overflow-clip xl:block">
           <span class="sr-only">
             {curr_video.title}
           </span>
@@ -47,7 +47,7 @@
             class="object-cover bg-transparent"
           />
         </a>
-        <div class="flex-col w-80 hidden items-start lg:flex">
+        <div class="flex flex-col w-64 items-start justify-start lg:w-80">
           <a href={player_link} class="text-sm text-pretty leading-tight select-text line-clamp-2">
             {curr_video.title}
           </a>
