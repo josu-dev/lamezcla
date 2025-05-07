@@ -33,6 +33,7 @@
   effect_once(() => {
     if (state.single) {
       if (player.current.video?.id !== state.video.id) {
+        player.set_video(state.video);
         player.play(state.video.id);
       }
     } else {
@@ -95,7 +96,7 @@
     </div>
 
     <div
-      class="px-4 flex flex-col bg-background border-t border-border w-full h-site-player-controls justify-end 2xl:px-6"
+      class="px-2 flex flex-col bg-background border-t border-border w-full h-site-player-controls pt-[9px] 2xl:px-4"
     >
       <ControlsStatic />
     </div>

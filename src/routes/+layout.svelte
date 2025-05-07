@@ -10,6 +10,7 @@
       let cleanup = () => {};
       import("eruda").then((m) => {
         m.default.init();
+        m.default.position({ x: window.innerWidth, y: window.innerHeight });
         cleanup = m.default.destroy;
       });
       return () => cleanup();
