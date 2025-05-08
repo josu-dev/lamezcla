@@ -46,7 +46,7 @@
       class="bg-background fixed z-50 top-0 bottom-0 left-0 border-r border-border w-xs max-w-[min(100%,var(--container-sm))] !duration-200 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left-full data-[state=open]:animate-in data-[state=open]:slide-in-from-left-full"
     >
       <div class="flex h-site-header flex-none px-2 border-b border-border">
-        <div class="flex items-center mr-1">
+        <div class="flex items-center">
           <Dialog.Close>
             {#snippet child({ props })}
               <ButtonIcon {...props} size="md" title="Close menu">
@@ -56,7 +56,7 @@
           </Dialog.Close>
         </div>
         <div class="flex items-center">
-          <a href="/" class="flex items-center text-3xl font-medium">
+          <a href="/" class="flex items-center text-3xl font-medium px-0.5">
             <span>lamezcla</span>
           </a>
         </div>

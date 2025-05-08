@@ -65,7 +65,7 @@
     </div>
 
     <div class="row-start-6 justify-self-center">
-      <a href="/" class="text-base font-semibold hover:bg-accent rounded-md flex gap-2 py-1 px-2">
+      <a href="/" class="text-base font-semibold hover:bg-accent rounded-md flex gap-2 py-1 px-2 focus-outline">
         <Icon.House />
         Home
       </a>
