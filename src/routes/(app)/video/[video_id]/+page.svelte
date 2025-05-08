@@ -30,7 +30,7 @@
           <a href="/play?v={data_video.id}" class="group relative">
             {@render image()}
             <div
-              class="absolute grid opacity-0 [&:is(:where(.group):hover:not(:has([data-no-play]:hover))_*)]:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
+              class="absolute grid opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
             >
               <div class="flex items-center gap-2 text-lg font-bold">
                 <Icon.Play class="size-5 stroke-3" /> Play

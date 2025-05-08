@@ -266,7 +266,13 @@
                     </div>
                   </div>
                   <p class="mt-1 text-sm font-semibold text-muted">
-                    <a href="/playlist/{playlist.id}" data-no-play class="hover:text-foreground"> View all tracks </a>
+                    <a
+                      href="/playlist/{playlist.id}"
+                      data-no-play
+                      class="focus-outline rounded-xs hover:text-foreground"
+                    >
+                      View all tracks
+                    </a>
                   </p>
                 </div>
               </div>

@@ -24,12 +24,12 @@
 <Player.Provider audio_only>
   <div class="flex flex-col h-full">
     <header class="flex h-site-header flex-none px-2 border-b border-border">
-      <div class="flex items-center mr-0.5 lg:hidden">
+      <div class="flex items-center lg:hidden">
         <SiteSidebar.Mobile />
       </div>
-      <div class="flex items-center lg:ml-2">
-        <a href="/" class="flex items-center text-3xl font-medium">
-          <Icon.Shuffle class="hidden lg:block size-6 mb-0.5 mr-2" />
+      <div class="flex items-center">
+        <a href="/" class="flex items-center text-3xl font-medium focus-outline rounded-md px-0.5 lg:px-2">
+          <Icon.Shuffle class="hidden lg:block size-6 mr-2" />
           <span>lamezcla</span>
         </a>
       </div>

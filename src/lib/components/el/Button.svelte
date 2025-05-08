@@ -11,7 +11,7 @@
 
 <button
   {...rest_props}
-  class="not-disabled:hover:bg-accent disabled:text-base-700 cursor-pointer rounded-md bg-transparent focus:ring-0 focus:outline-none disabled:cursor-not-allowed [&>svg]:size-full {classes}"
+  class="rounded-md bg-transparent focus-outline disabled:text-base-700 disabled:cursor-not-allowed not-disabled:hover:bg-accent [&>svg]:size-full {classes}"
 >
   {@render children()}
 </button>

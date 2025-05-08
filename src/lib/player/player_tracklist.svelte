@@ -28,9 +28,11 @@
     </h2>
     <div class="flex flex-col text-sm text-muted-foreground font-semibold mt-0.5">
       {#if channel !== undefined}
-        <div class="font-bold text-ellipsis overflow-hidden text-nowrap">
-          <a href="/{channel.id}">{channel.title}</a>
-        </div>
+        <a href="/{channel.id}" class="font-bold focus-outline flex w-max max-w-full rounded-xs">
+          <span class="overflow-hidden text-ellipsis text-nowrap">
+            {channel.title}
+          </span>
+        </a>
       {/if}
       <div>{total_entries} tracks, {seconds_to_human(total_time)}</div>
     </div>
@@ -45,7 +47,7 @@
           onclick={() => {
             on_select(e, index);
           }}
-          class="text-left rounded-md block w-full"
+          class="text-left rounded-md block w-full focus-outline"
         >
           <div
             data-selected={is_current ? "" : undefined}

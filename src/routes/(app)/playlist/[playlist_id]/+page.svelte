@@ -183,7 +183,7 @@
           <a href="/play?l={data_playlist.id}" class="group relative">
             {@render image()}
             <div
-              class="absolute grid opacity-0 [&:is(:where(.group):hover:not(:has([data-no-play]:hover))_*)]:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
+              class="absolute grid opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
             >
               <div class="flex items-center gap-2 text-lg font-bold">
                 <Icon.Play class="size-5 stroke-3" /> Play
@@ -264,7 +264,7 @@
         <button
           {title}
           onclick={() => (show_unavailable = !show_unavailable)}
-          class="hover:bg-accent rounded-md inline-flex gap-x-2 py-0.5 px-1.5"
+          class="hover:bg-accent focus-outline rounded-md inline-flex gap-x-2 py-0.5 px-1.5"
         >
           <span class="sr-only">{title}</span>
           {#if show_unavailable}
@@ -318,7 +318,11 @@
                         <h3 class="text-lg font-semibold mt-2">{video.title}</h3>
                       </div>
                       <p class="mt-1 text-sm font-semibold text-muted">
-                        <a href="/{video.channel_id}" data-no-play class="hover:text-foreground">
+                        <a
+                          href="/{video.channel_id}"
+                          data-no-play
+                          class="focus-outline ronded-xs hover:text-foreground"
+                        >
                           {video.channel_title}
                         </a>
                         -
