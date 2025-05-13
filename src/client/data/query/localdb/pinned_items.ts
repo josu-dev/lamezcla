@@ -31,6 +31,10 @@ export async function upsert_pinned_item(value: Model.PinnedItem): VoidPromise {
     await db.pinned_items.put(value);
 }
 
+export async function upsert_pinned_items(value: Model.PinnedItem[]): VoidPromise {
+    await db.pinned_items.bulkPut(value);
+}
+
 export async function update_pinned_item(value: Model.PinnedItem): VoidPromise {
     await db.pinned_items.update(value.id, value);
 }

@@ -29,6 +29,7 @@
     "globals": "^16.0.0",
     "svelte": "^5.25.9",
     "svelte-check": "^4.0.0",
+    "svelte-dnd-action": "^0.9.61",
     "sveltekit-superforms": "^2.24.0",
     "tailwindcss": "^4.0.0",
     "tailwindcss-animate": "^1.0.7",

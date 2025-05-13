@@ -75,6 +75,25 @@ class PinnedState {
     is_pinned(id: string): boolean {
         return this.#pinned_ids.has(id);
     }
+
+    async reorder(value: Model.PinnedEntry[]) {
+        const pinned_snapshot = $state.snapshot(this.pinned);
+        const items: Model.PinnedItem[] = new Array(value.length);
+        for (let i = 0; i < value.length; i++) {
+            const item = value[i].item;
+            item.position = i;
+            items[i] = item;
+            for (const pinned of pinned_snapshot) {
+                if (pinned.item.id === item.id) {
+                    pinned.item.position = item.position;
+                    break;
+                }
+            }
+        }
+
+        await localdb.upsert_pinned_items(items);
+        this.pinned = pinned_snapshot;
+    }
 }
 
 export type { PinnedState };

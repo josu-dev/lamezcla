@@ -19,6 +19,10 @@ class SiteSidebarState {
         this.followed = opts.followed;
         this.pinned = opts.pinned;
     }
+
+    async update_pinned(items: PinnedState['pinned']) {
+        await this.pinned.reorder(items);
+    }
 }
 
 const site_sidebar_ctx = create_context<SiteSidebarState>('site_sitebar');
