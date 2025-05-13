@@ -11,8 +11,6 @@
     <div class="px-2">
       <h3 class="font-bold text-lg">{title}</h3>
     </div>
-    <ul class="mt-2">
-      {@render children()}
-    </ul>
+    {@render children()}
   {/if}
 </section>

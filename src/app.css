@@ -85,6 +85,13 @@
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
 }
 
+@utility focus-themed {
+    outline-offset: 2px;
+    outline-width: 2px;
+    outline-color: var(--color-foreground);
+    outline-style: solid;
+}
+
 @utility focus-outline {
     &:focus {
         outline: none;

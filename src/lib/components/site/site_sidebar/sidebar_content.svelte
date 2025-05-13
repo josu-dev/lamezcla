@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state";
   import { Icon } from "$lib/components/icons/index.js";
+  import ReorderableList from "$lib/components/ReorderableList.svelte";
   import { GITHUB_REPOSITORY, GITHUB_USERNAME } from "$lib/constants.js";
   import type * as Model from "$lib/models/index.js";
   import type { Component } from "svelte";
@@ -40,72 +41,96 @@
       }
     }
   }
+
+  let pinned_reorderable = $derived(state.pinned_displayed.map((e) => ({ ...e, id: e.item.id })));
 </script>
 
 <div class="overflow-x-clip overflow-y-auto flex-1 flex flex-col">
   <Section title="Pinned">
     {#snippet children()}
-      {#each state.pinned_displayed as p (p.item.id)}
-        {@const ItemIcon = pinned_item_icon[p.type]}
-        {@const pathname = pinned_item_pathname(p)}
-        <SectionItem title={p.value.title} href={pathname} is_selected={page.url.pathname === pathname}>
-          {#snippet left_icon()}
-            <ItemIcon class="m-1" />
-          {/snippet}
-          {#snippet subtitle()}
-            {#if p.type === "playlist" || p.type === "playlist_custom"}
-              <div class="text-xs text-muted-foreground">{p.value.item_count ?? 0} tracks</div>
-            {/if}
-          {/snippet}
-          {#snippet right_icon()}
-            <button
-              onclick={(ev) => {
-                ev.preventDefault();
-                ev.stopPropagation();
-                state.pinned.unpin_by_id(p.item.pinned_id);
-              }}
-              class="block rounded-md p-1 focus-outline hover:bg-muted"
-            >
-              <Icon.PinOff class="size-4" />
-            </button>
-          {/snippet}
-        </SectionItem>
-      {:else}
-        <SectionItem title="Nothing pinned" class="cursor-default" />
-      {/each}
+      <ReorderableList
+        dnd_zone="pinned_items"
+        items={pinned_reorderable}
+        on_reorder={(items) => {
+          pinned_reorderable = items;
+          state.update_pinned(items);
+        }}
+        class="mt-2"
+      >
+        {#snippet item(p, i)}
+          {@const ItemIcon = pinned_item_icon[p.type]}
+          {@const pathname = pinned_item_pathname(p)}
+          <SectionItem
+            title={p.value.title}
+            href={pathname}
+            is_selected={page.url.pathname === pathname}
+            class="cursor-pointer in-[[data-is-dragging=true]]:cursor-grabbing in-[[data-is-dragging=true]]:focus-themed"
+          >
+            {#snippet left_icon()}
+              <ItemIcon class="m-1" />
+            {/snippet}
+            {#snippet subtitle()}
+              {#if p.type === "playlist" || p.type === "playlist_custom"}
+                <div class="text-xs text-muted-foreground">{p.value.item_count ?? 0} tracks</div>
+              {/if}
+            {/snippet}
+            {#snippet right_icon()}
+              <button
+                onclick={(ev) => {
+                  ev.preventDefault();
+                  ev.stopPropagation();
+                  state.pinned.unpin_by_id(p.item.pinned_id);
+                }}
+                class="block rounded-md p-1 focus-outline hover:bg-muted"
+              >
+                <Icon.PinOff class="size-4" />
+              </button>
+            {/snippet}
+          </SectionItem>
+        {/snippet}
+        {#snippet item_empty()}
+          <SectionItem title="Nothing pinned" class="cursor-default" />
+        {/snippet}
+      </ReorderableList>
     {/snippet}
   </Section>
 
   <Section title="Followed">
     {#snippet children()}
-      {#each state.followed_displayed as c (c.id)}
-        {@const pathname = "/" + (c.value.handle ?? c.value.id)}
-        <SectionItem title={c.value.title} href={pathname} is_selected={page.url.pathname === pathname}>
-          {#snippet left_icon()}
-            <img
-              src={c.value.img?.url}
-              height={c.value.img?.height}
-              width={c.value.img?.width}
-              alt="{c.value.title} channel avatar"
-              class="rounded-md overflow-clip size-7 p-0.5 m-0.5"
-            />
-          {/snippet}
-          {#snippet right_icon()}
-            <button
-              onclick={(ev) => {
-                ev.preventDefault();
-                ev.stopPropagation();
-                state.followed.unfollow(c.value);
-              }}
-              class="block rounded-md p-1 focus-outline hover:bg-muted"
-            >
-              <Icon.X class="size-4" />
-            </button>
-          {/snippet}
-        </SectionItem>
-      {:else}
-        <SectionItem title="No channels followed" class="cursor-default" />
-      {/each}
+      <ul class="mt-2">
+        {#each state.followed_displayed as c (c.id)}
+          {@const pathname = "/" + (c.value.handle ?? c.value.id)}
+          <li>
+            <SectionItem title={c.value.title} href={pathname} is_selected={page.url.pathname === pathname}>
+              {#snippet left_icon()}
+                <img
+                  src={c.value.img?.url}
+                  height={c.value.img?.height}
+                  width={c.value.img?.width}
+                  alt="{c.value.title} channel avatar"
+                  class="rounded-md overflow-clip size-7 p-0.5 m-0.5"
+                />
+              {/snippet}
+              {#snippet right_icon()}
+                <button
+                  onclick={(ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    state.followed.unfollow(c.value);
+                  }}
+                  class="block rounded-md p-1 focus-outline hover:bg-muted"
+                >
+                  <Icon.X class="size-4" />
+                </button>
+              {/snippet}
+            </SectionItem>
+          </li>
+        {:else}
+          <li>
+            <SectionItem title="No channels followed" class="cursor-default" />
+          </li>
+        {/each}
+      </ul>
     {/snippet}
   </Section>
 
