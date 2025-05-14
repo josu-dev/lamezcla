@@ -11,8 +11,8 @@
   <PlayerStatic
     channel={data.channel}
     video={data.video}
-    entries={data.entries}
     playlist={data.playlist}
+    playlist_entries={data.entries}
     start_index={data.start_index}
   />
 </main>
