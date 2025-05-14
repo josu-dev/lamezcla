@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { use_pinned_ctx } from "$client/context/index.js";
+  import { localdb } from "$client/data/query/index.js";
   import { refresh_local_playlist_and_items } from "$client/data/refresh/index.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import { Icon } from "$lib/components/icons/index.js";
@@ -13,6 +14,7 @@
   import type { Tuple } from "$lib/utils/index.js";
   import {
     is_play_prevented,
+    now_utc,
     Searcher,
     seconds_to_hhmmss,
     seconds_to_human,
@@ -171,6 +173,39 @@
       data_entries = value.entries;
     },
   });
+
+  const is_playlist_subset_playable = $derived(
+    entries_displayed.length > 0 && entries_displayed.length < entries_cache.available.length,
+  );
+  async function play_current_playlist() {
+    const now = now_utc();
+    const playlist_entries = $state.snapshot(entries_displayed);
+    const playlist_size = playlist_entries.length;
+    const playlist_title = `Subset: ${data.playlist.title.slice(data_playlist.title.startsWith("Subset: ") ? 8 : 0)}`;
+    const playlist: Model.Playlist = {
+      id: "ephemeral_playlist_subset",
+      v: 1,
+      channel_id: data_playlist.channel_id,
+      description: data_playlist.description,
+      img: data_playlist.img,
+      item_count: playlist_size,
+      privacy_status: data_playlist.privacy_status,
+      published_at: now,
+      updated_at: now,
+      title: playlist_title,
+    };
+    const items: Model.PlaylistItemCompact[] = new Array(playlist_size);
+    for (let i = 0; i < playlist_size; i++) {
+      const item: Model.PlaylistItemCompact = { ...playlist_entries[i].item, playlist_id: playlist.id, id: uuidv4() };
+      items[i] = item;
+    }
+
+    await localdb.upsert_playlist(playlist);
+    await localdb.delete_playlists_items_by_playlist(playlist.id);
+    await localdb.upsert_playlists_items(items);
+
+    goto(`/play?l=${playlist.id}`);
+  }
 </script>
 
 <Metadata description="Just have a look at the vibes of '{data_playlist.title}' tracks." />
@@ -248,7 +283,17 @@
 
   <PageSimple.Content>
     {#snippet title()}
-      Tracks {entries_displayed.length}
+      <span class="inline-block">
+        Tracks {entries_displayed.length}
+      </span>
+      {#if is_playlist_subset_playable}
+        <button
+          onclick={play_current_playlist}
+          class="ml-auto font-normal hover:bg-accent rounded-md inline-flex align-bottom gap-x-1.5 py-0.5 pl-1 pr-1.5 text-base active:scale-[0.98]"
+        >
+          <Icon.Play /><span class="">Subset</span>
+        </button>
+      {/if}
     {/snippet}
     {#snippet actions()}
       <SearchInput label="Search video" oninput={(ev) => (search_query = ev.currentTarget.value)} maxlength={32} />

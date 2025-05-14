@@ -65,10 +65,10 @@ export type PlayerProviderProps = PropsWithChildren<{
 
 export type PlayerStaticProps = PropsNoChildren<{
     channel?: Model.Channel;
-    playlist?: Model.Playlist;
-    entries?: Model.PlaylistEntry[];
     video?: Model.Video;
     start_index?: number;
+    playlist?: Model.Playlist;
+    playlist_entries?: Model.PlaylistEntry[];
 }>;
 
 export type PlayerControlsGlobalProps = PropsNoChildren<{
