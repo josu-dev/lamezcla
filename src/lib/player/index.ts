@@ -1,3 +1,4 @@
+export type { PlayerProviderProps } from './internal.js';
 export { default as ControlsGlobal } from './player_controls_global.svelte';
 export { default as ControlsStatic } from './player_controls_static.svelte';
 export { default as Provider } from './player_provider.svelte';

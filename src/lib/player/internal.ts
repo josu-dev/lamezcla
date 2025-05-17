@@ -1,4 +1,4 @@
-import * as Model from '$lib/models/index.js';
+import type { Model } from '$data/models/index.js';
 import type { PropsNoChildren, PropsWithChildren } from '$lib/utils/index.js';
 
 
@@ -26,6 +26,17 @@ export const PLAYER_STATE = {
  */
 export type PlayerRepeat = 0 | 1 | 2;
 
+export type PlayerOnPlayMap = {
+    'playlist': Model.AnyPlaylist;
+    'playlist_item': Model.PlaylistEntry;
+    'video': Model.Video;
+};
+
+export type PlayerOnPlayKey = keyof PlayerOnPlayMap;
+
+export type PlayerOnPlay = (arg_0: {
+    [K in PlayerOnPlayKey]: { type: K, value: PlayerOnPlayMap[K]; };
+}[PlayerOnPlayKey]) => void;
 
 export type PlayerStateOptions = {
     target_id: string;
@@ -41,6 +52,7 @@ export type PlayerStateOptions = {
     persist: boolean;
     persist_key: string;
     skip_on_unavailable: boolean;
+    on_play: PlayerOnPlay;
 };
 
 export type PlayerStateOptionsInit = {
@@ -56,18 +68,19 @@ export type PlayerStateOptionsInit = {
     volume?: undefined | number;
     persist?: undefined | boolean;
     skip_on_unavailable?: undefined | boolean;
+    on_play?: PlayerOnPlay;
 };
 
 export type PlayerProviderProps = PropsWithChildren<{
     audio_only?: boolean;
-    options?: PlayerStateOptionsInit;
+    options?: Partial<PlayerStateOptionsInit>;
 }>;
 
 export type PlayerStaticProps = PropsNoChildren<{
-    channel?: Model.Channel;
+    channel?: Model.AnyChannel;
     video?: Model.Video;
     start_index?: number;
-    playlist?: Model.Playlist;
+    playlist?: Model.AnyPlaylist;
     playlist_entries?: Model.PlaylistEntry[];
 }>;
 
@@ -79,9 +92,9 @@ export type PlayerControlsGlobalProps = PropsNoChildren<{
 export type PlayerControlsStaticProps = PropsNoChildren;
 
 export type PlayerTracklistProps = PropsNoChildren<{
-    channel?: Model.Channel;
-    playlist: Model.Playlist;
+    channel?: Model.AnyChannel;
+    playlist: Model.AnyPlaylist;
     entries: Model.PlaylistEntry[];
-    current_entry?: Model.StringId;
+    current_entry?: Model.PlaylistEntry['id'];
     on_select?: (value: Model.PlaylistEntry, index: number) => void;
 }>;

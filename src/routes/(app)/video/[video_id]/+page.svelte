@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { use_pinned_ctx } from "$client/context/index.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import { Icon } from "$lib/components/icons/index.js";
   import { ActionsMenu } from "$lib/components/menus/index.js";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
+  import { use_pinned_ctx } from "$lib/context/index.js";
   import { seconds_to_ddhhmmss, uuidv4 } from "$lib/utils/index.js";
   import type { PageData } from "./$types.js";
 
@@ -48,7 +48,7 @@
       <div class="font-bold text-foreground text-base">
         <a href="/{data_video.channel_id}">{data_video.channel_title}</a>
       </div>
-      Uploaded <HumanTime utc={data_video.published_at} as_relative />
+      Uploaded <HumanTime utc={data_video.created_at} as_relative />
     {/snippet}
     {#snippet actions()}
       <ActionsMenu
@@ -95,11 +95,11 @@
               </p>
               <p>
                 <span>Duration:</span>
-                {seconds_to_ddhhmmss(data_video.total_seconds)}
+                {seconds_to_ddhhmmss(data_video.duration_s)}
               </p>
               <p>
                 <span>Published:</span>
-                <HumanTime utc={data_video.published_at} />
+                <HumanTime utc={data_video.created_at} />
               </p>
               <p>
                 <span>Visibility:</span>

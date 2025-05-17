@@ -1,4 +1,4 @@
-import { youtube } from '$lib/provider/index.js';
+import { youtube } from '$data/providers/youtube/server/index.js';
 import { fail } from '@sveltejs/kit';
 import { message, superValidate, } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';

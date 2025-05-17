@@ -1,5 +1,6 @@
 <script lang="ts">
-  import type * as Model from "$lib/models/index.js";
+  import type { Model } from "$data/models/index.js";
+
   import type { Snippet } from "svelte";
 
   type Props = {

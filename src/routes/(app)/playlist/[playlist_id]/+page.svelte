@@ -1,8 +1,8 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import { use_pinned_ctx } from "$client/context/index.js";
-  import { localdb } from "$client/data/query/index.js";
-  import { refresh_local_playlist_and_items } from "$client/data/refresh/index.js";
+  import { add_playlist_subset } from "$data/local/db/playlists.js";
+  import { refresh_local_playlist_and_items } from "$data/local/db/refresh.js";
+  import type { Model } from "$data/models/index.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import { Icon } from "$lib/components/icons/index.js";
   import type { SortMode } from "$lib/components/menus/index.js";
@@ -10,11 +10,10 @@
   import SearchInput from "$lib/components/SearchInput.svelte";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
-  import type * as Model from "$lib/models/index.js";
+  import { use_pinned_ctx } from "$lib/context/index.js";
   import type { Tuple } from "$lib/utils/index.js";
   import {
     is_play_prevented,
-    now_utc,
     Searcher,
     seconds_to_hhmmss,
     seconds_to_human,
@@ -38,12 +37,12 @@
     {
       id: "added_new",
       label: "Added newest",
-      compare_fn: (a, b) => b.item.published_at.localeCompare(a.item.published_at),
+      compare_fn: (a, b) => b.item.created_at.localeCompare(a.item.created_at),
     },
     {
       id: "added_old",
       label: "Added oldest",
-      compare_fn: (a, b) => a.item.published_at.localeCompare(b.item.published_at),
+      compare_fn: (a, b) => a.item.created_at.localeCompare(b.item.created_at),
     },
     {
       id: "channel_az",
@@ -58,12 +57,12 @@
     {
       id: "published_new",
       label: "Published newest",
-      compare_fn: (a, b) => b.video.published_at.localeCompare(a.video.published_at),
+      compare_fn: (a, b) => b.video.created_at.localeCompare(a.video.created_at),
     },
     {
       id: "published_old",
       label: "Published oldest",
-      compare_fn: (a, b) => a.video.published_at.localeCompare(b.video.published_at),
+      compare_fn: (a, b) => a.video.created_at.localeCompare(b.video.created_at),
     },
     {
       id: "title_az",
@@ -78,12 +77,12 @@
     {
       id: "duration_10",
       label: "Duration longest",
-      compare_fn: (a, b) => b.video.total_seconds - a.video.total_seconds,
+      compare_fn: (a, b) => b.video.duration_s - a.video.duration_s,
     },
     {
       id: "duration_01",
       label: "Duration shortest",
-      compare_fn: (a, b) => a.video.total_seconds - b.video.total_seconds,
+      compare_fn: (a, b) => a.video.duration_s - b.video.duration_s,
     },
   ] satisfies Tuple<SortByMode>;
 
@@ -119,7 +118,7 @@
       all[i] = e;
       if (e.item.is_available) {
         available.push(e);
-        available_total_time += e.video.total_seconds;
+        available_total_time += e.video.duration_s;
       } else {
         unavailable.push(e);
       }
@@ -175,34 +174,11 @@
   });
 
   const is_playlist_subset_playable = $derived(
-    entries_displayed.length > 0 && entries_displayed.length < entries_cache.available.length,
+    (entries_displayed.length > 0 && entries_displayed.length < entries_cache.available.length) ||
+      sort_by.id !== DEFAULT_SORT_MODE.id,
   );
   async function play_current_playlist() {
-    const now = now_utc();
-    const playlist_entries = $state.snapshot(entries_displayed);
-    const playlist_size = playlist_entries.length;
-    const playlist_title = `Subset: ${data.playlist.title.slice(data_playlist.title.startsWith("Subset: ") ? 8 : 0)}`;
-    const playlist: Model.Playlist = {
-      id: "ephemeral_playlist_subset",
-      v: 1,
-      channel_id: data_playlist.channel_id,
-      description: data_playlist.description,
-      img: data_playlist.img,
-      item_count: playlist_size,
-      privacy_status: data_playlist.privacy_status,
-      published_at: now,
-      updated_at: now,
-      title: playlist_title,
-    };
-    const items: Model.PlaylistItemCompact[] = new Array(playlist_size);
-    for (let i = 0; i < playlist_size; i++) {
-      const item: Model.PlaylistItemCompact = { ...playlist_entries[i].item, playlist_id: playlist.id, id: uuidv4() };
-      items[i] = item;
-    }
-
-    await localdb.upsert_playlist(playlist);
-    await localdb.delete_playlists_items_by_playlist(playlist.id);
-    await localdb.upsert_playlists_items(items);
+    const playlist = await add_playlist_subset($state.snapshot(data_playlist), $state.snapshot(entries_displayed));
 
     goto(`/play?l=${playlist.id}`);
   }
@@ -238,7 +214,7 @@
       {/if}
       <div class="font-normal">
         <div>
-          Created <HumanTime utc={data_channel.published_at} as_relative />
+          Created <HumanTime utc={data_channel.created_at} as_relative />
         </div>
         <div>
           {entries_cache.all.length} tracks,
@@ -271,7 +247,11 @@
               if (playlist_is_pinned) {
                 pinned_state.unpin_by_id(data_playlist.id);
               } else {
-                pinned_state.pin("playlist", data_playlist);
+                if (data_playlist.tag === "l") {
+                  pinned_state.pin("lplaylist", data_playlist);
+                } else {
+                  pinned_state.pin("yplaylist", data_playlist);
+                }
               }
             },
             icon: playlist_is_pinned ? Icon.PinOff : Icon.Pin,
@@ -353,7 +333,7 @@
                     </div>
                     <div class="absolute bottom-2 right-2">
                       <span class="bg-accent px-1.5 py-1 rounded-md text-xs font-semibold tracking-wider">
-                        {seconds_to_hhmmss(video.total_seconds)}
+                        {seconds_to_hhmmss(video.duration_s)}
                       </span>
                     </div>
                   </div>
@@ -371,7 +351,7 @@
                           {video.channel_title}
                         </a>
                         -
-                        <span><HumanTime as_relative utc={video.published_at} /></span>
+                        <span><HumanTime as_relative utc={video.created_at} /></span>
                       </p>
                     </div>
                     <div class="flex items-center ml-auto" data-no-play>

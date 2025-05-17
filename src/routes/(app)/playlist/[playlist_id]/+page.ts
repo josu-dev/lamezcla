@@ -1,4 +1,7 @@
-import { localapi, localdb } from '$client/data/query/index.js';
+import { db } from '$data/local/db/index.js';
+import type { Model } from '$data/models/index.js';
+import { load_error } from '$data/providers/utils.js';
+import { youtube } from '$data/providers/youtube/client/index.js';
 import type { PageLoad } from './$types.js';
 
 
@@ -6,14 +9,14 @@ export const load: PageLoad = async ({ params, fetch }) => {
     let [
         playlist, entries
     ] = await Promise.all([
-        localdb.select_playlist(params.playlist_id),
-        localdb.select_playlist_entries(params.playlist_id)
+        db.select_playlist_by_id(params.playlist_id),
+        db.select_playlist_entries_by_id(params.playlist_id)
     ]);
     let save_playlist = false;
     if (playlist === undefined) {
-        const r = await localapi.get_playlist(params.playlist_id, fetch);
+        const r = await youtube.get_playlist(params.playlist_id, fetch);
         if (r.is_err) {
-            localapi.load_error(r.error, {
+            load_error(r.error, {
                 404: `Playlist with id '${params.playlist_id}' not found`,
                 other: `Playlist with id '${params.playlist_id}' couldn't be loaded`
             });
@@ -23,12 +26,12 @@ export const load: PageLoad = async ({ params, fetch }) => {
         save_playlist = true;
     }
 
-    let channel = await localdb.select_channel(playlist.channel_id);
+    let channel = await db.select_channel_by_id(playlist.channel_id);
     let save_channel = false;
     if (channel === undefined) {
-        const r = await localapi.get_channel(playlist.channel_id, fetch);
+        const r = await youtube.get_channel(playlist.channel_id, fetch);
         if (r.is_err) {
-            localapi.load_error(r.error, {
+            load_error(r.error, {
                 404: `Channel with id '${playlist.channel_id}' not found`,
                 other: `Channel with id '${playlist.channel_id}' couldn't be loaded`
             });
@@ -38,17 +41,15 @@ export const load: PageLoad = async ({ params, fetch }) => {
         save_channel = true;
     }
 
-    const refresh_entries = save_playlist || channel.v > playlist.v || entries.length === 0;
+    if (channel.tag === 'y' && playlist.tag === 'y' && (channel.v > playlist.v || entries.length === 0 || save_playlist)) {
+        if (channel.v > playlist.v) {
+            playlist.v = channel.v;
+            save_playlist = true;
+        }
 
-    if (channel.v > playlist.v) {
-        playlist.v = channel.v;
-        save_playlist = true;
-    }
-
-    if (refresh_entries) {
-        const r = await localapi.get_playlist_entries(params.playlist_id, fetch);
+        const r = await youtube.get_playlist_entries(params.playlist_id, fetch);
         if (r.is_err) {
-            localapi.load_error(r.error, {
+            load_error(r.error, {
                 404: `Items of playlist with id '${params.playlist_id}' couldn't be loaded`,
                 other: `Items of playlist with id '${params.playlist_id}' couldn't be loaded`
             });
@@ -68,20 +69,20 @@ export const load: PageLoad = async ({ params, fetch }) => {
             items_to_delete.push(e.item.id);
         }
         if (items_to_delete.length > 0) {
-            await localdb.delete_playlists_items(items_to_delete);
+            await db.delete_playlists_items_by_ids(items_to_delete);
         }
         await Promise.all([
-            localdb.upsert_playlists_items(items),
-            localdb.upsert_videos(videos as any),
+            db.upsert_playlists_items(items),
+            db.upsert_videos(videos as any),
         ]);
-        entries = await localdb.select_playlist_entries(params.playlist_id);
+        entries = await db.select_playlist_entries_by_id(params.playlist_id);
     }
 
     if (save_channel) {
-        await localdb.upsert_channel(channel);
+        await db.upsert_channel(channel);
     }
     if (save_playlist) {
-        await localdb.upsert_playlist(playlist);
+        await db.upsert_yplaylist(playlist as Model.YPlaylist);
     }
 
     return {

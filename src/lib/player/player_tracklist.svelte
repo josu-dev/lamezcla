@@ -9,11 +9,11 @@
   let total_time = $derived.by(() => {
     let total_s = 0;
     for (const t of entries) {
-      if (t.video === undefined) {
+      if (!t.video.is_available) {
         continue;
       }
 
-      total_s += t.video.total_seconds;
+      total_s += t.video.duration_s;
     }
 
     return total_s;
@@ -68,7 +68,7 @@
               </div>
             </div>
             <div class="justify-self-end text-xs tracking-wide">
-              {seconds_to_hhmmss(e.video.total_seconds)}
+              {seconds_to_hhmmss(e.video.duration_s)}
             </div>
           </div>
         </button>

@@ -3,11 +3,17 @@ import type { Snippet } from 'svelte';
 
 export type Optional<T> = undefined | T;
 
-export type OptionalPromise<T> = Promise<undefined | T>;
+export type Async<T> = Promise<T>;
 
-export type ArrayPromise<T> = Promise<T[]>;
+export type AsyncArray<T> = Promise<T[]>;
 
-export type VoidPromise = Promise<void>;
+export type AsyncBoolean = Promise<void>;
+
+export type AsyncNumber = Promise<number>;
+
+export type AsyncOptional<T> = Promise<undefined | T>;
+
+export type AsyncVoid = Promise<void>;
 
 export type ElEvent<E extends Event, T extends HTMLElement> = E & { currentTarget: T; };
 
