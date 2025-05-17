@@ -47,7 +47,7 @@ export type None = {
 
 export type Option<T> = None | Some<T>;
 
-export type AsyncOptional<T> = Promise<Option<T>>;
+export type AsyncOption<T> = Promise<Option<T>>;
 
 export function some(): Some<never>;
 export function some<T>(value: T): Some<T>;

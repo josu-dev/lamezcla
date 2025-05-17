@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import { use_followed_ctx, use_pinned_ctx } from "$client/context/index.js";
-  import { refresh_local_channel_and_playlists } from "$client/data/refresh/index.js";
+  import { refresh_local_channel_and_playlists } from "$data/local/db/refresh.js";
+  import type { Model } from "$data/models/index.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import { Icon } from "$lib/components/icons/index.js";
   import type { SortMode } from "$lib/components/menus/index.js";
@@ -9,7 +9,7 @@
   import SearchInput from "$lib/components/SearchInput.svelte";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
-  import * as Model from "$lib/models/index.js";
+  import { use_followed_ctx, use_pinned_ctx } from "$lib/context/index.js";
   import { is_play_prevented, use_async_callback, uuidv4, type Tuple } from "$lib/utils/index.js";
   import { Searcher } from "$lib/utils/searcher.js";
   import type { PageData } from "./$types.js";
@@ -18,18 +18,18 @@
     data: PageData;
   };
 
-  type SortByMode = SortMode<Model.Playlist>;
+  type SortByMode = SortMode<Model.AnyPlaylist>;
 
   const SORT_MODES = [
     {
       id: "published_new",
       label: "Published newest",
-      compare_fn: (a, b) => b.published_at.localeCompare(a.published_at),
+      compare_fn: (a, b) => b.created_at.localeCompare(a.created_at),
     },
     {
       id: "published_old",
       label: "Published oldest",
-      compare_fn: (a, b) => a.published_at.localeCompare(b.published_at),
+      compare_fn: (a, b) => a.created_at.localeCompare(b.created_at),
     },
     {
       id: "title_az",
@@ -55,7 +55,7 @@
 
   const DEFAULT_SORT_MODE = SORT_MODES[0];
 
-  const searcher = new Searcher<Model.Playlist>({ mapper: (p) => p.title, on_empty_search: "all" });
+  const searcher = new Searcher<Model.AnyPlaylist>({ mapper: (p) => p.title, on_empty_search: "all" });
 
   let { data }: Props = $props();
 
@@ -69,8 +69,8 @@
   const channel_is_pinned = $derived(pinned_state.is_pinned(data_channel.id));
 
   const playlists_cache = $derived.by(() => {
-    const all: Model.Playlist[] = new Array(data_playlists.length);
-    const empty: Model.Playlist[] = [];
+    const all: Model.AnyPlaylist[] = new Array(data_playlists.length);
+    const empty: Model.AnyPlaylist[] = [];
 
     for (let i = 0; i < data_playlists.length; i++) {
       const p = data_playlists[i];
@@ -139,10 +139,12 @@
       <SourceLink type="channel" id={data_channel.id} title={data_channel.title} size="size-5" />
     {/snippet}
     {#snippet children()}
-      <div class="font-bold text-foreground text-base select-text">{data_channel.handle}</div>
+      <div class="font-bold text-foreground text-base select-text">
+        {"handle" in data_channel ? data_channel.handle : ""}
+      </div>
       <div class="font-normal">
         <div>
-          Created <HumanTime utc={data_channel.published_at} as_relative />
+          Created <HumanTime utc={data_channel.created_at} as_relative />
         </div>
         <div>
           {data_playlists.length} playlists{#if some_playlist_empty}, {playlists_cache.empty.length} empty{/if}
@@ -169,9 +171,9 @@
             label: channel_is_followed ? "Unfollow" : "Follow",
             action: () => {
               if (channel_is_followed) {
-                followed_state.unfollow(data_channel);
+                followed_state.unfollow(data_channel as Model.YChannel);
               } else {
-                followed_state.follow(data_channel);
+                followed_state.follow(data_channel as Model.YChannel);
               }
             },
             icon: channel_is_followed ? Icon.UserX : Icon.UserPlus,
@@ -183,7 +185,7 @@
               if (channel_is_pinned) {
                 pinned_state.unpin_by_id(data_channel.id);
               } else {
-                pinned_state.pin("channel", data_channel);
+                pinned_state.pin("channel", data_channel as Model.YChannel);
               }
             },
             icon: channel_is_pinned ? Icon.PinOff : Icon.Pin,
@@ -256,7 +258,11 @@
                               if (is_pinned) {
                                 pinned_state.unpin_by_id(playlist.id);
                               } else {
-                                pinned_state.pin("playlist", playlist);
+                                if (playlist.tag === "l") {
+                                  pinned_state.pin("lplaylist", playlist);
+                                } else {
+                                  pinned_state.pin("yplaylist", playlist);
+                                }
                               }
                             },
                             icon: is_pinned ? Icon.PinOff : Icon.Pin,

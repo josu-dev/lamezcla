@@ -1,4 +1,4 @@
-import type * as Model from "$lib/models/index.js";
+import type { Model } from '$data/models/index.js';
 import type { Optional } from '$lib/utils/index.js';
 import { assert, create_context, noop } from '$lib/utils/index.js';
 import type * as IFrameAPI from "./iframe_api.js";
@@ -24,6 +24,7 @@ const DEFAULT_OPTS = {
     volume: 25,
     persist: true,
     skip_on_unavailable: true,
+    on_play: noop,
 } satisfies DefaultOptions;
 
 type PlayerInternalState = {
@@ -34,9 +35,9 @@ type PlayerInternalState = {
     is_paused: boolean;
     is_playing: boolean;
     repeat: PlayerRepeat;
-    time_current: number,
-    time_duration: number,
-    volume: number,
+    time_current: number;
+    time_duration: number;
+    volume: number;
 } & ({
     is_unplayable: true;
     video_id: undefined;
@@ -142,7 +143,7 @@ class PlayerState {
     #persist_config: PersistConfigFn;
     #entries: Model.PlaylistEntry[];
 
-    #s_playlist: undefined | Model.Playlist = $state();
+    #s_playlist: undefined | Model.AnyPlaylist = $state();
     #s_entries: Model.PlaylistEntry[] = $state([]);
     #s_current: CurrentTrack = $state({
         index: -1,
@@ -336,12 +337,44 @@ class PlayerState {
         }
     };
 
-    play = (video_id: string): void => {
-        this.#state.video_id = video_id;
+    play_playlist = (playlist: Model.AnyPlaylist, entries: Model.PlaylistEntry[], index: number): void => {
+        this.#s_playlist = playlist;
+        const valid = [];
+        for (const e of entries) {
+            if (e.video.is_available && e.video.is_embeddable) {
+                valid.push(e);
+            }
+        }
+
+        this.#entries = valid;
+        this.#state.is_mode_list = true;
+        this.#state.is_mode_single = false;
+        this.#state.is_unplayable = false;
+        this.#s_entries = [...valid];
+        this.#s_curr_i = 0;
+        this.#opts.on_play({ type: 'playlist', value: playlist });
+        this.play_by_index(index);
+    };
+
+    play_video = (value: Model.Video): void => {
+        this.#entries = [];
+        this.#state.is_mode_list = false;
+        this.#state.is_mode_list = true;
+        this.#state.is_unplayable = false;
+        this.#state.video_id = value.id;
+
+        this.#s_playlist = undefined;
+        this.#s_entries = [];
+        this.#s_current.index = -1;
+        this.#s_current.entry = undefined;
+        this.#s_current.unavailable = !(value.is_available && value.is_embeddable);
+        this.#s_current.unplayable = false;
+        this.#s_current.video = value;
         this.#state.is_mode_list = false;
         this.#state.is_mode_single = true;
         this.#state.is_unplayable = false;
         this.#play();
+        this.#opts.on_play({ type: 'video', value });
     };
 
     play_by_index = (index: number): void => {
@@ -362,9 +395,10 @@ class PlayerState {
         this.#s_current.unplayable = false;
         this.#s_current.video = e.video;
         this.#play();
+        this.#opts.on_play({ type: 'playlist_item', value: e });
     };
 
-    set_playlist = (value: Model.Playlist): void => {
+    set_playlist = (value: Model.AnyPlaylist): void => {
         this.#s_playlist = value;
     };
 
@@ -382,21 +416,6 @@ class PlayerState {
         this.#state.is_unplayable = false;
         this.#s_entries = [...valid];
         this.#s_curr_i = 0;
-    };
-
-    set_video = (value: Model.Video): void => {
-        this.#entries = [];
-        this.#state.is_mode_list = false;
-        this.#state.is_mode_list = true;
-        this.#state.is_unplayable = false;
-
-        this.#s_playlist = undefined;
-        this.#s_entries = [];
-        this.#s_current.index = -1;
-        this.#s_current.entry = undefined;
-        this.#s_current.unavailable = !(value.is_available && value.is_embeddable);
-        this.#s_current.unplayable = false;
-        this.#s_current.video = value;
     };
 
     shuffle = (): void => {
@@ -492,7 +511,7 @@ class PlayerState {
 
     get next_entry(): Optional<Model.PlaylistEntry> { return this.#s_next_entry; }
 
-    get playlist(): Optional<Model.Playlist> { return this.#s_playlist; }
+    get playlist(): Optional<Model.AnyPlaylist> { return this.#s_playlist; }
 
     get tracks(): Model.PlaylistEntry[] { return this.#s_entries; }
 }

@@ -1,5 +1,4 @@
-import type { FollowedState } from '$client/context/followed.svelte.js';
-import type { PinnedState } from '$client/context/pinned.svelte.js';
+import type { FollowedState, PinnedState } from '$lib/context/index.js';
 import type { PropsNoChildren, PropsWithChildren } from '$lib/utils/types.js';
 import type { Snippet } from 'svelte';
 

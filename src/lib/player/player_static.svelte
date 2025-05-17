@@ -45,8 +45,7 @@
 
     if (player_source.single) {
       if (player.current.video?.id !== player_source.video.id) {
-        player.set_video(player_source.video);
-        player.play(player_source.video.id);
+        player.play_video(player_source.video);
       }
       return;
     }
@@ -54,11 +53,9 @@
     const is_different_playlist =
       player.playlist === undefined ||
       player.playlist.id !== player_source.playlist.id ||
-      player.playlist.published_at !== player_source.playlist.published_at;
+      player.playlist.created_at !== player_source.playlist.created_at;
     if (is_different_playlist) {
-      player.set_playlist(player_source.playlist);
-      player.set_entries(player_source.playlist_entries);
-      player.play_by_index(player_source.start_index);
+      player.play_playlist(player_source.playlist, player_source.playlist_entries, player_source.start_index);
     }
   });
 </script>

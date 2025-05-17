@@ -1,4 +1,4 @@
-import { type FollowedState, type PinnedState } from '$client/context/index.js';
+import type { FollowedState, PinnedState } from '$lib/context/index.js';
 import { create_context } from '$lib/utils/index.js';
 import type { SidebarStateOptions } from './internal.js';
 

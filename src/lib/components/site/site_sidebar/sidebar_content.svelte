@@ -1,9 +1,9 @@
 <script lang="ts">
   import { page } from "$app/state";
+  import type { Model } from "$data/models/index.js";
   import { Icon } from "$lib/components/icons/index.js";
   import ReorderableList from "$lib/components/ReorderableList.svelte";
   import { GITHUB_REPOSITORY, GITHUB_USERNAME } from "$lib/constants.js";
-  import type * as Model from "$lib/models/index.js";
   import type { Component } from "svelte";
   import type { SidebarContentProps } from "./internal.js";
   import { use_site_sidebar_ctx } from "./sidebar.svelte.js";
@@ -16,20 +16,18 @@
 
   const pinned_item_icon: Record<Model.PinnedItemType, Component> = {
     channel: Icon.User,
-    playlist: Icon.ListVideo,
-    playlist_custom: Icon.ListVideo,
+    yplaylist: Icon.ListVideo,
+    lplaylist: Icon.ListVideo,
     video: Icon.Play,
   };
 
   function pinned_item_pathname<T extends Model.PinnedEntry>(entry: T): string {
-    switch (entry.type) {
+    switch (entry.tag) {
       case "channel": {
         return `/${entry.value.handle ?? entry.value.id}`;
       }
-      case "playlist": {
-        return `/playlist/${entry.value.id}`;
-      }
-      case "playlist_custom": {
+      case "yplaylist":
+      case "lplaylist": {
         return `/playlist/${entry.value.id}`;
       }
       case "video": {
@@ -58,7 +56,7 @@
         class="mt-2"
       >
         {#snippet item(p, i)}
-          {@const ItemIcon = pinned_item_icon[p.type]}
+          {@const ItemIcon = pinned_item_icon[p.tag]}
           {@const pathname = pinned_item_pathname(p)}
           <SectionItem
             title={p.value.title}
@@ -70,7 +68,7 @@
               <ItemIcon class="m-1" />
             {/snippet}
             {#snippet subtitle()}
-              {#if p.type === "playlist" || p.type === "playlist_custom"}
+              {#if p.tag === "yplaylist" || p.tag === "lplaylist"}
                 <div class="text-xs text-muted-foreground">{p.value.item_count ?? 0} tracks</div>
               {/if}
             {/snippet}
@@ -79,7 +77,7 @@
                 onclick={(ev) => {
                   ev.preventDefault();
                   ev.stopPropagation();
-                  state.pinned.unpin_by_id(p.item.pinned_id);
+                  state.pinned.unpin_by_id(p.item.value_id);
                 }}
                 class="block rounded-md p-1 focus-outline hover:bg-muted"
               >

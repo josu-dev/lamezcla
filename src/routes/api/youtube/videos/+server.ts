@@ -1,4 +1,4 @@
-import { youtube } from '$lib/provider/index.js';
+import { youtube } from '$data/providers/youtube/server/index.js';
 import { endpoint_error, endpoint_json, parse_request } from '$lib/utils/index.js';
 import * as v from 'valibot';
 import type { RequestHandler } from './$types';
