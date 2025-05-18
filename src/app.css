@@ -5,23 +5,23 @@
 
 
 @font-face {
-	font-family: 'Nunito';
-	font-style: normal;
-	font-weight: 200 900;
-	font-display: swap;
-	src: url('/fonts/Nunito/Nunito-VariableFont_wght.ttf') format('truetype');
+    font-family: 'Nunito';
+    font-style: normal;
+    font-weight: 200 900;
+    font-display: swap;
+    src: url('/fonts/Nunito/Nunito-VariableFont_wght.ttf') format('truetype');
 }
 
 @font-face {
-	font-family: 'Nunito';
-	font-style: italic;
-	font-weight: 200 900;
-	font-display: swap;
-	src: url('/fonts/Nunito/Nunito-Italic-VariableFont_wght.ttf') format('truetype');
+    font-family: 'Nunito';
+    font-style: italic;
+    font-weight: 200 900;
+    font-display: swap;
+    src: url('/fonts/Nunito/Nunito-Italic-VariableFont_wght.ttf') format('truetype');
 }
 
 @theme {
-	--font-sans: 'Nunito', sans-serif;
+    --font-sans: 'Nunito', sans-serif;
 }
 
 @custom-variant dark (&:is(.dark *));
@@ -37,6 +37,7 @@
     --color-muted: var(--color-neutral-500);
     --color-primary-foreground: var(--color-neutral-100);
     --color-primary: var(--color-red-600);
+    --color-primary-background: var(--color-red-900);
     --radius: 0.5rem;
     --radius-sm: calc(var(--radius) - 4px);
     --radius-md: calc(var(--radius) - 2px);
@@ -67,7 +68,7 @@
     }
 
     body {
-        @apply bg-background text-foreground font-sans max-h-full;
+        @apply bg-background text-foreground font-sans overflow-hidden;
     }
 
     a, button, input {

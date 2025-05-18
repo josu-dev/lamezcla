@@ -5,6 +5,7 @@
   import HumanTime from "$lib/components/HumanTime.svelte";
   import { Icon } from "$lib/components/icons/index.js";
   import { OptionsMenu, SortMenu } from "$lib/components/menus/index.js";
+  import PlayCover from "$lib/components/PlayCover.svelte";
   import SearchInput from "$lib/components/SearchInput.svelte";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
@@ -148,9 +149,6 @@
         <div>
           {data_playlists.length} playlists{#if some_playlist_empty}, {playlists_cache.empty.length} empty{/if}
         </div>
-        <!-- <div>
-          Last refresh <HumanTime utc={data_channel.updated_at} as_relative />
-        </div> -->
       </div>
     {/snippet}
     {#snippet actions()}
@@ -231,18 +229,12 @@
                     alt="{playlist.title} playlist thumbnail"
                     class="rounded-md w-full aspect-video object-fill"
                   />
-                  <div
-                    class="absolute grid opacity-0 [&:is(:where(.group):hover:not(:has([data-no-play]:hover))_*)]:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
-                  >
-                    <div class="flex items-center gap-2 text-2xl font-semibold">
-                      <Icon.Play class="size-8 stroke-2" /> Play
-                    </div>
-                  </div>
                   <div class="absolute bottom-2 right-2">
                     <span class="bg-accent px-1.5 py-1 rounded-md text-xs font-semibold tracking-wider">
                       ≈ {playlist.item_count} tracks
                     </span>
                   </div>
+                  <PlayCover size="md" />
                 </div>
                 <div>
                   <div class="flex">
