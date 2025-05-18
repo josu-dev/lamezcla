@@ -4,13 +4,12 @@
   import type { Model } from "$data/models/index.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import { Icon } from "$lib/components/icons/index.js";
-  import type { SortMode } from "$lib/components/menus/index.js";
-  import { ActionsMenu, SortMenu } from "$lib/components/menus/index.js";
+  import { OptionsMenu, SortMenu } from "$lib/components/menus/index.js";
   import SearchInput from "$lib/components/SearchInput.svelte";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import { use_followed_ctx, use_pinned_ctx } from "$lib/context/index.js";
-  import { is_play_prevented, use_async_callback, uuidv4, type Tuple } from "$lib/utils/index.js";
+  import { is_play_prevented, use_async_callback, type Tuple } from "$lib/utils/index.js";
   import { Searcher } from "$lib/utils/searcher.js";
   import type { PageData } from "./$types.js";
 
@@ -18,7 +17,7 @@
     data: PageData;
   };
 
-  type SortByMode = SortMode<Model.AnyPlaylist>;
+  type SortMode = SortMenu.SortMode<Model.AnyPlaylist>;
 
   const SORT_MODES = [
     {
@@ -51,7 +50,7 @@
       label: "Track count + to -",
       compare_fn: (a, b) => b.item_count - a.item_count,
     },
-  ] satisfies Tuple<SortByMode>;
+  ] satisfies Tuple<SortMode>;
 
   const DEFAULT_SORT_MODE = SORT_MODES[0];
 
@@ -101,7 +100,7 @@
     return out;
   });
 
-  let sort_by: SortByMode = $state(DEFAULT_SORT_MODE);
+  let sort_by: SortMode = $state(DEFAULT_SORT_MODE);
   let playlists_displayed = $derived.by(() => {
     const out = playlists_filtered.toSorted(sort_by.compare_fn);
     return out;
@@ -155,40 +154,40 @@
       </div>
     {/snippet}
     {#snippet actions()}
-      <ActionsMenu
-        actions={[
+      <OptionsMenu.Root
+        label="Channel options"
+        options={[
           {
-            id: uuidv4(),
             label: "Refresh",
-            action: () => {
+            onSelect: () => {
               refresh_channel.fn(data_channel.id);
             },
-            icon: refresh_channel.running ? Icon.LoaderCircle : Icon.RefreshCw,
-            icon_props: { class: refresh_channel.running ? "animate-spin" : "" },
+            icon_left: {
+              Icon: refresh_channel.running ? Icon.LoaderCircle : Icon.RefreshCw,
+              props: { class: refresh_channel.running ? "animate-spin" : "" },
+            },
           },
           {
-            id: uuidv4(),
             label: channel_is_followed ? "Unfollow" : "Follow",
-            action: () => {
+            onSelect: () => {
               if (channel_is_followed) {
                 followed_state.unfollow(data_channel as Model.YChannel);
               } else {
                 followed_state.follow(data_channel as Model.YChannel);
               }
             },
-            icon: channel_is_followed ? Icon.UserX : Icon.UserPlus,
+            icon_left: { Icon: channel_is_followed ? Icon.UserX : Icon.UserPlus },
           },
           {
-            id: uuidv4(),
             label: channel_is_pinned ? "Unpin" : "Pin",
-            action: () => {
+            onSelect: () => {
               if (channel_is_pinned) {
                 pinned_state.unpin_by_id(data_channel.id);
               } else {
                 pinned_state.pin("channel", data_channel as Model.YChannel);
               }
             },
-            icon: channel_is_pinned ? Icon.PinOff : Icon.Pin,
+            icon_left: { Icon: channel_is_pinned ? Icon.PinOff : Icon.Pin },
           },
         ]}
       />
@@ -201,7 +200,7 @@
     {/snippet}
     {#snippet actions()}
       <SearchInput label="Search playlist" oninput={(ev) => (search_query = ev.currentTarget.value)} maxlength={32} />
-      <SortMenu
+      <SortMenu.Root
         current={sort_by}
         modes={SORT_MODES}
         on_selected={(mode) => {
@@ -249,12 +248,12 @@
                   <div class="flex">
                     <h3 class="text-lg font-semibold mt-2">{playlist.title}</h3>
                     <div class="mt-2 ml-auto relative" data-no-play>
-                      <ActionsMenu
-                        actions={[
+                      <OptionsMenu.Root
+                        label="Playlist options"
+                        options={[
                           {
-                            id: uuidv4(),
                             label: is_pinned ? "Unpin" : "Pin",
-                            action: () => {
+                            onSelect: () => {
                               if (is_pinned) {
                                 pinned_state.unpin_by_id(playlist.id);
                               } else {
@@ -265,7 +264,7 @@
                                 }
                               }
                             },
-                            icon: is_pinned ? Icon.PinOff : Icon.Pin,
+                            icon_left: { Icon: is_pinned ? Icon.PinOff : Icon.Pin },
                           },
                         ]}
                       />

@@ -1,11 +1,11 @@
 <script lang="ts">
   import HumanTime from "$lib/components/HumanTime.svelte";
   import { Icon } from "$lib/components/icons/index.js";
-  import { ActionsMenu } from "$lib/components/menus/index.js";
+  import { OptionsMenu } from "$lib/components/menus/index.js";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import { use_pinned_ctx } from "$lib/context/index.js";
-  import { seconds_to_ddhhmmss, uuidv4 } from "$lib/utils/index.js";
+  import { seconds_to_ddhhmmss } from "$lib/utils/index.js";
   import type { PageData } from "./$types.js";
 
   type Props = {
@@ -51,19 +51,19 @@
       Uploaded <HumanTime utc={data_video.created_at} as_relative />
     {/snippet}
     {#snippet actions()}
-      <ActionsMenu
-        actions={[
+      <OptionsMenu.Root
+        label="Video options"
+        options={[
           {
-            id: uuidv4(),
             label: video_is_pinned ? "Unpin" : "Pin",
-            action: () => {
+            onSelect: () => {
               if (video_is_pinned) {
                 pinned_state.unpin_by_id(data_video.id);
               } else {
                 pinned_state.pin("video", data_video);
               }
             },
-            icon: video_is_pinned ? Icon.PinOff : Icon.Pin,
+            icon_left: { Icon: video_is_pinned ? Icon.PinOff : Icon.Pin },
           },
         ]}
       />{/snippet}

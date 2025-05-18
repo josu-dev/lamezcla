@@ -27,6 +27,7 @@ export { default as Repeat } from '@lucide/svelte/icons/repeat';
 export { default as Repeat1 } from '@lucide/svelte/icons/repeat-1';
 export { default as RotateCw } from '@lucide/svelte/icons/rotate-cw';
 export { default as Search } from '@lucide/svelte/icons/search';
+export { default as Shredder } from '@lucide/svelte/icons/shredder';
 export { default as Shuffle } from '@lucide/svelte/icons/shuffle';
 export { default as SkipBack } from '@lucide/svelte/icons/skip-back';
 export { default as SkipForward } from '@lucide/svelte/icons/skip-forward';

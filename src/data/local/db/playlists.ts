@@ -1,15 +1,13 @@
 import { PLAYLIST_ITEM_FLAGS, type Model } from '$data/models/index.js';
 import { now_utc, uuidv4 } from '$lib/utils/misc.js';
 import type { Async, AsyncArray, AsyncOptional, AsyncVoid } from '$lib/utils/types.js';
-import { expand_playlist_item_compact, expand_video_compact, normalize_playlist_entries, } from '../shared.js';
 import type { DexieWithTables } from './db.js';
 import { select_lplaylist_by_id, update_lplaylist_by_id, upsert_lplaylist } from './lplaylists.js';
 import { count_play_records, select_last_play_record, select_play_records, upsert_play_record } from './play_records.js';
 import { delete_playlist_items_by_playlist_id, select_playlist_items_by_playlist_id, upsert_playlists_items } from './playlists_items.js';
-import { ID_ME_CHANNEL } from './shared.js';
+import { expand_playlist_item_compact, expand_video_compact, FALLBACK_IMG, ID_ME_CHANNEL, normalize_playlist_entries, } from './shared.js';
 import { count_videos_most_played, select_videos_by_ids, select_videos_most_played } from './videos.js';
 import { select_yplaylist_by_id, upsert_yplaylist } from './yplaylists.js';
-
 
 
 export const PREFIX_DYNAMIC_PLAYLIST = 'DP';
@@ -256,7 +254,7 @@ export async function seed_playlists(db: DexieWithTables) {
         channel_id: ID_ME_CHANNEL,
         title: 'History',
         description: 'History of played tracks',
-        img: undefined,
+        img: FALLBACK_IMG,
         item_count: 0,
         play_count: 0,
         created_at: now,
@@ -272,7 +270,7 @@ export async function seed_playlists(db: DexieWithTables) {
         channel_id: ID_ME_CHANNEL,
         title: `Likes`,
         description: '',
-        img: undefined,
+        img: FALLBACK_IMG,
         item_count: 0,
         play_count: 0,
         updated_at: now,
@@ -288,7 +286,7 @@ export async function seed_playlists(db: DexieWithTables) {
         channel_id: ID_ME_CHANNEL,
         title: `50's most played`,
         description: '',
-        img: undefined,
+        img: FALLBACK_IMG,
         item_count: 0,
         play_count: 0,
         updated_at: now,
@@ -304,7 +302,7 @@ export async function seed_playlists(db: DexieWithTables) {
         channel_id: ID_ME_CHANNEL,
         title: `100's most played`,
         description: '',
-        img: undefined,
+        img: FALLBACK_IMG,
         item_count: 0,
         play_count: 0,
         updated_at: now,

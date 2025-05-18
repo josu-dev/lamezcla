@@ -25,7 +25,7 @@
 </script>
 
 {#if is_hidden && dev}
-  <div class="fixed top-0 right-0 bg-red-500 py-2 px-1 text-xs">HIDDEN</div>
+  <div class="fixed top-0 right-0 z-10 bg-red-500 py-0.5 px-px text-[10px] leading-none font-semibold">HIDDEN</div>
 {/if}
 
 <div

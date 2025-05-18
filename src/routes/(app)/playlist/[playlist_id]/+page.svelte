@@ -5,8 +5,7 @@
   import type { Model } from "$data/models/index.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import { Icon } from "$lib/components/icons/index.js";
-  import type { SortMode } from "$lib/components/menus/index.js";
-  import { ActionsMenu, SortMenu } from "$lib/components/menus/index.js";
+  import { OptionsMenu, SortMenu } from "$lib/components/menus/index.js";
   import SearchInput from "$lib/components/SearchInput.svelte";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
@@ -18,7 +17,6 @@
     seconds_to_hhmmss,
     seconds_to_human,
     use_async_callback,
-    uuidv4,
   } from "$lib/utils/index.js";
   import type { PageData } from "./$types.js";
 
@@ -26,7 +24,7 @@
     data: PageData;
   };
 
-  type SortByMode = SortMode<Model.PlaylistEntry>;
+  type SortByMode = SortMenu.SortMode<Model.PlaylistEntry>;
 
   const SORT_MODES = [
     {
@@ -229,21 +227,22 @@
       </div>
     {/snippet}
     {#snippet actions()}
-      <ActionsMenu
-        actions={[
+      <OptionsMenu.Root
+        label="Playlist options"
+        options={[
           {
-            id: uuidv4(),
             label: "Refresh",
-            action: () => {
+            onSelect: () => {
               refresh_playlist.fn(data_playlist.id);
             },
-            icon: refresh_playlist.running ? Icon.LoaderCircle : Icon.RefreshCw,
-            icon_props: { class: refresh_playlist.running ? "animate-spin" : "" },
+            icon_left: {
+              Icon: refresh_playlist.running ? Icon.LoaderCircle : Icon.RefreshCw,
+              props: { class: refresh_playlist.running ? "animate-spin" : "" },
+            },
           },
           {
-            id: uuidv4(),
             label: playlist_is_pinned ? "Unpin" : "Pin",
-            action: () => {
+            onSelect: () => {
               if (playlist_is_pinned) {
                 pinned_state.unpin_by_id(data_playlist.id);
               } else {
@@ -254,7 +253,7 @@
                 }
               }
             },
-            icon: playlist_is_pinned ? Icon.PinOff : Icon.Pin,
+            icon_left: { Icon: playlist_is_pinned ? Icon.PinOff : Icon.Pin },
           },
         ]}
       />
@@ -277,7 +276,7 @@
     {/snippet}
     {#snippet actions()}
       <SearchInput label="Search video" oninput={(ev) => (search_query = ev.currentTarget.value)} maxlength={32} />
-      <SortMenu
+      <SortMenu.Root
         current={sort_by}
         modes={SORT_MODES}
         on_selected={(mode) => {
@@ -355,19 +354,19 @@
                       </p>
                     </div>
                     <div class="flex items-center ml-auto" data-no-play>
-                      <ActionsMenu
-                        actions={[
+                      <OptionsMenu.Root
+                        label="Video options"
+                        options={[
                           {
-                            id: uuidv4(),
                             label: "Pin",
-                            action: () => {
+                            onSelect: () => {
                               if (is_pinned) {
                                 pinned_state.unpin_by_id(video.id);
                               } else {
                                 pinned_state.pin("video", video);
                               }
                             },
-                            icon: is_pinned ? Icon.PinOff : Icon.Pin,
+                            icon_left: { Icon: is_pinned ? Icon.PinOff : Icon.Pin },
                           },
                         ]}
                       />
