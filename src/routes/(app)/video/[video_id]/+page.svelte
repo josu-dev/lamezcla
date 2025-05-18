@@ -2,6 +2,7 @@
   import HumanTime from "$lib/components/HumanTime.svelte";
   import { Icon } from "$lib/components/icons/index.js";
   import { OptionsMenu } from "$lib/components/menus/index.js";
+  import PlayCover from "$lib/components/PlayCover.svelte";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import { use_pinned_ctx } from "$lib/context/index.js";
@@ -27,15 +28,9 @@
     {#snippet image()}
       <PageSimple.HeaderImage img={data_video.img} alt="{data_video.title} video thumbnail">
         {#snippet children(image)}
-          <a href="/play?v={data_video.id}" class="group relative">
+          <a href="/play?v={data_video.id}" class="group relative block h-28 aspect-video">
             {@render image()}
-            <div
-              class="absolute grid opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
-            >
-              <div class="flex items-center gap-2 text-lg font-bold">
-                <Icon.Play class="size-5 stroke-3" /> Play
-              </div>
-            </div>
+            <PlayCover size="md" />
           </a>
         {/snippet}
       </PageSimple.HeaderImage>

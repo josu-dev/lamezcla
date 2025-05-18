@@ -6,6 +6,7 @@
   import HumanTime from "$lib/components/HumanTime.svelte";
   import { Icon } from "$lib/components/icons/index.js";
   import { OptionsMenu, SortMenu } from "$lib/components/menus/index.js";
+  import PlayCover from "$lib/components/PlayCover.svelte";
   import SearchInput from "$lib/components/SearchInput.svelte";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import SourceLink from "$lib/components/sources/SourceLink.svelte";
@@ -189,15 +190,9 @@
     {#snippet image()}
       <PageSimple.HeaderImage img={data_playlist.img} alt="{data_playlist.title} playlist thumbnail">
         {#snippet children(image)}
-          <a href="/play?l={data_playlist.id}" class="group relative">
+          <a href="/play?l={data_playlist.id}" class="group relative block h-28 aspect-video">
             {@render image()}
-            <div
-              class="absolute grid opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
-            >
-              <div class="flex items-center gap-2 text-lg font-bold">
-                <Icon.Play class="size-5 stroke-3" /> Play
-              </div>
-            </div>
+            <PlayCover />
           </a>
         {/snippet}
       </PageSimple.HeaderImage>
@@ -323,18 +318,12 @@
                       alt="{video.title} video thumbnail"
                       class="rounded-md w-full aspect-video object-fill"
                     />
-                    <div
-                      class="absolute grid opacity-0 [&:is(:where(.group):hover:not(:has([data-no-play]:hover))_*)]:opacity-100 transition-opacity place-items-center inset-0 bg-background/75"
-                    >
-                      <div class="flex items-center gap-2 text-2xl font-bold">
-                        <Icon.Play class="size-8 stroke-3" /> Play
-                      </div>
-                    </div>
                     <div class="absolute bottom-2 right-2">
                       <span class="bg-accent px-1.5 py-1 rounded-md text-xs font-semibold tracking-wider">
                         {seconds_to_hhmmss(video.duration_s)}
                       </span>
                     </div>
+                    <PlayCover size="md" />
                   </div>
                   <div class="flex gap-4 flex-1">
                     <div>

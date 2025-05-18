@@ -22,7 +22,7 @@
   const { enhance } = superForm(data.form, {
     onSubmit({ cancel }) {
       if (query.mode === "") {
-        toast.error("Enter a valid text");
+        toast.error("Enter a valid text to search");
         cancel();
         return;
       }
