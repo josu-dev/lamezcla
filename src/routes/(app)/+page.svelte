@@ -56,7 +56,7 @@
     },
   });
 
-  function on_input(ev: ElEvent<Event, HTMLInputElement>) {
+  function on_input(ev: ElEvent<HTMLInputElement, Event>) {
     const v = ev.currentTarget.value;
     if (v === query.raw) {
       return;

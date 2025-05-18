@@ -2,7 +2,6 @@
     "javascript.preferences.importModuleSpecifierEnding": "js",
     "typescript.preferences.importModuleSpecifierEnding": "js",
     "files.autoSaveDelay": 60000,
-    "typescript.preferences.importModuleSpecifier": "shortest",
     "typescript.preferences.preferTypeOnlyAutoImports": true,
     "javascript.updateImportsOnFileMove.enabled": "prompt",
     "typescript.updateImportsOnFileMove.enabled": "prompt",

@@ -1,2 +1,3 @@
-export { default as ActionsMenu } from './ActionsMenu/ActionsMenu.svelte';
-export * from './SortMenu/index.js';
+export * as ActionsMenu from './actions_menu/index.js';
+export * as OptionsMenu from './options_menu/index.js';
+export * as SortMenu from './sort_menu/index.js';

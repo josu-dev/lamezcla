@@ -1,10 +1,10 @@
-import { expand_video_compact, normalize_playlist_entries, unavailable_video, video_compact_is_unavailable } from '$data/local/shared.js';
 import type { Model } from '$data/models/index.js';
 import { youtube } from '$data/providers/youtube/client/index.js';
 import type { AsyncOptional, AsyncResult, Optional } from '$lib/utils/index.js';
 import { ok } from '$lib/utils/index.js';
 import { select_channel_by_id, upsert_channel } from './channels.js';
 import { delete_playlists_items_by_ids, select_playlist_items_by_playlist_id, upsert_playlists_items } from './playlists_items.js';
+import { expand_video_compact, normalize_playlist_entries, unavailable_video, video_compact_is_unavailable } from './shared.js';
 import { upsert_videos } from './videos.js';
 import { delete_yplaylists_by_ids, select_yplaylist_by_id, select_yplaylists_by_channel_id, upsert_yplaylist, upsert_yplaylists } from './yplaylists.js';
 

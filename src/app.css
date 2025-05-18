@@ -67,7 +67,7 @@
     }
 
     body {
-        @apply bg-background text-foreground font-sans;
+        @apply bg-background text-foreground font-sans max-h-full;
     }
 
     a, button, input {
