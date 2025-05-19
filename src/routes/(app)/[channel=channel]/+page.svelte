@@ -152,43 +152,45 @@
       </div>
     {/snippet}
     {#snippet actions()}
-      <OptionsMenu.Root
-        label="Channel options"
-        options={[
-          {
-            label: "Refresh",
-            onSelect: () => {
-              refresh_channel.fn(data_channel.id);
+      {#if data_channel.tag === "y"}
+        <OptionsMenu.Root
+          label="Channel options"
+          options={[
+            {
+              label: "Refresh",
+              onSelect: () => {
+                refresh_channel.fn(data_channel.id);
+              },
+              icon_left: {
+                Icon: refresh_channel.running ? Icon.LoaderCircle : Icon.RefreshCw,
+                props: { class: refresh_channel.running ? "animate-spin" : "" },
+              },
             },
-            icon_left: {
-              Icon: refresh_channel.running ? Icon.LoaderCircle : Icon.RefreshCw,
-              props: { class: refresh_channel.running ? "animate-spin" : "" },
+            {
+              label: channel_is_followed ? "Unfollow" : "Follow",
+              onSelect: () => {
+                if (channel_is_followed) {
+                  followed_state.unfollow(data_channel as Model.YChannel);
+                } else {
+                  followed_state.follow(data_channel as Model.YChannel);
+                }
+              },
+              icon_left: { Icon: channel_is_followed ? Icon.UserX : Icon.UserPlus },
             },
-          },
-          {
-            label: channel_is_followed ? "Unfollow" : "Follow",
-            onSelect: () => {
-              if (channel_is_followed) {
-                followed_state.unfollow(data_channel as Model.YChannel);
-              } else {
-                followed_state.follow(data_channel as Model.YChannel);
-              }
+            {
+              label: channel_is_pinned ? "Unpin" : "Pin",
+              onSelect: () => {
+                if (channel_is_pinned) {
+                  pinned_state.unpin_by_id(data_channel.id);
+                } else {
+                  pinned_state.pin("channel", data_channel as Model.YChannel);
+                }
+              },
+              icon_left: { Icon: channel_is_pinned ? Icon.PinOff : Icon.Pin },
             },
-            icon_left: { Icon: channel_is_followed ? Icon.UserX : Icon.UserPlus },
-          },
-          {
-            label: channel_is_pinned ? "Unpin" : "Pin",
-            onSelect: () => {
-              if (channel_is_pinned) {
-                pinned_state.unpin_by_id(data_channel.id);
-              } else {
-                pinned_state.pin("channel", data_channel as Model.YChannel);
-              }
-            },
-            icon_left: { Icon: channel_is_pinned ? Icon.PinOff : Icon.Pin },
-          },
-        ]}
-      />
+          ]}
+        />
+      {/if}
     {/snippet}
   </PageSimple.Header>
 
@@ -257,6 +259,7 @@
                               }
                             },
                             icon_left: { Icon: is_pinned ? Icon.PinOff : Icon.Pin },
+                            disabled: playlist.tag === "l" && !playlist.pinneable,
                           },
                         ]}
                       />

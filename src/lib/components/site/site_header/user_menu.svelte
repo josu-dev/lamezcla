@@ -103,15 +103,6 @@
       <div class="flex flex-col gap-4 mt-4">
         <p class="text-sm">Are you sure you want to delete the application data?</p>
         <div class="flex justify-center gap-4 sm:gap-8 text-base">
-          <Dialog.Close
-            class="not-disabled:hover:bg-accent rounded-md inline-flex gap-x-2 py-0.5 px-1.5 active:scale-[0.98] disabled:opacity-75"
-            disabled={is_deleting}
-          >
-            <div class="h-6 overflow-hidden">
-              <Icon.X class="scale-125 -mr-0.5" />
-            </div>
-            <span>Cancel</span>
-          </Dialog.Close>
           <button
             onclick={on_delete_app_data}
             class="hover:bg-accent rounded-md inline-flex gap-x-2 py-0.5 px-1.5 active:scale-[0.98]"
@@ -124,6 +115,15 @@
               <span>Delete</span>
             {/if}
           </button>
+          <Dialog.Close
+            class="not-disabled:hover:bg-accent rounded-md inline-flex gap-x-2 py-0.5 px-1.5 active:scale-[0.98] disabled:opacity-75"
+            disabled={is_deleting}
+          >
+            <div class="h-6 overflow-hidden">
+              <Icon.X class="scale-125 -mr-0.5" />
+            </div>
+            <span>Cancel</span>
+          </Dialog.Close>
         </div>
       </div>
     </Dialog.Content>

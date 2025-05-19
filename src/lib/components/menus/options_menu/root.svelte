@@ -6,6 +6,7 @@
     label: string;
     onSelect: ActionsMenu.MenuAction["onSelect"] & {};
     icon_left: ActionsMenu.MenuAction["icon_left"] & {};
+    disabled?: boolean;
   };
 
   type Props = {
@@ -29,6 +30,8 @@
             class: "size-5 " + (option.icon_left.props?.class ?? ""),
           },
         },
+        disabled: option.disabled,
+        props: { class: "aria-disabled:hidden" },
         tag: "button",
       };
     }
