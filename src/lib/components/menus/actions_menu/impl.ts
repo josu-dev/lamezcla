@@ -14,6 +14,7 @@ export type MenuAction = {
     id: number;
     label: string;
     icon_left?: IconProp;
+    disabled?: boolean;
 } & (
         | { tag: "a"; onSelect?: (event: Event) => void; props: HTMLAnchorAttributes; }
         | { tag: "button"; onSelect: (event: Event) => void; props?: HTMLButtonAttributes; }

@@ -13,13 +13,14 @@
   {#each groups as group (group.id)}
     <DropdownMenu.Group aria-label={group.label} class="py-2 not-last:border-b border-muted">
       {#each group.items as action (action.id)}
-        <DropdownMenu.Item onSelect={action.onSelect}>
+        <DropdownMenu.Item onSelect={action.onSelect} disabled={action.disabled}>
           {#snippet child({ props })}
             <svelte:element
               this={action.tag}
               {...action.props}
               {...props}
-              class="data-highlighted:bg-muted flex w-full items-center text-sm font-medium px-2 cursor-pointer"
+              class="data-highlighted:bg-muted flex w-full items-center text-sm font-medium px-2 {action.props?.class ??
+                ''}"
             >
               <div class="grid place-items-center size-8 mr-1.5">
                 {#if action.icon_left}

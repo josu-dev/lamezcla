@@ -249,6 +249,7 @@
               }
             },
             icon_left: { Icon: playlist_is_pinned ? Icon.PinOff : Icon.Pin },
+            disabled: data_playlist.tag === "l" && !data_playlist.pinneable,
           },
         ]}
       />
