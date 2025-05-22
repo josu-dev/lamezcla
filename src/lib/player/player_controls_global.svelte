@@ -59,6 +59,8 @@
     {/if}
   </div>
   <div class="mt-[9px]">
-    <PlayerControlsStatic />
+    {#key is_hidden}
+      <PlayerControlsStatic />
+    {/key}
   </div>
 </div>

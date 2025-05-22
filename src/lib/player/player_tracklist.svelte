@@ -1,5 +1,4 @@
 <script lang="ts">
-  import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import type { PlayerTracklistProps } from "$lib/player/internal.js";
   import { seconds_to_hhmmss, seconds_to_human } from "$lib/utils/index.js";
 
@@ -22,10 +21,7 @@
 
 <aside class="max-w-sm border-l border-border h-full max-h-page-content overflow-hidden flex flex-col 2xl:max-w-md">
   <div class="border-b px-2 py-2 border-border">
-    <h2 class="text-xl font-bold">
-      Current playlist
-      <SourceLink type="playlist" id={playlist.id} title={playlist.title} size="size-5" />
-    </h2>
+    <h2 class="text-xl font-bold">Current playlist</h2>
     <div class="flex flex-col text-sm text-muted-foreground font-semibold mt-0.5">
       {#if channel !== undefined}
         <a href="/{channel.id}" class="font-bold focus-outline flex w-max max-w-full rounded-xs">

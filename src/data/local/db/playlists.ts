@@ -1,28 +1,16 @@
-import { PLAYLIST_ITEM_FLAGS, type Model } from '$data/models/index.js';
-import { now_utc, uuidv4 } from '$lib/utils/misc.js';
-import type { Async, AsyncArray, AsyncOptional, AsyncVoid } from '$lib/utils/types.js';
+import type { Model } from '$data/models/index.js';
+import type { Async, AsyncArray, AsyncOptional, AsyncVoid } from '$lib/utils/index.js';
+import { uuidv4 } from '$lib/utils/index.js';
+import { HISTORY_PLAYLIST_ID, LIKES_PLAYLIST_ID, MOST_PLAYED_100_PLAYLIST_ID, MOST_PLAYED_50_PLAYLIST_ID, SUBSET_PLAYLIST_ID } from '../constants.js';
+import { is_computed_playlist_id, is_local_playlist_id, play_record, play_record_to_playlist_item, playlist_item, system_playlist } from '../shared.js';
 import type { DexieWithTables } from './db.js';
-import { select_lplaylist_by_id, update_lplaylist_by_id, upsert_lplaylist } from './lplaylists.js';
+import { delete_lplaylist_by_id, select_lplaylist_by_id, update_lplaylist_by_id, upsert_lplaylist } from './lplaylists.js';
 import { count_play_records, select_last_play_record, select_play_records, upsert_play_record } from './play_records.js';
 import { delete_playlist_items_by_playlist_id, select_playlist_items_by_playlist_id, upsert_playlists_items } from './playlists_items.js';
-import { expand_playlist_item_compact, expand_video_compact, FALLBACK_IMG, ID_ME_CHANNEL, normalize_playlist_entries, } from './shared.js';
+import { expand_video_compact, normalize_playlist_entries } from './shared.js';
 import { count_videos_most_played, select_videos_by_ids, select_videos_most_played } from './videos.js';
 import { select_yplaylist_by_id, upsert_yplaylist } from './yplaylists.js';
 
-
-export const PREFIX_DYNAMIC_PLAYLIST = 'DP';
-
-export const PREFIX_LOCAL_PLAYLIST = 'LP';
-
-export const ID_SUBSET_PLAYLIST = `${PREFIX_LOCAL_PLAYLIST}_subset`;
-
-export const ID_LIKES_PLAYLIST = `${PREFIX_LOCAL_PLAYLIST}_likes`;
-
-export const ID_HISTORY_PLAYLIST = `${PREFIX_DYNAMIC_PLAYLIST}_history`;
-
-export const ID_50_MOST_PLAYED_PLAYLIST = `${PREFIX_DYNAMIC_PLAYLIST}_50_most_played`;
-
-export const ID_100_MOST_PLAYED_PLAYLIST = `${PREFIX_DYNAMIC_PLAYLIST}_100_most_played`;
 
 export async function upsert_playlist(value: Model.AnyPlaylist): AsyncVoid {
     if (value.tag === 'l') {
@@ -34,18 +22,18 @@ export async function upsert_playlist(value: Model.AnyPlaylist): AsyncVoid {
 }
 
 export async function select_playlist_by_id(id: string): AsyncOptional<Model.AnyPlaylist> {
-    const query = is_dynamic_or_local_playlist_id(id) ? select_lplaylist_by_id : select_yplaylist_by_id;
+    const query = is_local_playlist_id(id) ? select_lplaylist_by_id : select_yplaylist_by_id;
     const out = await query(id);
     if (out === undefined) {
         return;
     }
-    if (id === ID_HISTORY_PLAYLIST) {
+    if (id === HISTORY_PLAYLIST_ID) {
         out.item_count = await count_play_records();
     }
-    else if (id === ID_50_MOST_PLAYED_PLAYLIST) {
+    else if (id === MOST_PLAYED_50_PLAYLIST_ID) {
         out.item_count = await count_videos_most_played(50);
     }
-    else if (id === ID_100_MOST_PLAYED_PLAYLIST) {
+    else if (id === MOST_PLAYED_100_PLAYLIST_ID) {
         out.item_count = await count_videos_most_played(100);
     }
     return out;
@@ -57,18 +45,15 @@ export async function select_playlist_entries_by_most_played_videos(playlist_id:
     const out: Model.PlaylistEntry[] = new Array(videos.length);
     for (let i = 0; i < out.length; i++) {
         const video = videos[i];
-        const item_compact: Model.PlaylistItemCompact = {
+        const item = playlist_item({
             id: `${playlist_id}_${i}`,
-            created_at: now_utc(),
-            flags: PLAYLIST_ITEM_FLAGS.IS_PUBLIC,
-            play_count: 0,
             playlist_id: playlist_id,
             position: i + 1,
             video_id: video.id,
-        };
+        });
         out[i] = {
-            id: item_compact.id,
-            item: expand_playlist_item_compact(item_compact),
+            id: item.id,
+            item: item,
             video: video
         };
     }
@@ -78,15 +63,15 @@ export async function select_playlist_entries_by_most_played_videos(playlist_id:
 
 export async function select_playlist_entries_by_id(id: string): AsyncArray<Model.PlaylistEntry> {
     let compact_items: Model.PlaylistItemCompact[];
-    if (is_dynamic_playlist_id(id)) {
-        if (id === ID_HISTORY_PLAYLIST) {
+    if (is_computed_playlist_id(id)) {
+        if (id === HISTORY_PLAYLIST_ID) {
             const play_records = await select_play_records(0, 250);
             compact_items = new Array(play_records.length);
             for (let i = 0; i < compact_items.length; i++) {
                 compact_items[i] = play_record_to_playlist_item(play_records[i]);
             }
         }
-        else if (id === ID_50_MOST_PLAYED_PLAYLIST) {
+        else if (id === MOST_PLAYED_50_PLAYLIST_ID) {
             return await select_playlist_entries_by_most_played_videos(id, 50);
         }
         else {
@@ -118,25 +103,24 @@ export async function select_playlist_entries_by_id(id: string): AsyncArray<Mode
     return out;
 }
 
-export async function recount_playlists_items(values: Model.AnyPlaylist[]) {
+export async function recount_playlists_items(values: Model.AnyPlaylist[]): AsyncVoid {
     const [play_records_count, most_played_count] = await Promise.all([
         count_play_records(),
         count_videos_most_played(100),
-        // count_videos_liked(),
     ]);
     for (const value of values) {
         if (value.tag === 'y') {
             continue;
         }
-        if (value.id === ID_HISTORY_PLAYLIST) {
+        if (value.id === HISTORY_PLAYLIST_ID) {
             value.item_count = play_records_count;
             continue;
         }
-        if (value.id === ID_50_MOST_PLAYED_PLAYLIST) {
+        if (value.id === MOST_PLAYED_50_PLAYLIST_ID) {
             value.item_count = most_played_count > 50 ? 50 : most_played_count;
             continue;
         }
-        if (value.id === ID_100_MOST_PLAYED_PLAYLIST) {
+        if (value.id === MOST_PLAYED_100_PLAYLIST_ID) {
             value.item_count = most_played_count > 100 ? 100 : most_played_count;
             continue;
         }
@@ -149,34 +133,8 @@ export async function add_play_record(video_id: Model.StringId): AsyncVoid {
         return;
     }
 
-    await upsert_play_record({
-        id: uuidv4(),
-        video_id: video_id,
-        created_at: now_utc()
-    });
-    await update_lplaylist_by_id(ID_HISTORY_PLAYLIST, (v) => v.item_count++);
-}
-
-function play_record_to_playlist_item(value: Model.PlayRecord): Model.PlaylistItem {
-    const out: Model.PlaylistItem = {
-        id: value.id,
-        playlist_id: ID_HISTORY_PLAYLIST,
-        video_id: value.video_id,
-        created_at: value.created_at,
-        flags: PLAYLIST_ITEM_FLAGS.IS_PUBLIC,
-        is_available: true,
-        is_deleted: false,
-        is_private: false,
-        is_public: true,
-        is_unlisted: false,
-        play_count: 0,
-        position: 0,
-    };
-    return out;
-}
-
-export function is_history_playlist_id(id: Model.StringId): boolean {
-    return id === ID_HISTORY_PLAYLIST;
+    await upsert_play_record(play_record({ video_id: video_id }));
+    await update_lplaylist_by_id(HISTORY_PLAYLIST_ID, (v) => v.item_count++);
 }
 
 export async function select_history_playlist_entries(page: number = 0, page_size: number = 100): AsyncArray<Model.PlaylistEntry> {
@@ -206,33 +164,17 @@ export async function select_history_playlist_entries(page: number = 0, page_siz
     return out;
 }
 
-export function is_dynamic_playlist_id(id: Model.StringId): boolean {
-    return id.startsWith(PREFIX_DYNAMIC_PLAYLIST);
-}
-
-export function is_dynamic_or_local_playlist_id(id: Model.StringId): boolean {
-    return id.startsWith(PREFIX_DYNAMIC_PLAYLIST) || id.startsWith(PREFIX_LOCAL_PLAYLIST);
-}
-
 export async function add_playlist_subset(source_playlist: Model.AnyPlaylist, source_entries: Model.PlaylistEntry[]): Async<Model.AnyChannel> {
-    const now = now_utc();
     const playlist_length = source_entries.length;
     const title = `Subset: ${source_playlist.title.slice(source_playlist.title.startsWith("Subset: ") ? 8 : 0)}`;
-    const playlist: Model.LPlaylist = {
-        id: ID_SUBSET_PLAYLIST,
-        channel_id: ID_ME_CHANNEL,
+    const playlist = system_playlist({
+        id: SUBSET_PLAYLIST_ID,
         title: title,
         description: source_playlist.description,
         img: source_playlist.img,
         item_count: playlist_length,
-        play_count: 0,
         sortable: source_playlist.sortable,
-        created_at: now,
-        updated_at: now,
-        tag: "l",
-        pinneable: false,
-        deletable: true
-    };
+    });
 
     const items: Model.PlaylistItemCompact[] = new Array(playlist_length);
     for (let i = 0; i < playlist_length; i++) {
@@ -243,73 +185,47 @@ export async function add_playlist_subset(source_playlist: Model.AnyPlaylist, so
     await upsert_playlist(playlist);
     await delete_playlist_items_by_playlist_id(playlist.id);
     await upsert_playlists_items(items);
+
     return playlist;
 }
 
-export async function seed_playlists(db: DexieWithTables) {
-    const now = now_utc();
+export async function delete_user_playlist_by_id(id: Model.StringId) {
+    const [playlist_deleted,] = await Promise.all([
+        delete_lplaylist_by_id(id),
+        delete_playlist_items_by_playlist_id(id),
+    ]);
+    return playlist_deleted;
+}
 
-    await db.lplaylists.put({
-        id: ID_HISTORY_PLAYLIST,
-        channel_id: ID_ME_CHANNEL,
+export async function seed_playlists(db: DexieWithTables): AsyncVoid {
+    await db.lplaylists.put(system_playlist({
+        id: HISTORY_PLAYLIST_ID,
         title: 'History',
         description: 'History of played tracks',
-        img: FALLBACK_IMG,
-        item_count: 0,
-        play_count: 0,
-        created_at: now,
-        updated_at: now,
-        tag: 'l',
-        pinneable: true,
-        deletable: false,
-        sortable: false
-    });
+        computed: true,
+        pinneable: true
+    }));
 
-    await db.lplaylists.put({
-        id: ID_LIKES_PLAYLIST,
-        channel_id: ID_ME_CHANNEL,
+    await db.lplaylists.put(system_playlist({
+        id: LIKES_PLAYLIST_ID,
         title: `Likes`,
         description: '',
-        img: FALLBACK_IMG,
-        item_count: 0,
-        play_count: 0,
-        updated_at: now,
-        created_at: now,
-        tag: 'l',
-        pinneable: true,
-        deletable: false,
-        sortable: false,
-    });
+        pinneable: true
+    }));
 
-    await db.lplaylists.put({
-        id: ID_50_MOST_PLAYED_PLAYLIST,
-        channel_id: ID_ME_CHANNEL,
+    await db.lplaylists.put(system_playlist({
+        id: MOST_PLAYED_50_PLAYLIST_ID,
         title: `50's most played`,
         description: '',
-        img: FALLBACK_IMG,
-        item_count: 0,
-        play_count: 0,
-        updated_at: now,
-        created_at: now,
-        tag: 'l',
-        pinneable: true,
-        deletable: false,
-        sortable: false,
-    });
+        computed: true,
+        pinneable: true
+    }));
 
-    await db.lplaylists.put({
-        id: ID_100_MOST_PLAYED_PLAYLIST,
-        channel_id: ID_ME_CHANNEL,
+    await db.lplaylists.put(system_playlist({
+        id: MOST_PLAYED_100_PLAYLIST_ID,
         title: `100's most played`,
         description: '',
-        img: FALLBACK_IMG,
-        item_count: 0,
-        play_count: 0,
-        updated_at: now,
-        created_at: now,
-        tag: 'l',
-        pinneable: true,
-        deletable: false,
-        sortable: false,
-    });
+        computed: true,
+        pinneable: true
+    }));
 }

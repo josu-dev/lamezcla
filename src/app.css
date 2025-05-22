@@ -71,7 +71,7 @@
         @apply bg-background text-foreground font-sans overflow-hidden;
     }
 
-    a, button, input {
+    a, button:not(:disabled), input:not(:disabled) {
         cursor: pointer;
     }
 }
