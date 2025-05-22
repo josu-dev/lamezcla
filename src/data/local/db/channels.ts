@@ -1,8 +1,8 @@
 import type { Model } from '$data/models/index.js';
 import type { AsyncOptional, AsyncVoid } from '$lib/utils/index.js';
 import { now_utc } from '$lib/utils/index.js';
+import { FALLBACK_IMG, ME_CHANNEL_ID } from '../constants.js';
 import type { DexieWithTables } from './db.js';
-import { FALLBACK_IMG, ID_ME_CHANNEL } from './shared.js';
 
 
 export type TableSchema = Model.AnyChannel;
@@ -42,7 +42,7 @@ export async function seed_channels(db: DexieWithTables) {
     const now = now_utc();
 
     await db.channels.put({
-        id: ID_ME_CHANNEL,
+        id: ME_CHANNEL_ID,
         tag: 'l',
         handle: '@me',
         title: 'Me',

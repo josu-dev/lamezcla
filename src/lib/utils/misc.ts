@@ -86,3 +86,9 @@ export function uuidv4(): string {
     const out = crypto.randomUUID?.() ?? Array.from(crypto.getRandomValues(new Uint8Array(18)), b => b.toString(16).padStart(2, '0')).join('');
     return out;
 }
+
+export function wait(seconds: number): Promise<void> {
+    return new Promise((resolve) => {
+        setTimeout(resolve, seconds * 1000);
+    });
+}

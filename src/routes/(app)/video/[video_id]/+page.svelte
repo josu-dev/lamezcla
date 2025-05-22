@@ -1,10 +1,10 @@
 <script lang="ts">
+  import { video_url } from "$data/providers/youtube/shared.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import { Icon } from "$lib/components/icons/index.js";
-  import { OptionsMenu } from "$lib/components/menus/index.js";
+  import { OptionsMenu, PlaylistsMenu } from "$lib/components/menus/index.js";
   import PlayCover from "$lib/components/PlayCover.svelte";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
-  import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import { use_pinned_ctx } from "$lib/context/index.js";
   import { seconds_to_ddhhmmss } from "$lib/utils/index.js";
   import type { PageData } from "./$types.js";
@@ -19,9 +19,13 @@
 
   let data_video = $derived(data.video);
   const video_is_pinned = $derived(pinned_state.is_pinned(data_video.id));
+
+  let playlists_menu: PlaylistsMenu.Root;
 </script>
 
 <Metadata description="Just have a look at some details of '{data_video.title}' video." />
+
+<PlaylistsMenu.Root bind:this={playlists_menu} />
 
 <PageSimple.Root>
   <PageSimple.Header>
@@ -30,14 +34,13 @@
         {#snippet children(image)}
           <a href="/play?v={data_video.id}" class="group relative block h-28 aspect-video">
             {@render image()}
-            <PlayCover size="md" />
+            <PlayCover />
           </a>
         {/snippet}
       </PageSimple.HeaderImage>
     {/snippet}
     {#snippet title()}
       {data_video.title}
-      <SourceLink type="video" id={data_video.id} title={data_video.title} size="size-5" />
     {/snippet}
     {#snippet children()}
       <div class="font-bold text-foreground text-base">
@@ -59,6 +62,18 @@
               }
             },
             icon_left: { Icon: video_is_pinned ? Icon.PinOff : Icon.Pin },
+          },
+          {
+            label: "Playlists",
+            onSelect: () => {
+              playlists_menu.open_for_video_id(data_video.id);
+            },
+            icon_left: { Icon: Icon.Library },
+          },
+          {
+            label: "Open in YouTube",
+            href: video_url(data_video.id),
+            icon_left: { Icon: Icon.SquareArrowOutUpRight },
           },
         ]}
       />{/snippet}

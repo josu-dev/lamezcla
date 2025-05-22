@@ -2,13 +2,13 @@
   import { goto } from "$app/navigation";
   import { refresh_local_channel_and_playlists } from "$data/local/db/refresh.js";
   import type { Model } from "$data/models/index.js";
+  import { channel_url, playlist_url } from "$data/providers/youtube/shared.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import { Icon } from "$lib/components/icons/index.js";
   import { OptionsMenu, SortMenu } from "$lib/components/menus/index.js";
   import PlayCover from "$lib/components/PlayCover.svelte";
   import SearchInput from "$lib/components/SearchInput.svelte";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
-  import SourceLink from "$lib/components/sources/SourceLink.svelte";
   import { use_followed_ctx, use_pinned_ctx } from "$lib/context/index.js";
   import { is_play_prevented, use_async_callback, type Tuple } from "$lib/utils/index.js";
   import { Searcher } from "$lib/utils/searcher.js";
@@ -136,7 +136,6 @@
     {/snippet}
     {#snippet title()}
       {data_channel.title}
-      <SourceLink type="channel" id={data_channel.id} title={data_channel.title} size="size-5" />
     {/snippet}
     {#snippet children()}
       <div class="font-bold text-foreground text-base select-text">
@@ -187,6 +186,11 @@
                 }
               },
               icon_left: { Icon: channel_is_pinned ? Icon.PinOff : Icon.Pin },
+            },
+            {
+              label: "Open in YouTube",
+              href: channel_url(data_channel.id),
+              icon_left: { Icon: Icon.SquareArrowOutUpRight },
             },
           ]}
         />
@@ -260,6 +264,12 @@
                             },
                             icon_left: { Icon: is_pinned ? Icon.PinOff : Icon.Pin },
                             disabled: playlist.tag === "l" && !playlist.pinneable,
+                          },
+                          {
+                            label: "Open in YouTube",
+                            href: playlist_url(playlist.id),
+                            icon_left: { Icon: Icon.SquareArrowOutUpRight },
+                            disabled: playlist.tag === "l",
                           },
                         ]}
                       />

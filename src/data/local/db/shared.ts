@@ -1,14 +1,8 @@
 import type { Model } from '$data/models/index.js';
 import { PLAYLIST_ITEM_FLAGS, VIDEO_FLAGS } from '$data/models/index.js';
+import { FALLBACK_IMG } from '../constants.js';
+import { expand_playlist_item_compact } from '../shared.js';
 
-
-export const ID_ME_CHANNEL = 'L9f2e8b31-979c-4477-8a8b-4f3514689d0a';
-
-export const FALLBACK_IMG = {
-    url: "https://i.ytimg.com/img/no_thumbnail.jpg",
-    width: 120,
-    height: 90,
-};
 
 export function video_compact_is_unavailable(value: Model.SomeVideoCompact): value is Model.VideoCompactUnavailable {
     return value.flags === VIDEO_FLAGS.NO_FLAGS;
@@ -66,30 +60,12 @@ export function expand_video_compact(value: Model.VideoCompact): Model.Video {
     return out;
 }
 
-export function extract_playlist_item_flags_of_video(video: undefined | Model.VideoCompact) {
+function extract_playlist_item_flags_of_video(video: undefined | Model.VideoCompact) {
     if (video === undefined || video.flags === 0) {
         return PLAYLIST_ITEM_FLAGS.IS_UNAVAILABLE;
     }
 
     return 0;
-}
-
-export function expand_playlist_item_compact(value: Model.PlaylistItemCompact): Model.PlaylistItem {
-    const is_deleted = (PLAYLIST_ITEM_FLAGS.IS_DELETED & value.flags) !== 0;
-    const is_not_found = (PLAYLIST_ITEM_FLAGS.IS_UNAVAILABLE & value.flags) !== 0;
-    const is_public = (PLAYLIST_ITEM_FLAGS.IS_PUBLIC & value.flags) !== 0;
-    const is_unlisted = (PLAYLIST_ITEM_FLAGS.IS_UNLISTED & value.flags) !== 0;
-
-    const out: Model.PlaylistItem = {
-        ...value,
-        is_available: (is_public || is_unlisted) && !(is_deleted || is_not_found),
-        is_public: is_public,
-        is_private: (PLAYLIST_ITEM_FLAGS.IS_PRIVATE & value.flags) !== 0,
-        is_unlisted: is_unlisted,
-        is_deleted: is_deleted
-    };
-
-    return out;
 }
 
 export function normalize_playlist_entries(compact_items: Model.PlaylistItemCompact[], video_id_to_video: Map<string, Model.Video>): Model.PlaylistEntry[] {
@@ -104,7 +80,7 @@ export function normalize_playlist_entries(compact_items: Model.PlaylistItemComp
         }
         compact_item.flags |= extract_playlist_item_flags_of_video(v);
 
-        const item: Model.PlaylistItem = expand_playlist_item_compact(compact_item);
+        const item = expand_playlist_item_compact(compact_item);
 
         out.push({
             id: item.id,
@@ -114,8 +90,4 @@ export function normalize_playlist_entries(compact_items: Model.PlaylistItemComp
     }
 
     return out;
-}
-
-export function inc_play_count(value: Model.PlayCountableTrait): void {
-    value.play_count++;
 }

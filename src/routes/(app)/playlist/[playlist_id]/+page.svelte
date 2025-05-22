@@ -3,14 +3,15 @@
   import { add_playlist_subset } from "$data/local/db/playlists.js";
   import { refresh_local_playlist_and_items } from "$data/local/db/refresh.js";
   import type { Model } from "$data/models/index.js";
+  import { playlist_url, video_url } from "$data/providers/youtube/shared.js";
+  import { ConfirmDialog } from "$lib/components/dialogs/index.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import { Icon } from "$lib/components/icons/index.js";
-  import { OptionsMenu, SortMenu } from "$lib/components/menus/index.js";
+  import { OptionsMenu, PlaylistsMenu, SortMenu } from "$lib/components/menus/index.js";
   import PlayCover from "$lib/components/PlayCover.svelte";
   import SearchInput from "$lib/components/SearchInput.svelte";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
-  import SourceLink from "$lib/components/sources/SourceLink.svelte";
-  import { use_pinned_ctx } from "$lib/context/index.js";
+  import { use_pinned_ctx, use_playlists_ctx } from "$lib/context/index.js";
   import type { Tuple } from "$lib/utils/index.js";
   import {
     is_play_prevented,
@@ -181,9 +182,62 @@
 
     goto(`/play?l=${playlist.id}`);
   }
+
+  let playlists_menu: PlaylistsMenu.Root;
+
+  const playlists = use_playlists_ctx();
+
+  async function on_delete_playlist() {
+    const deleted = await playlists.delete_playlist(data_playlist.id);
+    if (!deleted) {
+      return;
+    }
+    if (playlist_is_pinned) {
+      await pinned_state.unpin_by_id(data_playlist.id);
+    }
+    goto("/");
+  }
+
+  let delete_dialog_open = $state(false);
+
+  function open_delete_dialog() {
+    delete_dialog_open = true;
+  }
 </script>
 
 <Metadata description="Just have a look at the vibes of '{data_playlist.title}' tracks." />
+
+<PlaylistsMenu.Root bind:this={playlists_menu} />
+
+<ConfirmDialog.Root bind:open={delete_dialog_open}>
+  <ConfirmDialog.Title>Playlist deletion</ConfirmDialog.Title>
+  <ConfirmDialog.Description>
+    Deleting the playlist will <b>permanently remove</b> all the tracks it has.. This action will also
+    <b>erase all information</b> generated while you've been playing the playlist.
+  </ConfirmDialog.Description>
+  <ConfirmDialog.Actions>
+    {#snippet confirm()}
+      Are you sure you want to delete the playlist '{data_playlist.title}'?
+    {/snippet}
+    {#snippet actions()}
+      <ConfirmDialog.Confirm on_confirm={on_delete_playlist}>
+        {#snippet children(running)}
+          {#if running}
+            <Icon.LoaderCircle class="animate-spin" />
+            <span>Deleting</span>
+          {:else}
+            <Icon.Shredder />
+            <span>Delete</span>
+          {/if}
+        {/snippet}
+      </ConfirmDialog.Confirm>
+      <ConfirmDialog.Cancel>
+        <Icon.X />
+        <span>Cancel</span>
+      </ConfirmDialog.Cancel>
+    {/snippet}
+  </ConfirmDialog.Actions>
+</ConfirmDialog.Root>
 
 <PageSimple.Root>
   <PageSimple.Header>
@@ -199,7 +253,6 @@
     {/snippet}
     {#snippet title()}
       {data_playlist.title}
-      <SourceLink type="playlist" id={data_playlist.id} title={data_playlist.title} size="size-5" />
     {/snippet}
     {#snippet children()}
       {#if data_channel}
@@ -216,9 +269,6 @@
           {/if}
           about {seconds_to_human(playlist_total_time)}
         </div>
-        <!-- <div>
-          Last refresh <HumanTime utc={data_playlist.updated_at} as_relative />
-        </div> -->
       </div>
     {/snippet}
     {#snippet actions()}
@@ -234,6 +284,7 @@
               Icon: refresh_playlist.running ? Icon.LoaderCircle : Icon.RefreshCw,
               props: { class: refresh_playlist.running ? "animate-spin" : "" },
             },
+            disabled: data_playlist.tag === "l",
           },
           {
             label: playlist_is_pinned ? "Unpin" : "Pin",
@@ -250,6 +301,18 @@
             },
             icon_left: { Icon: playlist_is_pinned ? Icon.PinOff : Icon.Pin },
             disabled: data_playlist.tag === "l" && !data_playlist.pinneable,
+          },
+          {
+            label: "Delete",
+            onSelect: open_delete_dialog,
+            icon_left: { Icon: Icon.Shredder },
+            disabled: data_playlist.tag === "y" || data_playlist.system,
+          },
+          {
+            label: "Open in YouTube",
+            href: playlist_url(data_playlist.id),
+            icon_left: { Icon: Icon.SquareArrowOutUpRight },
+            disabled: data_playlist.tag === "l",
           },
         ]}
       />
@@ -357,6 +420,18 @@
                               }
                             },
                             icon_left: { Icon: is_pinned ? Icon.PinOff : Icon.Pin },
+                          },
+                          {
+                            label: "Playlists",
+                            onSelect: () => {
+                              playlists_menu.open_for_video_id(video.id);
+                            },
+                            icon_left: { Icon: Icon.Library },
+                          },
+                          {
+                            label: "Open in YouTube",
+                            href: video_url(data_playlist.id),
+                            icon_left: { Icon: Icon.SquareArrowOutUpRight },
                           },
                         ]}
                       />

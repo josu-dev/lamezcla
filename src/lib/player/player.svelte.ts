@@ -322,6 +322,36 @@ class PlayerState {
         this.#s_current.time_percentage = time / duration;
     };
 
+    stop = (): void => {
+        if (this.#not_ready) {
+            return;
+        }
+
+        this.#player.stopVideo();
+        this.#state.entry_i = -1;
+        this.#state.is_mode_single = false;
+        this.#state.is_mode_list = false;
+        this.#state.is_paused = false;
+        this.#state.is_playing = false;
+        this.#state.time_current = 0;
+        this.#state.time_duration = 60;
+        this.#state.video_id = undefined;
+        this.#entries.length = 0;
+
+        this.#s_playlist = undefined;
+        this.#s_entries.length = 0;
+        this.#s_current.index = -1;
+        this.#s_current.time_current = 0;
+        this.#s_current.time_duration = 60;
+        this.#s_current.time_percentage = 0;
+        this.#s_current.unavailable = false;
+        this.#s_current.video = undefined;
+        this.#s_current.entry = undefined;
+        this.#s_curr_i = -1;
+        this.#s_is_paused = false;
+        this.#s_is_playing = false;
+    };
+
     #play = (): void => {
         if (this.#not_ready || this.#state.is_unplayable) {
             return;

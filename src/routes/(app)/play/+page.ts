@@ -38,6 +38,7 @@ function extract_params(url: URL) {
     } as const;
 }
 
+// TODO: resolve computed, system and user playlists better, lookup object?
 export const load: PageLoad = async ({ url, fetch }) => {
     const { video_id, playlist_id, index } = extract_params(url);
 
@@ -91,7 +92,7 @@ export const load: PageLoad = async ({ url, fetch }) => {
     }
 
     let entries = cached_entries;
-    if (entries.length === 0) {
+    if (playlist.tag === 'y' && entries.length === 0) {
         const r = await youtube.get_playlist_entries(playlist_id, fetch);
         if (r.is_err) {
             load_error(r.error, {

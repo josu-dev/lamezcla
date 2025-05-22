@@ -60,8 +60,9 @@ export interface YPlaylist extends BasePlaylist, SyncableTrait {
 
 export interface LPlaylist extends BasePlaylist {
     tag: 'l';
+    computed: boolean;
+    system: boolean;
     pinneable: boolean;
-    deletable: boolean;
 };
 
 export type AnyPlaylist = YPlaylist | LPlaylist;

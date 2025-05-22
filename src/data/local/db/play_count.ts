@@ -1,5 +1,5 @@
 import type { Model } from '$data/models/index.js';
-import type { AsyncVoid } from '$lib/utils/types.js';
+import type { AsyncVoid } from '$lib/utils/index.js';
 import { update_lplaylist_by_id } from './lplaylists.js';
 import { update_playlist_item_by_id } from './playlists_items.js';
 import { update_video_by_id } from './videos.js';

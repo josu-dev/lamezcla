@@ -2,7 +2,7 @@
   import { db } from "$data/local/db/index.js";
   import { PageLoadingBar, SiteHeader, SiteSidebar } from "$lib/components/site/index.js";
   import { use_site_sidebar_ctx } from "$lib/components/site/site_sidebar/sidebar.svelte.js";
-  import { use_followed_ctx, use_pinned_ctx } from "$lib/context/index.js";
+  import { use_followed_ctx, use_pinned_ctx, use_playlists_ctx } from "$lib/context/index.js";
   import * as Player from "$lib/player/index.js";
   import type { Snippet } from "svelte";
   import type { LayoutData } from "./$types.js";
@@ -17,6 +17,7 @@
   const followed = use_followed_ctx(data.followed);
   const pinned = use_pinned_ctx(data.pinned);
   use_site_sidebar_ctx({ followed, pinned });
+  use_playlists_ctx([]);
 
   const player_provider_options: Player.PlayerProviderProps["options"] = {
     on_play: ({ type, value }) => {

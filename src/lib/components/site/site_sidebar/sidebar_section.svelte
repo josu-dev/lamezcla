@@ -8,7 +8,7 @@
   {#if title === undefined}
     {@render children()}
   {:else}
-    <div class="px-2">
+    <div class="px-1.5">
       <h3 class="font-bold text-lg">{title}</h3>
     </div>
     {@render children()}
