@@ -178,7 +178,16 @@ export async function add_playlist_subset(source_playlist: Model.AnyPlaylist, so
 
     const items: Model.PlaylistItemCompact[] = new Array(playlist_length);
     for (let i = 0; i < playlist_length; i++) {
-        const item: Model.PlaylistItemCompact = { ...source_entries[i].item, playlist_id: playlist.id, id: uuidv4() };
+        const source_item = source_entries[i].item;
+        const item: Model.PlaylistItemCompact = {
+            id: uuidv4(),
+            playlist_id: playlist.id,
+            video_id: source_item.video_id,
+            flags: source_item.flags,
+            position: i,
+            play_count: 0,
+            created_at: source_item.created_at
+        };
         items[i] = item;
     }
 
