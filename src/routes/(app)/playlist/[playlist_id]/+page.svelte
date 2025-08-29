@@ -430,7 +430,7 @@
                           },
                           {
                             label: "Open in YouTube",
-                            href: video_url(data_playlist.id),
+                            href: video_url(video.id),
                             icon_left: { Icon: Icon.SquareArrowOutUpRight },
                           },
                         ]}
