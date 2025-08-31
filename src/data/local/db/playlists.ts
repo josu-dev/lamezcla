@@ -2,12 +2,11 @@ import type { Model } from '$data/models/index.js';
 import type { Async, AsyncArray, AsyncOptional, AsyncVoid } from '$lib/utils/index.js';
 import { uuidv4 } from '$lib/utils/index.js';
 import { HISTORY_PLAYLIST_ID, LIKES_PLAYLIST_ID, MOST_PLAYED_100_PLAYLIST_ID, MOST_PLAYED_50_PLAYLIST_ID, SUBSET_PLAYLIST_ID } from '../constants.js';
-import { is_computed_playlist_id, is_local_playlist_id, play_record, play_record_to_playlist_item, playlist_item, system_playlist } from '../shared.js';
+import { expand_video_compact, is_computed_playlist_id, is_local_playlist_id, normalize_playlist_entries, play_record, play_record_to_playlist_item, playlist_item, system_playlist } from '../shared.js';
 import type { DexieWithTables } from './db.js';
 import { delete_lplaylist_by_id, select_lplaylist_by_id, update_lplaylist_by_id, upsert_lplaylist } from './lplaylists.js';
 import { count_play_records, select_last_play_record, select_play_records, upsert_play_record } from './play_records.js';
 import { delete_playlist_items_by_playlist_id, select_playlist_items_by_playlist_id, upsert_playlists_items } from './playlists_items.js';
-import { expand_video_compact, normalize_playlist_entries } from './shared.js';
 import { count_videos_most_played, select_videos_by_ids, select_videos_most_played } from './videos.js';
 import { select_yplaylist_by_id, upsert_yplaylist } from './yplaylists.js';
 
@@ -164,7 +163,76 @@ export async function select_history_playlist_entries(page: number = 0, page_siz
     return out;
 }
 
-export async function add_playlist_subset(source_playlist: Model.AnyPlaylist, source_entries: Model.PlaylistEntry[]): Async<Model.AnyChannel> {
+function playlist_items_from_items1(playlist_id: string, source: Array<Model.PlaylistItem>): Array<Model.PlaylistItemCompact> {
+    const out: Model.PlaylistItemCompact[] = new Array(source.length);
+    for (let i = 0; i < source.length; i++) {
+        const source_item = source[i];
+        const item: Model.PlaylistItemCompact = {
+            id: uuidv4(),
+            playlist_id: playlist_id,
+            video_id: source_item.video_id,
+            flags: source_item.flags,
+            position: i,
+            play_count: 0,
+            created_at: source_item.created_at
+        };
+        out[i] = item;
+    }
+    return out;
+}
+
+function playlist_items_from_items2(playlist_id: string, source: Array<Model.PlaylistItem>): Array<Model.PlaylistItemCompact> {
+    const out: Model.PlaylistItemCompact[] = new Array(source.length);
+    for (let i = 0; i < source.length; i++) {
+        const source_item = source[i];
+        const item: Model.PlaylistItemCompact = {
+            id: uuidv4(),
+            playlist_id: playlist_id,
+            video_id: source_item.video_id,
+            flags: source_item.flags,
+            position: i,
+            play_count: 0,
+            created_at: source_item.created_at
+        };
+        out[i] = item;
+    }
+    return out;
+}
+
+export async function add_playlist_subset(source_playlist: Model.AnyPlaylist, source_items: Model.PlaylistItemCompact[]): Async<Model.AnyChannel> {
+    const playlist_length = source_items.length;
+    const title = `Subset: ${source_playlist.title.slice(source_playlist.title.startsWith("Subset: ") ? 8 : 0)}`;
+    const playlist = system_playlist({
+        id: SUBSET_PLAYLIST_ID,
+        title: title,
+        description: source_playlist.description,
+        img: source_playlist.img,
+        item_count: playlist_length,
+        sortable: source_playlist.sortable,
+    });
+
+    const items: Model.PlaylistItemCompact[] = new Array(playlist_length);
+    for (let i = 0; i < playlist_length; i++) {
+        const source_item = source_items[i];
+        const item: Model.PlaylistItemCompact = {
+            id: uuidv4(),
+            playlist_id: playlist.id,
+            video_id: source_item.video_id,
+            flags: source_item.flags,
+            position: i,
+            play_count: 0,
+            created_at: source_item.created_at
+        };
+        items[i] = item;
+    }
+
+    await upsert_playlist(playlist);
+    await delete_playlist_items_by_playlist_id(playlist.id);
+    await upsert_playlists_items(items);
+
+    return playlist;
+}
+export async function add_playlist_subset_from_entries(source_playlist: Model.AnyPlaylist, source_entries: Model.PlaylistEntry[]): Async<Model.AnyChannel> {
     const playlist_length = source_entries.length;
     const title = `Subset: ${source_playlist.title.slice(source_playlist.title.startsWith("Subset: ") ? 8 : 0)}`;
     const playlist = system_playlist({

@@ -1,7 +1,9 @@
 import { db } from '$data/local/db/index.js';
+import { extract_videos, normalize_playlist_entries } from '$data/local/shared.js';
+import type { Model } from '$data/models/index.js';
 import { load_error } from '$data/providers/utils.js';
 import { youtube } from '$data/providers/youtube/client/index.js';
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import type { PageLoad } from './$types.js';
 
 
@@ -43,7 +45,7 @@ export const load: PageLoad = async ({ url, fetch }) => {
     const { video_id, playlist_id, index } = extract_params(url);
 
     if (playlist_id === undefined && video_id === undefined) {
-        error(400, `Video id or Playlist id required`);
+        redirect(302, "/");
     }
 
     if (playlist_id === undefined) {
@@ -93,23 +95,26 @@ export const load: PageLoad = async ({ url, fetch }) => {
 
     let entries = cached_entries;
     if (playlist.tag === 'y' && entries.length === 0) {
-        const r = await youtube.get_playlist_entries(playlist_id, fetch);
+        const r = await youtube.get_playlist_entries_all(playlist_id, void 0, fetch);
         if (r.is_err) {
             load_error(r.error, {
                 other: `Entries of playlist with '${playlist_id}' couldn't be loaded`
             });
         }
-
-        const { items, videos: some_compact_videos } = r.value;
-        await Promise.all([
-            db.upsert_playlists_items(items),
-            db.upsert_videos(some_compact_videos as any),
-        ]);
-        entries = await db.select_playlist_entries_by_id(playlist_id);
-
-        if (entries.length === 0) {
+        if (r.value.items.length === 0) {
             error(400, `Playlist with '${playlist_id}' is empty`);
         }
+
+        const videos_compact_available: Array<Model.VideoCompact> = [];
+        const video_id_to_video: Map<string, Model.Video> = new Map();
+        extract_videos(r.value.videos, videos_compact_available, [], video_id_to_video);
+
+        await Promise.all([
+            db.upsert_playlists_items(r.value.items),
+            db.upsert_videos(videos_compact_available),
+        ]);
+
+        entries = normalize_playlist_entries(r.value.items, video_id_to_video);
     }
 
     let synced_index = index > entries.length ? entries.length : index;

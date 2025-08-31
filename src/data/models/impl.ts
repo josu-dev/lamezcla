@@ -31,7 +31,6 @@ export interface BaseChannel {
 
 export interface YChannel extends BaseChannel, SyncableTrait {
     tag: 'y';
-    v: number;
 }
 
 export interface LChannel extends BaseChannel {

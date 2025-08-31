@@ -50,6 +50,7 @@
 }
 
 @theme {
+    --color-background: var(--color-neutral-950);
     --spacing-page-content: var(--spacing-site-content);
 }
 

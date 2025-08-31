@@ -1,4 +1,8 @@
-@reference "tailwindcss";
+@reference "../../app.css";
+
+.french-toast-container {
+  top: 3rem !important;
+}
 
 .french-toast-container div.french-toast-message {
     background-color: var(--color-background);

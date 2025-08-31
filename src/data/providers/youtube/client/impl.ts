@@ -79,17 +79,17 @@ export async function get_playlist(id: string, fetch: FetchFn) {
     return ok(out);
 }
 
-export async function get_playlist_entries(id: string, fetch: FetchFn) {
+export async function get_playlist_entries(id: string, page: undefined | string, fetch: FetchFn) {
     const r_items = await try_fetch({
         fetch: fetch,
-        url: `/api/youtube/playlists/${id}`,
+        url: `/api/youtube/playlists/${id}?${page === undefined ? "" : "page_token=" + page}`,
         parse_json: true,
     });
     if (r_items.is_err) {
         return r_items;
     }
 
-    const compact_items: ModelsAPI.PlaylistItemCompact[] = (r_items.value as any).data;
+    const { items: compact_items, next_page, total_items }: ModelsAPI.Paginated<ModelsAPI.PlaylistItemCompact> = (r_items.value as any).data;
     const out_compact_items: Model.PlaylistItemCompact[] = new Array(compact_items.length);
     const ids: string[] = [];
     for (let i = 0; i < compact_items.length; i++) {
@@ -125,6 +125,37 @@ export async function get_playlist_entries(id: string, fetch: FetchFn) {
     const out = {
         items: out_compact_items,
         videos: out_compact_videos,
+        next_page: next_page,
+        total_items: total_items
+    };
+    return ok(out);
+}
+
+export async function get_playlist_entries_all(id: string, initial_page: undefined | string, fetch: FetchFn) {
+    const items: Array<Model.PlaylistItemCompact> = [];
+    const videos: Array<Model.SomeVideoCompact> = [];
+    let total_items = 0;
+    let curr_page: undefined | string = initial_page;
+    while (true) {
+        const r = await get_playlist_entries(id, curr_page, fetch);
+        if (r.is_err) {
+            return r;
+        }
+
+        curr_page = r.value.next_page;
+        total_items = r.value.total_items;
+        items.push(...r.value.items);
+        videos.push(...r.value.videos);
+
+        if (curr_page == undefined) {
+            break;
+        }
+    }
+    const out = {
+        items: items,
+        videos: videos,
+        next_page: void 0,
+        total_items: total_items
     };
     return ok(out);
 }

@@ -92,3 +92,7 @@ export function wait(seconds: number): Promise<void> {
         setTimeout(resolve, seconds * 1000);
     });
 }
+
+export function pick_random<T>(arr: Array<T>): T {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
