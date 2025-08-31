@@ -6,7 +6,7 @@
 </script>
 
 <Toaster
-  position="bottom-right"
+  position="top-center"
   containerClassName="french-toast-container"
   toastOptions={{ className: "french-toast-message" }}
 />

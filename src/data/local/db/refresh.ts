@@ -2,9 +2,9 @@ import type { Model } from '$data/models/index.js';
 import { youtube } from '$data/providers/youtube/client/index.js';
 import type { AsyncOptional, AsyncResult, Optional } from '$lib/utils/index.js';
 import { ok } from '$lib/utils/index.js';
+import { expand_video_compact, is_video_compact_unavailable, normalize_playlist_entries, unavailable_video } from '../shared.js';
 import { select_channel_by_id, upsert_channel } from './channels.js';
 import { delete_playlists_items_by_ids, select_playlist_items_by_playlist_id, upsert_playlists_items } from './playlists_items.js';
-import { expand_video_compact, normalize_playlist_entries, unavailable_video, video_compact_is_unavailable } from './shared.js';
 import { upsert_videos } from './videos.js';
 import { delete_yplaylists_by_ids, select_yplaylist_by_id, select_yplaylists_by_channel_id, upsert_yplaylist, upsert_yplaylists } from './yplaylists.js';
 
@@ -81,7 +81,7 @@ export async function refresh_local_channel_and_playlists(id: string) {
 export async function refresh_local_playlist_and_items(id: string) {
     const [r_playlist, r_entries, channel_local, playlist_local, items_local] = await Promise.all([
         youtube.get_playlist(id, fetch),
-        youtube.get_playlist_entries(id, fetch),
+        youtube.get_playlist_entries_all(id, void 0, fetch),
         select_channel_by_id(id) as AsyncOptional<Model.YChannel>,
         select_yplaylist_by_id(id),
         select_playlist_items_by_playlist_id(id)
@@ -124,7 +124,7 @@ export async function refresh_local_playlist_and_items(id: string) {
     const video_id_to_video: Map<string, Model.Video> = new Map();
     for (const v of some_compact_videos) {
         let video: Model.Video;
-        if (video_compact_is_unavailable(v)) {
+        if (is_video_compact_unavailable(v)) {
             video = unavailable_video(v.id);
         }
         else {

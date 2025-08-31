@@ -273,9 +273,67 @@ export function extract_playlist_item_flags(item: YApi.PlaylistItem): number {
     return flags;
 }
 
-export async function get_playlist_items_all(id: string) {
+function to_playlist_item_compact(item: YApi.PlaylistItem): Out.PlaylistItemCompact {
+    let flags = 0;
+    if (item.status !== undefined) {
+        switch (item.status.privacyStatus) {
+            case 'public':
+                flags |= VIDEO_FLAGS.IS_PUBLIC;
+                break;
+            case 'unlisted':
+                flags |= VIDEO_FLAGS.IS_UNLISTED;
+                break;
+            case 'private':
+                flags |= VIDEO_FLAGS.IS_PRIVATE;
+                break;
+        }
+    }
+
+    const out: Out.PlaylistItemCompact = {
+        id: item.id,
+        flags: flags,
+        playlist_id: item.snippet.playlistId,
+        video_id: item.contentDetails.videoId,
+        position: item.snippet.position,
+        created_at: item.snippet.publishedAt,
+    };
+    return out;
+}
+
+
+export async function get_playlist_items(id: string, page_token: undefined | string = undefined, page_count: number = 1) {
+    const out: Out.Paginated<Out.PlaylistItemCompact> = {
+        items: [],
+        next_page: void 0,
+        total_items: 0
+    };
+    let curr_page: undefined | string = page_token;
+    while (page_count > 0) {
+        const r = await _get_playlist_items(id, curr_page);
+        if (r.is_err) {
+            return r;
+        }
+        if ('empty' in r.value) {
+            break;
+        }
+        for (const item of r.value.items) {
+            out.items.push(to_playlist_item_compact(item));
+        }
+        out.total_items = r.value.pageInfo.totalResults;
+        out.next_page = r.value.nextPageToken;
+        if (out.items.length >= out.total_items || out.next_page == undefined) {
+            break;
+        }
+        page_count -= 1;
+        curr_page = out.next_page;
+    }
+
+    return ok(out);
+}
+
+export async function get_playlist_items_all(id: string, page_token: undefined | string = undefined) {
     const out: Out.PlaylistItemCompact[] = [];
-    let next_page: undefined | string;
+    let next_page: undefined | string = page_token;
     while (true) {
         const r = await _get_playlist_items(id, next_page);
         if (r.is_err) {

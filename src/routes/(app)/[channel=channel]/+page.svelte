@@ -1,7 +1,9 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import { refresh_local_channel_and_playlists } from "$data/local/db/refresh.js";
+  import { db } from "$data/local/db/index.js";
+  import { is_video_compact_unavailable } from "$data/local/shared.js";
   import type { Model } from "$data/models/index.js";
+  import { youtube } from "$data/providers/youtube/client/index.js";
   import { channel_url, playlist_url } from "$data/providers/youtube/shared.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
   import { Icon } from "$lib/components/icons/index.js";
@@ -9,51 +11,16 @@
   import PlayCover from "$lib/components/PlayCover.svelte";
   import SearchInput from "$lib/components/SearchInput.svelte";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
+  import { toast } from "$lib/components/Toaster.svelte";
   import { use_followed_ctx, use_pinned_ctx } from "$lib/context/index.js";
-  import { is_play_prevented, use_async_callback, type Tuple } from "$lib/utils/index.js";
+  import { is_play_prevented, pick_random, use_async_callback } from "$lib/utils/index.js";
   import { Searcher } from "$lib/utils/searcher.js";
   import type { PageData } from "./$types.js";
+  import { DEFAULT_SORT_MODE, SORT_MODES, type SortMode } from "./config.js";
 
   type Props = {
     data: PageData;
   };
-
-  type SortMode = SortMenu.SortMode<Model.AnyPlaylist>;
-
-  const SORT_MODES = [
-    {
-      id: "published_new",
-      label: "Published newest",
-      compare_fn: (a, b) => b.created_at.localeCompare(a.created_at),
-    },
-    {
-      id: "published_old",
-      label: "Published oldest",
-      compare_fn: (a, b) => a.created_at.localeCompare(b.created_at),
-    },
-    {
-      id: "title_az",
-      label: "Title A to Z",
-      compare_fn: (a, b) => a.title.localeCompare(b.title),
-    },
-    {
-      id: "title_za",
-      label: "Title Z to A",
-      compare_fn: (a, b) => b.title.localeCompare(a.title),
-    },
-    {
-      id: "tracks_01",
-      label: "Track count - to +",
-      compare_fn: (a, b) => a.item_count - b.item_count,
-    },
-    {
-      id: "tracks_10",
-      label: "Track count + to -",
-      compare_fn: (a, b) => b.item_count - a.item_count,
-    },
-  ] satisfies Tuple<SortMode>;
-
-  const DEFAULT_SORT_MODE = SORT_MODES[0];
 
   const searcher = new Searcher<Model.AnyPlaylist>({ mapper: (p) => p.title, on_empty_search: "all" });
 
@@ -71,11 +38,13 @@
   const playlists_cache = $derived.by(() => {
     const all: Model.AnyPlaylist[] = new Array(data_playlists.length);
     const empty: Model.AnyPlaylist[] = [];
-
+    const playable: Model.AnyPlaylist[] = [];
     for (let i = 0; i < data_playlists.length; i++) {
       const p = data_playlists[i];
       all[i] = p;
-      if (p.item_count < 1) {
+      if (p.item_count > 0) {
+        playable.push(p);
+      } else {
         empty.push(p);
       }
     }
@@ -83,6 +52,7 @@
     return {
       all: all,
       empty: empty,
+      playable: playable,
     };
   });
 
@@ -111,8 +81,39 @@
     goto(`/play?l=${id}`);
   }
 
+  async function on_channel_shuffle() {
+    if (playlists_cache.playable.length === 0) return;
+
+    const playlist_source = $state.snapshot(pick_random(playlists_cache.playable));
+
+    let items_source = await db.select_playlist_items_by_playlist_id(playlist_source.id);
+    if (items_source.length === 0) {
+      const r = await youtube.get_playlist_entries_all(playlist_source.id, void 0, fetch);
+      if (r.is_err) {
+        toast.error(`Failed to shuffle '${playlist_source.title}'.\nPlaylist content unavailable.`, { duration: 5000 });
+        return;
+      }
+
+      items_source = r.value.items;
+
+      const videos: Array<Model.VideoCompact> = [];
+      for (const v of r.value.videos) {
+        if (is_video_compact_unavailable(v)) {
+          continue;
+        }
+        videos.push(v);
+      }
+      await Promise.all([db.upsert_playlists_items(r.value.items), db.upsert_videos(videos)]);
+    }
+
+    items_source.sort(() => Math.random() - 0.5);
+    const playlist = await db.add_playlist_subset(playlist_source, items_source);
+
+    goto(`/play?l=${playlist.id}`);
+  }
+
   const refresh_channel = use_async_callback({
-    fn: refresh_local_channel_and_playlists,
+    fn: db.refresh_local_channel_and_playlists,
     on_err: (error) => {
       console.error(error);
     },
@@ -156,14 +157,20 @@
           label="Channel options"
           options={[
             {
-              label: "Refresh",
+              label: "Shuffle",
+              onSelect: on_channel_shuffle,
+              icon_left: { Icon: Icon.Shuffle },
+            },
+            {
+              label: channel_is_pinned ? "Unpin" : "Pin",
               onSelect: () => {
-                refresh_channel.fn(data_channel.id);
+                if (channel_is_pinned) {
+                  pinned_state.unpin_by_id(data_channel.id);
+                } else {
+                  pinned_state.pin("channel", data_channel as Model.YChannel);
+                }
               },
-              icon_left: {
-                Icon: refresh_channel.running ? Icon.LoaderCircle : Icon.RefreshCw,
-                props: { class: refresh_channel.running ? "animate-spin" : "" },
-              },
+              icon_left: { Icon: channel_is_pinned ? Icon.PinOff : Icon.Pin },
             },
             {
               label: channel_is_followed ? "Unfollow" : "Follow",
@@ -177,15 +184,14 @@
               icon_left: { Icon: channel_is_followed ? Icon.UserX : Icon.UserPlus },
             },
             {
-              label: channel_is_pinned ? "Unpin" : "Pin",
+              label: "Refresh",
               onSelect: () => {
-                if (channel_is_pinned) {
-                  pinned_state.unpin_by_id(data_channel.id);
-                } else {
-                  pinned_state.pin("channel", data_channel as Model.YChannel);
-                }
+                refresh_channel.fn(data_channel.id);
               },
-              icon_left: { Icon: channel_is_pinned ? Icon.PinOff : Icon.Pin },
+              icon_left: {
+                Icon: refresh_channel.running ? Icon.LoaderCircle : Icon.RefreshCw,
+                props: { class: refresh_channel.running ? "animate-spin" : "" },
+              },
             },
             {
               label: "Open in YouTube",

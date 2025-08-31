@@ -159,6 +159,38 @@ export class Searcher<
         return [...this.#source_items_filtered];
     }
 
+    search_exact(query: string): TSource[] {
+        const safe_query = utf_to_ascii(query);
+        this.#query = safe_query;
+
+        this.#items_filtered.length = 0;
+        this.#source_items_filtered.length = 0;
+
+        if (safe_query === '') {
+            if (this.#empty_search_mode === emptySearchMode.none) {
+                return [];
+            }
+
+            for (let i = 0; i < this.#items.length; i++) {
+                const item = this.#items[i]!;
+                this.#items_filtered.push(item);
+                this.#source_items_filtered.push(item.item);
+            }
+
+            return [...this.#source_items];
+        }
+
+        for (let item_i = 0; item_i < this.#items.length; item_i++) {
+            const item = this.#items[item_i]!;
+            if (item.searchable_text.includes(safe_query)) {
+                this.#items_filtered.push(item);
+                this.#source_items_filtered.push(item.item);
+            }
+        }
+
+        return [...this.#source_items_filtered];
+    }
+
     search_no_side_effect(query: string): TSource[] {
         const safe_query = utf_to_ascii(query);
         const out: TSource[] = [];

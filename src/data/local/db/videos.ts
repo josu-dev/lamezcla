@@ -1,7 +1,7 @@
 import type { Model } from '$data/models/index.js';
 import type { AsyncArray, AsyncNumber, AsyncOptional, AsyncVoid } from '$lib/utils/index.js';
+import { expand_video_compact } from '../shared.js';
 import type { DexieWithTables } from './db.js';
-import { expand_video_compact } from './shared.js';
 
 
 export type TableSchema = Model.VideoCompact;

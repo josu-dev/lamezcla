@@ -25,6 +25,12 @@ export type VideoCompactUnavailable = Model.VideoCompactUnavailable;
 
 export type SomeVideoCompact = VideoCompact | VideoCompactUnavailable;
 
+export type Paginated<T> = {
+    items: Array<T>;
+    next_page: undefined | string;
+    total_items: number;
+};
+
 export function channel_url(id: string) {
     return `https://www.youtube.com/channel/${id}`;
 }

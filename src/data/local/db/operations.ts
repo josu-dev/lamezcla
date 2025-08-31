@@ -4,7 +4,7 @@ export { delete_lplaylist_by_id, delete_lplaylists, select_lplaylist_by_id, sele
 export { delete_pinned_item_by_id, delete_pinned_items, select_pinned_entries, select_pinned_items, upsert_pinned_item, upsert_pinned_items } from './pinned_items.js';
 export { inc_lplaylist_play_count, inc_playlist_item_play_count, inc_video_play_count, inc_yplaylist_play_count } from './play_count.js';
 export { delete_play_record_by_video_id, delete_play_records, select_play_records, upsert_play_record } from './play_records.js';
-export { add_play_record, delete_user_playlist_by_id, recount_playlists_items, select_playlist_by_id, select_playlist_entries_by_id, upsert_playlist } from './playlists.js';
+export { add_play_record, add_playlist_subset, add_playlist_subset_from_entries, delete_user_playlist_by_id, recount_playlists_items, select_playlist_by_id, select_playlist_entries_by_id, upsert_playlist } from './playlists.js';
 export { delete_playlist_item_by_playlist_and_video_id, delete_playlist_items_by_playlist_id, delete_playlists_items, delete_playlists_items_by_ids, select_playlist_items_by_playlist_id, select_playlists_item_by_video_id, update_playlist_item_by_id, upsert_playlist_item, upsert_playlists_items } from './playlists_items.js';
 export { refresh_local_channel, refresh_local_channel_and_playlists, refresh_local_playlist_and_items } from './refresh.js';
 export { select_video_by_id, update_video_by_id, upsert_video, upsert_videos } from './videos.js';

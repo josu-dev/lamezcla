@@ -1,5 +1,5 @@
 import type { Model } from '$data/models/index.js';
-import { PLAYLIST_ITEM_FLAGS } from '$data/models/index.js';
+import { PLAYLIST_ITEM_FLAGS, VIDEO_FLAGS } from '$data/models/index.js';
 import { now_utc, uuidv4 } from '$lib/utils/index.js';
 import * as c from './constants.js';
 
@@ -144,6 +144,80 @@ export function play_record({ video_id }: { video_id: Model.StringId; }): Model.
     return out;
 }
 
+export function is_video_compact_unavailable(value: Model.SomeVideoCompact): value is Model.VideoCompactUnavailable {
+    return value.flags === VIDEO_FLAGS.NO_FLAGS;
+}
+
+export function unavailable_video(id: string): Model.Video {
+    return {
+        id: id,
+        flags: 0,
+        channel_id: '',
+        channel_title: '',
+        img: c.FALLBACK_IMG,
+        created_at: '',
+        title: '',
+        duration_s: 0,
+        play_count: 0,
+        duration: {
+            s: 0,
+            m: 0,
+            h: 0,
+            d: 0,
+        },
+        is_available: false,
+        is_public: false,
+        is_private: false,
+        is_unlisted: false,
+        is_embeddable: false,
+    };
+}
+
+function seconds_to_duration(value: number) {
+    return {
+        d: Math.floor(value / 86400),
+        h: Math.floor((value % 86400) / 3600),
+        m: Math.floor((value % 3600) / 60),
+        s: value % 60,
+    };
+}
+
+export function expand_some_video_compact(value: Model.SomeVideoCompact): Model.Video {
+    if (is_video_compact_unavailable(value)) {
+        return unavailable_video(value.id);
+    }
+
+    const out: Model.Video = {
+        ...value,
+        duration: seconds_to_duration(value.duration_s),
+        is_available: (VIDEO_FLAGS.IS_AVAILABLE & value.flags) !== 0,
+        is_public: (VIDEO_FLAGS.IS_PUBLIC & value.flags) !== 0,
+        is_private: (VIDEO_FLAGS.IS_PRIVATE & value.flags) !== 0,
+        is_unlisted: (VIDEO_FLAGS.IS_UNLISTED & value.flags) !== 0,
+        is_embeddable: (VIDEO_FLAGS.IS_EMBEDDABLE & value.flags) !== 0,
+    };
+
+    return out;
+}
+
+export function expand_video_compact(value: Model.VideoCompact): Model.Video {
+    if (value.flags === VIDEO_FLAGS.NO_FLAGS) {
+        return unavailable_video(value.id);
+    }
+
+    const out: Model.Video = {
+        ...value,
+        duration: seconds_to_duration(value.duration_s),
+        is_available: (VIDEO_FLAGS.IS_AVAILABLE & value.flags) !== 0,
+        is_public: (VIDEO_FLAGS.IS_PUBLIC & value.flags) !== 0,
+        is_private: (VIDEO_FLAGS.IS_PRIVATE & value.flags) !== 0,
+        is_unlisted: (VIDEO_FLAGS.IS_UNLISTED & value.flags) !== 0,
+        is_embeddable: (VIDEO_FLAGS.IS_EMBEDDABLE & value.flags) !== 0,
+    };
+
+    return out;
+}
+
 export function expand_playlist_item_compact(value: Model.PlaylistItemCompact): Model.PlaylistItem {
     const is_deleted = (PLAYLIST_ITEM_FLAGS.IS_DELETED & value.flags) !== 0;
     const is_not_found = (PLAYLIST_ITEM_FLAGS.IS_UNAVAILABLE & value.flags) !== 0;
@@ -161,3 +235,63 @@ export function expand_playlist_item_compact(value: Model.PlaylistItemCompact): 
 
     return out;
 }
+
+function extract_playlist_item_flags_of_video(video: undefined | Model.VideoCompact) {
+    if (video === undefined || video.flags === 0) {
+        return PLAYLIST_ITEM_FLAGS.IS_UNAVAILABLE;
+    }
+
+    return 0;
+}
+
+export function normalize_playlist_entries(compact_items: Model.PlaylistItemCompact[], video_id_to_video: Map<string, Model.Video>): Model.PlaylistEntry[] {
+    const out: Model.PlaylistEntry[] = [];
+    for (const compact_item of compact_items) {
+        const v = video_id_to_video.get(compact_item.video_id);
+        let video: Model.Video;
+        if (v === undefined) {
+            video = unavailable_video(compact_item.video_id);
+        } else {
+            video = v;
+        }
+        compact_item.flags |= extract_playlist_item_flags_of_video(v);
+
+        const item = expand_playlist_item_compact(compact_item);
+
+        out.push({
+            id: item.id,
+            item: item,
+            video: video
+        });
+    }
+
+    return out;
+}
+
+export function extract_videos(videos_raw: Array<Model.SomeVideoCompact>, videos_compact_available: Array<Model.VideoCompact>, videos: Array<Model.Video>, video_id_to_video: Map<string, Model.Video>): void {
+    for (const video_raw of videos_raw) {
+        if (is_video_compact_unavailable(video_raw)) {
+            continue;
+        }
+        const video = expand_video_compact(video_raw);
+        if (!video.is_available) {
+            continue;
+        }
+        videos_compact_available.push(video_raw);
+        video_id_to_video.set(video.id, video);
+        videos.push(video);
+    }
+}
+
+export const SYNCHRONIZATION_ACTION = {
+    NONE: "NONE",
+    RESUME: "RESUME",
+    HARD_REFRESH: "HARD_REFRESH"
+} as const;
+
+export type SynchronizationActionEnum = typeof SYNCHRONIZATION_ACTION;
+
+export type SynchronizationAction =
+    | { tag: SynchronizationActionEnum["NONE"]; }
+    | { tag: SynchronizationActionEnum["RESUME"], next_page?: string; total_count: number; }
+    | { tag: SynchronizationActionEnum["HARD_REFRESH"], next_page?: string; total_count?: number; };

@@ -16,7 +16,7 @@ export const load: PageLoad = async ({ params, fetch }) => {
     }
 
     let save_channel = false;
-    if (channel === undefined) {
+    if (channel === undefined || channel.tag === "y" && channel.v < 1) {
         const r = await youtube.get_channel(params.channel, fetch);
         if (r.is_err) {
             load_error(r.error, {

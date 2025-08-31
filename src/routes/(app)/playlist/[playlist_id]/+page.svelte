@@ -1,8 +1,9 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import { add_playlist_subset } from "$data/local/db/playlists.js";
-  import { refresh_local_playlist_and_items } from "$data/local/db/refresh.js";
+  import { db } from "$data/local/db/index.js";
+  import { extract_videos, normalize_playlist_entries, SYNCHRONIZATION_ACTION } from "$data/local/shared.js";
   import type { Model } from "$data/models/index.js";
+  import { youtube } from "$data/providers/youtube/client/index.js";
   import { playlist_url, video_url } from "$data/providers/youtube/shared.js";
   import { ConfirmDialog } from "$lib/components/dialogs/index.js";
   import HumanTime from "$lib/components/HumanTime.svelte";
@@ -12,7 +13,6 @@
   import SearchInput from "$lib/components/SearchInput.svelte";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import { use_pinned_ctx, use_playlists_ctx } from "$lib/context/index.js";
-  import type { Tuple } from "$lib/utils/index.js";
   import {
     is_play_prevented,
     Searcher,
@@ -20,73 +20,13 @@
     seconds_to_human,
     use_async_callback,
   } from "$lib/utils/index.js";
+  import { createVirtualizer } from "@tanstack/svelte-virtual";
   import type { PageData } from "./$types.js";
+  import { DEFAULT_SORT_MODE, SORT_MODES, type SortByMode } from "./config.js";
 
   type Props = {
     data: PageData;
   };
-
-  type SortByMode = SortMenu.SortMode<Model.PlaylistEntry>;
-
-  const SORT_MODES = [
-    {
-      id: "manual",
-      label: "Manual",
-      compare_fn: (a, b) => a.item.position - b.item.position,
-    },
-    {
-      id: "added_new",
-      label: "Added newest",
-      compare_fn: (a, b) => b.item.created_at.localeCompare(a.item.created_at),
-    },
-    {
-      id: "added_old",
-      label: "Added oldest",
-      compare_fn: (a, b) => a.item.created_at.localeCompare(b.item.created_at),
-    },
-    {
-      id: "channel_az",
-      label: "Channel A to Z",
-      compare_fn: (a, b) => a.video.channel_title.localeCompare(b.video.channel_title),
-    },
-    {
-      id: "channel_za",
-      label: "Channel Z to A",
-      compare_fn: (a, b) => b.video.channel_title.localeCompare(a.video.channel_title),
-    },
-    {
-      id: "published_new",
-      label: "Published newest",
-      compare_fn: (a, b) => b.video.created_at.localeCompare(a.video.created_at),
-    },
-    {
-      id: "published_old",
-      label: "Published oldest",
-      compare_fn: (a, b) => a.video.created_at.localeCompare(b.video.created_at),
-    },
-    {
-      id: "title_az",
-      label: "Title A to Z",
-      compare_fn: (a, b) => a.video.title.localeCompare(b.video.title),
-    },
-    {
-      id: "title_za",
-      label: "Title Z to A",
-      compare_fn: (a, b) => b.video.title.localeCompare(a.video.title),
-    },
-    {
-      id: "duration_10",
-      label: "Duration longest",
-      compare_fn: (a, b) => b.video.duration_s - a.video.duration_s,
-    },
-    {
-      id: "duration_01",
-      label: "Duration shortest",
-      compare_fn: (a, b) => a.video.duration_s - b.video.duration_s,
-    },
-  ] satisfies Tuple<SortByMode>;
-
-  const DEFAULT_SORT_MODE = SORT_MODES[0];
 
   const searcher = new Searcher<Model.PlaylistEntry>({
     mapper: (p) => {
@@ -104,8 +44,73 @@
 
   const data_channel = $derived(data.channel);
   let data_playlist = $derived(data.playlist);
-  let data_entries = $derived(data.entries);
+  let data_entries = $state(data.entries);
   const playlist_is_pinned = $derived(pinned_state.is_pinned(data_playlist.id));
+  const pending_entries = $state(
+    data.entries_sync_action.tag === "NONE"
+      ? {
+          loading: false,
+          curr_count: 0,
+          total_entries: 0,
+        }
+      : {
+          loading: data.entries_sync_action.tag === "RESUME",
+          curr_count: data.entries.length,
+          total_entries: data.entries_sync_action.total_count ?? data.entries.length,
+        },
+  );
+
+  async function fetch_and_store_entries(id: string, page_token: undefined | string, reset: boolean = false) {
+    const items: Array<Model.PlaylistItemCompact> = [];
+    const videos_compact_available: Array<Model.VideoCompact> = [];
+    const video_id_to_video: Map<string, Model.Video> = new Map();
+    let curr_page: undefined | string = page_token;
+    while (true) {
+      const r = await youtube.get_playlist_entries(id, curr_page, fetch);
+      if (r.is_err) {
+        pending_entries.loading = false;
+        // TODO: error message(?
+        return;
+      }
+
+      curr_page = r.value.next_page;
+      items.push(...r.value.items);
+      extract_videos(r.value.videos, videos_compact_available, [], video_id_to_video);
+      pending_entries.curr_count += r.value.items.length;
+
+      if (curr_page == undefined) {
+        break;
+      }
+    }
+
+    await Promise.all([db.upsert_playlists_items(items), db.upsert_videos(videos_compact_available)]);
+
+    const entries = normalize_playlist_entries(items, video_id_to_video);
+    if (reset) {
+      data_entries = entries;
+    } else {
+      data_entries = [...data_entries, ...entries];
+    }
+    pending_entries.loading = false;
+  }
+
+  async function hard_refresh_entries(id: string) {
+    await db.delete_playlist_items_by_playlist_id(id);
+    await fetch_and_store_entries(id, void 0, true);
+  }
+
+  $effect(() => {
+    if (data.entries_sync_action.tag === SYNCHRONIZATION_ACTION.NONE) {
+      return;
+    }
+    if (data.entries_sync_action.tag === SYNCHRONIZATION_ACTION.HARD_REFRESH) {
+      hard_refresh_entries(data.playlist.id);
+      return;
+    }
+    if (data.entries_sync_action.tag === SYNCHRONIZATION_ACTION.RESUME) {
+      fetch_and_store_entries(data.playlist.id, data.entries_sync_action.next_page);
+    }
+  });
 
   const entries_cache = $derived.by(() => {
     const all: Model.PlaylistEntry[] = new Array(data_entries.length);
@@ -133,7 +138,7 @@
   });
 
   let some_track_unavailable = $derived(entries_cache.unavailable.length > 0);
-  let show_unavailable = $state(false);
+  let show_unavailable = $state(true);
   const playlist_total_time = $derived(entries_cache.available_total_time);
 
   const base_entries = $derived(show_unavailable ? entries_cache.all : entries_cache.available);
@@ -148,7 +153,7 @@
       return base_entries;
     }
 
-    const out = searcher.search(search_query);
+    const out = searcher.search_exact(search_query);
     return out;
   });
 
@@ -158,12 +163,46 @@
     return out;
   });
 
+  let vl_scroll_container = $state<HTMLElement | null>(null);
+  let vl_elements: HTMLLIElement[] = $state([]);
+  let virtualizer = $derived(
+    createVirtualizer<HTMLElement, HTMLLIElement>({
+      count: entries_displayed.length,
+      getScrollElement: vl_scroll_container ? () => vl_scroll_container : () => null,
+      estimateSize: () => 196,
+    }),
+  );
+  let vl_items = $derived($virtualizer.getVirtualItems());
+  // Ref: https://github.com/TanStack/virtual/issues/640#issuecomment-1885029911
+  // Ref: https://github.com/TanStack/virtual/discussions/476#discussioncomment-4724139
+  let [vl_items_before, vl_items_after] = $derived(
+    vl_items.length > 0
+      ? [
+          vl_items[0].start - $virtualizer.options.scrollMargin,
+          $virtualizer.getTotalSize() - vl_items[vl_items.length - 1].end,
+        ]
+      : [0, 0],
+  );
+  $inspect(vl_items_before, vl_items_after);
+  $effect(() => {
+    if (vl_elements.length) {
+      vl_elements.forEach((el) => $virtualizer.measureElement(el));
+    }
+  });
+
   function on_play_video(id: string) {
     goto(`/play?v=${id}`);
   }
 
+  async function on_shuffle() {
+    const entries = $state.snapshot(entries_displayed);
+    entries.sort(() => Math.random() - 0.5);
+    const playlist = await db.add_playlist_subset_from_entries($state.snapshot(data_playlist), entries);
+    goto(`/play?l=${playlist.id}`);
+  }
+
   const refresh_playlist = use_async_callback({
-    fn: refresh_local_playlist_and_items,
+    fn: db.refresh_local_playlist_and_items,
     on_err: (error) => {
       console.error(error);
     },
@@ -178,7 +217,10 @@
       sort_by.id !== DEFAULT_SORT_MODE.id,
   );
   async function play_current_playlist() {
-    const playlist = await add_playlist_subset($state.snapshot(data_playlist), $state.snapshot(entries_displayed));
+    const playlist = await db.add_playlist_subset_from_entries(
+      $state.snapshot(data_playlist),
+      $state.snapshot(entries_displayed),
+    );
 
     goto(`/play?l=${playlist.id}`);
   }
@@ -239,7 +281,7 @@
   </ConfirmDialog.Actions>
 </ConfirmDialog.Root>
 
-<PageSimple.Root>
+<PageSimple.Root bind:el={vl_scroll_container}>
   <PageSimple.Header>
     {#snippet image()}
       <PageSimple.HeaderImage img={data_playlist.img} alt="{data_playlist.title} playlist thumbnail">
@@ -256,7 +298,13 @@
     {/snippet}
     {#snippet children()}
       {#if data_channel}
-        <div class="font-bold text-foreground text-base"><a href="/{data_channel.id}">{data_channel.title}</a></div>
+        <div class="font-bold text-foreground text-base">
+          {#if data_channel.handle === undefined}
+            <a href="/{data_channel.id}">{data_channel.title}</a>
+          {:else}
+            <a href="/{data_channel.handle}">{data_channel.handle}</a>
+          {/if}
+        </div>
       {/if}
       <div class="font-normal">
         <div>
@@ -276,15 +324,9 @@
         label="Playlist options"
         options={[
           {
-            label: "Refresh",
-            onSelect: () => {
-              refresh_playlist.fn(data_playlist.id);
-            },
-            icon_left: {
-              Icon: refresh_playlist.running ? Icon.LoaderCircle : Icon.RefreshCw,
-              props: { class: refresh_playlist.running ? "animate-spin" : "" },
-            },
-            disabled: data_playlist.tag === "l",
+            label: "Shuffle",
+            onSelect: on_shuffle,
+            icon_left: { Icon: Icon.Shuffle },
           },
           {
             label: playlist_is_pinned ? "Unpin" : "Pin",
@@ -301,6 +343,17 @@
             },
             icon_left: { Icon: playlist_is_pinned ? Icon.PinOff : Icon.Pin },
             disabled: data_playlist.tag === "l" && !data_playlist.pinneable,
+          },
+          {
+            label: "Refresh",
+            onSelect: () => {
+              refresh_playlist.fn(data_playlist.id);
+            },
+            icon_left: {
+              Icon: refresh_playlist.running ? Icon.LoaderCircle : Icon.RefreshCw,
+              props: { class: refresh_playlist.running ? "animate-spin" : "" },
+            },
+            disabled: data_playlist.tag === "l",
           },
           {
             label: "Delete",
@@ -321,16 +374,25 @@
 
   <PageSimple.Content>
     {#snippet title()}
-      <span class="inline-block">
-        Tracks {entries_displayed.length}
-      </span>
-      {#if is_playlist_subset_playable}
-        <button
-          onclick={play_current_playlist}
-          class="ml-auto font-normal hover:bg-accent rounded-md inline-flex align-bottom gap-x-1.5 py-0.5 pl-1 pr-1.5 text-base active:scale-[0.98]"
-        >
-          <Icon.Play /><span class="">Subset</span>
-        </button>
+      {#if pending_entries.loading}
+        <span class="inline-flex gap-2">
+          Tracks {pending_entries.curr_count} / {pending_entries.total_entries}
+          <Icon.LoaderCircle class="animate-spin inline-block size-5 self-center" />
+        </span>
+      {:else}
+        <span class="inline-block">
+          Tracks {entries_displayed.length} / {show_unavailable
+            ? entries_cache.all.length
+            : entries_cache.available.length}
+        </span>
+        {#if is_playlist_subset_playable}
+          <button
+            onclick={play_current_playlist}
+            class="ml-auto font-normal hover:bg-accent rounded-md inline-flex align-bottom gap-x-1.5 py-0.5 pl-1 pr-1.5 text-base active:scale-[0.98]"
+          >
+            <Icon.Play /><span class="">Subset</span>
+          </button>
+        {/if}
       {/if}
     {/snippet}
     {#snippet actions()}
@@ -359,9 +421,13 @@
       {/if}
     {/snippet}
     {#snippet children()}
-      <ul class="grid grid-cols-[repeat(1,minmax(auto,64rem))] gap-y-8 sm:gap-y-0">
-        {#each entries_displayed as { item, video } (item.id)}
-          <li class="flex flex-col flex-1">
+      <ul class="grid grid-cols-[minmax(auto,64rem)] gap-y-8 sm:gap-y-0">
+        {#if vl_items_before > 0}
+          <div style="height: {vl_items_before}px;"></div>
+        {/if}
+        {#each vl_items as { index }, vl_items_index (index)}
+          {@const { item, video } = entries_displayed[index]}
+          <li bind:this={vl_elements[vl_items_index]} data-index={index} class="flex flex-col flex-1">
             {#if item.is_available}
               {@const is_pinned = pinned_state.is_pinned(video.id)}
               <button
@@ -467,6 +533,9 @@
             {/if}
           </li>
         {/each}
+        {#if vl_items_after > 0}
+          <div style="height: {vl_items_before}px;"></div>
+        {/if}
       </ul>
     {/snippet}
   </PageSimple.Content>
