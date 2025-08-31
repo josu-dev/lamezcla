@@ -2,6 +2,7 @@
   import { onNavigate } from "$app/navigation";
   import ButtonIcon from "$lib/components/el/ButtonIcon.svelte";
   import { Icon } from "$lib/components/icons/index.js";
+  import { SITE_NAME } from "$lib/constants.js";
   import { Dialog } from "bits-ui";
   import { tick } from "svelte";
   import type { SidebarMobileProps } from "./internal.js";
@@ -57,7 +58,7 @@
         </div>
         <div class="flex items-center">
           <a href="/" class="flex items-center text-3xl font-medium px-0.5">
-            <span>lamezcla</span>
+            <span>{SITE_NAME}</span>
           </a>
         </div>
       </div>

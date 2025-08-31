@@ -12,8 +12,9 @@
   import SearchInput from "$lib/components/SearchInput.svelte";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
   import { toast } from "$lib/components/Toaster.svelte";
+  import { SITE_NAME } from "$lib/constants.js";
   import { use_followed_ctx, use_pinned_ctx } from "$lib/context/index.js";
-  import { is_play_prevented, pick_random, use_async_callback } from "$lib/utils/index.js";
+  import { is_play_prevented, pick_random, share_or_copy_link, use_async_callback } from "$lib/utils/index.js";
   import { Searcher } from "$lib/utils/searcher.js";
   import type { PageData } from "./$types.js";
   import { DEFAULT_SORT_MODE, SORT_MODES, type SortMode } from "./config.js";
@@ -184,6 +185,23 @@
               icon_left: { Icon: channel_is_followed ? Icon.UserX : Icon.UserPlus },
             },
             {
+              label: "Share",
+              onSelect: () => {
+                share_or_copy_link(
+                  {
+                    title: SITE_NAME,
+                    text: `Shuffle "${data_channel.title}" playlists on ${SITE_NAME}`,
+                    url: window.location.href,
+                  },
+                  {
+                    on_copy_ok: () => toast.success("Channel link copied to clipboard"),
+                    on_copy_err: () => toast.error("Failed to copy channel link to clipboard"),
+                  },
+                );
+              },
+              icon_left: { Icon: Icon.Share2 },
+            },
+            {
               label: "Refresh",
               onSelect: () => {
                 refresh_channel.fn(data_channel.id);
@@ -270,6 +288,24 @@
                             },
                             icon_left: { Icon: is_pinned ? Icon.PinOff : Icon.Pin },
                             disabled: playlist.tag === "l" && !playlist.pinneable,
+                          },
+                          {
+                            label: "Share",
+                            onSelect: () => {
+                              share_or_copy_link(
+                                {
+                                  title: SITE_NAME,
+                                  text: `Shuffle "${playlist.title}" playlist on ${SITE_NAME}`,
+                                  url: window.location.href,
+                                },
+                                {
+                                  on_copy_ok: () => toast.success("Playlist link copied to clipboard"),
+                                  on_copy_err: () => toast.error("Failed to copy playlist link to clipboard"),
+                                },
+                              );
+                            },
+                            icon_left: { Icon: Icon.Share2 },
+                            disabled: playlist.tag === "l",
                           },
                           {
                             label: "Open in YouTube",
