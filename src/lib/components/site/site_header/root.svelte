@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Icon } from "$lib/components/icons/index.js";
   import * as SiteSidebar from "$lib/components/site/site_sidebar/index.js";
+  import { SITE_NAME } from "$lib/constants.js";
   import UserMenu from "./user_menu.svelte";
 </script>
 
@@ -11,7 +12,7 @@
   <div class="flex items-center">
     <a href="/" class="flex items-center text-3xl font-medium focus-outline rounded-md px-0.5 lg:px-2">
       <Icon.Shuffle class="hidden lg:block size-6 mr-2" />
-      <span>lamezcla</span>
+      <span>{SITE_NAME}</span>
     </a>
   </div>
   <div class="flex items-center ml-auto">

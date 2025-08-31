@@ -1,4 +1,5 @@
 import { assert } from './asserts.js';
+import type { AsyncVoid } from './types.js';
 
 
 export function ev_prevent_default(ev: Event) {
@@ -95,4 +96,38 @@ export function wait(seconds: number): Promise<void> {
 
 export function pick_random<T>(arr: Array<T>): T {
     return arr[Math.floor(Math.random() * arr.length)];
+}
+
+export type LinkData = Required<Pick<ShareData, 'title' | 'text' | 'url'>>;
+
+export function copy_link(value: LinkData, on_ok?: () => void, on_err?: (reason: unknown) => void): AsyncVoid {
+    if (navigator.clipboard === undefined || navigator.clipboard.writeText === undefined) {
+        return Promise.reject(new Error('Clipboard API not available')).catch(on_err);
+    }
+
+    const text = `${value.title}\n${value.text} ${value.url}`;
+    return navigator.clipboard
+        .writeText(text)
+        .then(on_ok, on_err);
+}
+
+export function share_link(value: LinkData, on_ok?: () => void, on_err?: (reason: unknown) => void): AsyncVoid {
+    if (navigator.share === undefined) {
+        return Promise.reject(new Error('Web Share API not available')).catch(on_err);
+    }
+
+    return navigator
+        .share(value)
+        .then(on_ok, on_err);
+}
+
+type ShareOrCopyLinkOptions = {
+    on_ok?: () => void;
+    on_err?: (reason: unknown) => void;
+    on_copy_ok?: () => void;
+    on_copy_err?: (reason: unknown) => void;
+};
+
+export function share_or_copy_link(value: LinkData, options: ShareOrCopyLinkOptions = {}): AsyncVoid {
+    return share_link(value, options.on_ok, () => copy_link(value, options.on_copy_ok, options.on_copy_err));
 }

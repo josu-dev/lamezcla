@@ -12,12 +12,15 @@
   import PlayCover from "$lib/components/PlayCover.svelte";
   import SearchInput from "$lib/components/SearchInput.svelte";
   import { Metadata, PageSimple } from "$lib/components/site/index.js";
+  import { toast } from "$lib/components/Toaster.svelte";
+  import { SITE_NAME } from "$lib/constants.js";
   import { use_pinned_ctx, use_playlists_ctx } from "$lib/context/index.js";
   import {
     is_play_prevented,
     Searcher,
     seconds_to_hhmmss,
     seconds_to_human,
+    share_or_copy_link,
     use_async_callback,
   } from "$lib/utils/index.js";
   import { createVirtualizer } from "@tanstack/svelte-virtual";
@@ -343,6 +346,24 @@
             },
             icon_left: { Icon: playlist_is_pinned ? Icon.PinOff : Icon.Pin },
             disabled: data_playlist.tag === "l" && !data_playlist.pinneable,
+          },
+          {
+            label: "Share",
+            onSelect: () => {
+              share_or_copy_link(
+                {
+                  title: SITE_NAME,
+                  text: `Shuffle "${data_playlist.title}" playlist on ${SITE_NAME}`,
+                  url: window.location.href,
+                },
+                {
+                  on_copy_ok: () => toast.success("Playlist link copied to clipboard"),
+                  on_copy_err: () => toast.error("Failed to copy playlist link to clipboard"),
+                },
+              );
+            },
+            icon_left: { Icon: Icon.Share2 },
+            disabled: data_playlist.tag === "l",
           },
           {
             label: "Refresh",
