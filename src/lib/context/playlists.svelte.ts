@@ -82,7 +82,7 @@ class PlaylistsState {
             video_id: video_id,
             position: playlist.item_count,
         });
-        Promise.all([
+        await Promise.all([
             db.upsert_lplaylist(playlist),
             db.upsert_playlist_item(item)
         ]);
@@ -96,12 +96,12 @@ class PlaylistsState {
             return false;
         }
 
-        Promise.all([
-            await db.update_yplaylist_by_id(
+        await Promise.all([
+            db.update_lplaylist_by_id(
                 playlist_id,
                 v => { v.item_count -= 1; v.updated_at = now_utc(); }
             ),
-            await db.delete_playlist_item_by_playlist_and_video_id(playlist_id, video_id)
+            db.delete_playlist_item_by_playlist_and_video_id(playlist_id, video_id)
         ]);
 
         return true;

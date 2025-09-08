@@ -5,6 +5,7 @@
 
   type Props = {
     img?: Model.Image;
+    square?: boolean;
     alt: string;
     children?: Snippet<[Snippet]>;
   };
@@ -15,13 +16,15 @@
     height: 90,
   };
 
-  let { img = DEFAULT_IMG, alt, children }: Props = $props();
+  let { img = DEFAULT_IMG, square = false, alt, children }: Props = $props();
 </script>
 
 {#snippet Image()}
-  {@const is_16_9 = img.width / img.height === 16 / 9}
-  <div class={is_16_9 ? "h-28 aspect-video" : "size-28"}>
-    <img src={img.url} width={img.width} height={img.height} {alt} class="rounded-md object-cover size-full" />
+  <div
+    data-square={square ? "" : undefined}
+    class="h-28 aspect-video rounded-md overflow-hidden data-square:size-28 data-square:aspect-auto"
+  >
+    <img src={img.url} width={img.width} height={img.height} {alt} class="object-cover size-full" />
   </div>
 {/snippet}
 

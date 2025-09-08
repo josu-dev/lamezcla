@@ -455,7 +455,7 @@ class PlayerState {
     };
 
     prev_track = (): void => {
-        const prev_i = (this.#state.entry_i - 1) % this.#entries.length;
+        const prev_i = (this.#state.entry_i - 1 + this.#entries.length) % this.#entries.length;
         this.play_by_index(prev_i + 1);
     };
 

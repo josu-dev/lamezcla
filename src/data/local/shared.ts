@@ -31,6 +31,7 @@ export function user_playlist({
     const out: Model.LPlaylist = {
         id: user_playlist_id(),
         channel_id: c.ME_CHANNEL_ID,
+        parent_id: undefined,
         title: title,
         description: description,
         img: img,
@@ -111,13 +112,14 @@ export function play_record_to_playlist_item(value: Model.PlayRecord): Model.Pla
 }
 
 export function system_playlist({
-    id, title, description, img = c.FALLBACK_IMG, item_count = 0, sortable = false, pinneable = false, computed = false
+    id, parent_id, title, description, img = c.FALLBACK_IMG, item_count = 0, sortable = false, pinneable = false, computed = false
 }: {
-    id: Model.StringId, title: string, description: string, img?: Model.Image, item_count?: number; sortable?: boolean; pinneable?: boolean, computed?: boolean;
+    id: Model.StringId, parent_id?: Model.StringId, title: string, description: string, img?: Model.Image, item_count?: number; sortable?: boolean; pinneable?: boolean, computed?: boolean;
 }): Model.LPlaylist {
     const now = now_utc();
     const out: Model.LPlaylist = {
         id: id,
+        parent_id: parent_id,
         channel_id: c.ME_CHANNEL_ID,
         tag: 'l',
         title: title,

@@ -54,12 +54,23 @@ export async function count_videos_most_played(limit: number): AsyncNumber {
     return out;
 }
 
-export async function select_videos_most_played(limit: number): AsyncArray<Model.Video> {
-    const compact_videos = await db.videos.where('play_count').above(0).reverse().sortBy('play_count');
+export async function select_video_most_played(): AsyncOptional<Model.Video> {
+    const compact_video = await db.videos.orderBy('play_count').reverse().first();
+    if (compact_video === undefined) {
+        return;
+    }
+    return expand_video_compact(compact_video);
+}
 
-    const out: Model.Video[] = new Array(compact_videos.length);
+export async function select_videos_most_played(limit: number): AsyncArray<Model.Video> {
+    const compact_videos = await db.videos.orderBy('play_count').reverse().limit(limit).toArray();
+    const out: Array<Model.Video> = [];
     for (let i = 0; i < compact_videos.length; i++) {
-        out[i] = expand_video_compact(compact_videos[i]);
+        const compact_video = compact_videos[i];
+        if (compact_video.play_count === 0) {
+            break;
+        }
+        out.push(expand_video_compact(compact_video));
     }
     return out;
 }
