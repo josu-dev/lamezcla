@@ -47,7 +47,8 @@
 
   const data_channel = $derived(data.channel);
   let data_playlist = $derived(data.playlist);
-  let data_entries = $state(data.entries);
+  // Fallback to empty array because on onmount breaks
+  let data_entries = $derived(data.entries ?? []);
   const playlist_is_pinned = $derived(pinned_state.is_pinned(data_playlist.id));
   const pending_entries = $state(
     data.entries_sync_action.tag === "NONE"
@@ -60,7 +61,7 @@
           loading: data.entries_sync_action.tag === "RESUME",
           curr_count: data.entries.length,
           total_entries: data.entries_sync_action.total_count ?? data.entries.length,
-        },
+        }
   );
 
   async function fetch_and_store_entries(id: string, page_token: undefined | string, reset: boolean = false) {
@@ -173,7 +174,7 @@
       count: entries_displayed.length,
       getScrollElement: vl_scroll_container ? () => vl_scroll_container : () => null,
       estimateSize: () => 196,
-    }),
+    })
   );
   let vl_items = $derived($virtualizer.getVirtualItems());
   // Ref: https://github.com/TanStack/virtual/issues/640#issuecomment-1885029911
@@ -184,9 +185,9 @@
           vl_items[0].start - $virtualizer.options.scrollMargin,
           $virtualizer.getTotalSize() - vl_items[vl_items.length - 1].end,
         ]
-      : [0, 0],
+      : [0, 0]
   );
-  $inspect(vl_items_before, vl_items_after);
+
   $effect(() => {
     if (vl_elements.length) {
       vl_elements.forEach((el) => $virtualizer.measureElement(el));
@@ -216,13 +217,14 @@
   });
 
   const is_playlist_subset_playable = $derived(
-    (entries_displayed.length > 0 && entries_displayed.length < entries_cache.available.length) ||
-      sort_by.id !== DEFAULT_SORT_MODE.id,
+    (entries_displayed.length > 0 &&
+      entries_displayed.length < (show_unavailable ? entries_cache.all.length : entries_cache.available.length)) ||
+      sort_by.id !== DEFAULT_SORT_MODE.id
   );
   async function play_current_playlist() {
     const playlist = await db.add_playlist_subset_from_entries(
       $state.snapshot(data_playlist),
-      $state.snapshot(entries_displayed),
+      $state.snapshot(entries_displayed)
     );
 
     goto(`/play?l=${playlist.id}`);
@@ -310,6 +312,13 @@
         </div>
       {/if}
       <div class="font-normal">
+        {#if data.parent_playlist !== undefined}
+          <div>
+            Subplaylist of <a href="/playlist/{data.parent_playlist.id}" class="font-bold hover:text-foreground"
+              >{data.parent_playlist.title}</a
+            >
+          </div>
+        {/if}
         <div>
           Created <HumanTime utc={data_channel.created_at} as_relative />
         </div>
@@ -359,7 +368,7 @@
                 {
                   on_copy_ok: () => toast.success("Playlist link copied to clipboard"),
                   on_copy_err: () => toast.error("Failed to copy playlist link to clipboard"),
-                },
+                }
               );
             },
             icon_left: { Icon: Icon.Share2 },
@@ -461,13 +470,13 @@
                 class="group text-left flex w-full"
               >
                 <div class="flex flex-col gap-4 px-4 py-2 w-full sm:flex-row">
-                  <div class="relative flex-none">
+                  <div class="relative flex-none rounded-md overflow-hidden aspect-video sm:w-xs">
                     <img
                       src={video.img?.url}
                       width={video.img?.width}
                       height={video.img?.height}
                       alt="{video.title} video thumbnail"
-                      class="rounded-md w-full aspect-video object-fill"
+                      class="size-full object-cover"
                     />
                     <div class="absolute bottom-2 right-2">
                       <span class="bg-accent px-1.5 py-1 rounded-md text-xs font-semibold tracking-wider">
@@ -527,14 +536,14 @@
                 </div>
               </button>
             {:else}
-              <div class="flex gap-4 px-4 py-2 w-full">
-                <div class="relative flex-none">
+              <div class="flex flex-col gap-4 px-4 py-2 w-full sm:flex-row">
+                <div class="relative flex-none rounded-md overflow-hidden aspect-video sm:w-xs">
                   <img
                     src={video.img?.url}
                     width={video.img?.width}
                     height={video.img?.height}
                     alt="{video.title} video thumbnail"
-                    class="rounded-md w-[320px] aspect-video object-fill"
+                    class="size-full object-cover"
                   />
                 </div>
                 <div>

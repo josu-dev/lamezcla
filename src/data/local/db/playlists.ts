@@ -1,13 +1,13 @@
-import type { Model } from '$data/models/index.js';
+import type { Model, StringId } from '$data/models/index.js';
 import type { Async, AsyncArray, AsyncOptional, AsyncVoid } from '$lib/utils/index.js';
 import { uuidv4 } from '$lib/utils/index.js';
 import { HISTORY_PLAYLIST_ID, LIKES_PLAYLIST_ID, MOST_PLAYED_100_PLAYLIST_ID, MOST_PLAYED_50_PLAYLIST_ID, SUBSET_PLAYLIST_ID } from '../constants.js';
 import { expand_video_compact, is_computed_playlist_id, is_local_playlist_id, normalize_playlist_entries, play_record, play_record_to_playlist_item, playlist_item, system_playlist } from '../shared.js';
 import type { DexieWithTables } from './db.js';
 import { delete_lplaylist_by_id, select_lplaylist_by_id, update_lplaylist_by_id, upsert_lplaylist } from './lplaylists.js';
-import { count_play_records, select_last_play_record, select_play_records, upsert_play_record } from './play_records.js';
-import { delete_playlist_items_by_playlist_id, select_playlist_items_by_playlist_id, upsert_playlists_items } from './playlists_items.js';
-import { count_videos_most_played, select_videos_by_ids, select_videos_most_played } from './videos.js';
+import { count_play_records, select_last_play_record, select_play_record, select_play_records, upsert_play_record } from './play_records.js';
+import { delete_playlist_items_by_playlist_id, select_last_playlist_item_by_playlist_id, select_playlist_items_by_playlist_id, upsert_playlists_items } from './playlists_items.js';
+import { count_videos_most_played, select_video_by_id, select_video_most_played, select_videos_by_ids, select_videos_most_played } from './videos.js';
 import { select_yplaylist_by_id, upsert_yplaylist } from './yplaylists.js';
 
 
@@ -64,7 +64,7 @@ export async function select_playlist_entries_by_id(id: string): AsyncArray<Mode
     let compact_items: Model.PlaylistItemCompact[];
     if (is_computed_playlist_id(id)) {
         if (id === HISTORY_PLAYLIST_ID) {
-            const play_records = await select_play_records(0, 250);
+            const play_records = await select_play_records(1, 250);
             compact_items = new Array(play_records.length);
             for (let i = 0; i < compact_items.length; i++) {
                 compact_items[i] = play_record_to_playlist_item(play_records[i]);
@@ -102,25 +102,50 @@ export async function select_playlist_entries_by_id(id: string): AsyncArray<Mode
     return out;
 }
 
-export async function recount_playlists_items(values: Model.AnyPlaylist[]): AsyncVoid {
-    const [play_records_count, most_played_count] = await Promise.all([
+export async function compute_system_playlists_meta(values: Array<Model.LPlaylist>): AsyncVoid {
+    const [
+        play_records_count,
+        most_played_count,
+        last_play_record,
+        most_played_video,
+        last_liked_item,
+    ] = await Promise.all([
         count_play_records(),
         count_videos_most_played(100),
+        select_play_record(),
+        select_video_most_played(),
+        select_last_playlist_item_by_playlist_id(LIKES_PLAYLIST_ID)
     ]);
+
+    const last_played_video = last_play_record !== undefined ? await select_video_by_id(last_play_record.video_id) : undefined;
+    const last_liked_video = last_liked_item !== undefined ? await select_video_by_id(last_liked_item.video_id) : undefined;
+
     for (const value of values) {
-        if (value.tag === 'y') {
-            continue;
-        }
         if (value.id === HISTORY_PLAYLIST_ID) {
+            if (last_played_video !== undefined) {
+                value.img = last_played_video.img;
+            }
             value.item_count = play_records_count;
             continue;
         }
         if (value.id === MOST_PLAYED_50_PLAYLIST_ID) {
+            if (most_played_video !== undefined) {
+                value.img = most_played_video.img;
+            }
             value.item_count = most_played_count > 50 ? 50 : most_played_count;
             continue;
         }
         if (value.id === MOST_PLAYED_100_PLAYLIST_ID) {
+            if (most_played_video !== undefined) {
+                value.img = most_played_video.img;
+            }
             value.item_count = most_played_count > 100 ? 100 : most_played_count;
+            continue;
+        }
+        if (value.id === LIKES_PLAYLIST_ID) {
+            if (last_liked_video !== undefined) {
+                value.img = last_liked_video.img;
+            }
             continue;
         }
     }
@@ -136,7 +161,7 @@ export async function add_play_record(video_id: Model.StringId): AsyncVoid {
     await update_lplaylist_by_id(HISTORY_PLAYLIST_ID, (v) => v.item_count++);
 }
 
-export async function select_history_playlist_entries(page: number = 0, page_size: number = 100): AsyncArray<Model.PlaylistEntry> {
+export async function select_history_playlist_entries(page: number = 1, page_size: number = 100): AsyncArray<Model.PlaylistEntry> {
     const records = await select_play_records(page, page_size);
 
     const value_id_to_item: Map<string, Model.PlaylistItem> = new Map();
@@ -163,47 +188,21 @@ export async function select_history_playlist_entries(page: number = 0, page_siz
     return out;
 }
 
-function playlist_items_from_items1(playlist_id: string, source: Array<Model.PlaylistItem>): Array<Model.PlaylistItemCompact> {
-    const out: Model.PlaylistItemCompact[] = new Array(source.length);
-    for (let i = 0; i < source.length; i++) {
-        const source_item = source[i];
-        const item: Model.PlaylistItemCompact = {
-            id: uuidv4(),
-            playlist_id: playlist_id,
-            video_id: source_item.video_id,
-            flags: source_item.flags,
-            position: i,
-            play_count: 0,
-            created_at: source_item.created_at
-        };
-        out[i] = item;
-    }
-    return out;
-}
-
-function playlist_items_from_items2(playlist_id: string, source: Array<Model.PlaylistItem>): Array<Model.PlaylistItemCompact> {
-    const out: Model.PlaylistItemCompact[] = new Array(source.length);
-    for (let i = 0; i < source.length; i++) {
-        const source_item = source[i];
-        const item: Model.PlaylistItemCompact = {
-            id: uuidv4(),
-            playlist_id: playlist_id,
-            video_id: source_item.video_id,
-            flags: source_item.flags,
-            position: i,
-            play_count: 0,
-            created_at: source_item.created_at
-        };
-        out[i] = item;
-    }
-    return out;
-}
-
 export async function add_playlist_subset(source_playlist: Model.AnyPlaylist, source_items: Model.PlaylistItemCompact[]): Async<Model.AnyChannel> {
     const playlist_length = source_items.length;
-    const title = `Subset: ${source_playlist.title.slice(source_playlist.title.startsWith("Subset: ") ? 8 : 0)}`;
+    let title: string;
+    let parent_id: undefined | StringId;
+    if (source_playlist.tag === "y") {
+        title = `Subset: ${source_playlist.title.slice(source_playlist.title.startsWith("Subset: ") ? 8 : 0)}`;
+        parent_id = source_playlist.id;
+    }
+    else {
+        title = `Subset: ${source_playlist.title.slice(source_playlist.title.startsWith("Subset: ") ? 8 : 0)}`;
+        parent_id = source_playlist.parent_id;
+    }
     const playlist = system_playlist({
         id: SUBSET_PLAYLIST_ID,
+        parent_id: parent_id,
         title: title,
         description: source_playlist.description,
         img: source_playlist.img,
@@ -232,11 +231,13 @@ export async function add_playlist_subset(source_playlist: Model.AnyPlaylist, so
 
     return playlist;
 }
+
 export async function add_playlist_subset_from_entries(source_playlist: Model.AnyPlaylist, source_entries: Model.PlaylistEntry[]): Async<Model.AnyChannel> {
     const playlist_length = source_entries.length;
     const title = `Subset: ${source_playlist.title.slice(source_playlist.title.startsWith("Subset: ") ? 8 : 0)}`;
     const playlist = system_playlist({
         id: SUBSET_PLAYLIST_ID,
+        parent_id: source_playlist.tag === 'y' ? source_playlist.id : source_playlist.parent_id,
         title: title,
         description: source_playlist.description,
         img: source_playlist.img,

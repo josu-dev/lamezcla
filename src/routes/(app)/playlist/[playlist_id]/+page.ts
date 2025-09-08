@@ -103,9 +103,18 @@ export const load: PageLoad = async ({ params, fetch }) => {
         await db.upsert_yplaylist(playlist as Model.YPlaylist);
     }
 
+    let parent_playlist: undefined | Model.AnyPlaylist;
+    if (playlist.tag === "l") {
+        if (playlist.parent_id !== undefined) {
+            parent_playlist = await db.select_playlist_by_id(playlist.parent_id);
+        }
+        await db.compute_system_playlists_meta([playlist]);
+    }
+
     return {
         channel: channel,
         playlist: playlist,
+        parent_playlist,
         entries: entries,
         entries_sync_action: sync_action
     };

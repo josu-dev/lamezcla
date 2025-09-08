@@ -19,8 +19,13 @@ export async function upsert_play_record(value: Model.PlayRecord): AsyncVoid {
     await db.play_records.put(value);
 }
 
-export async function select_play_records(page: number = 0, page_size: number = 100): AsyncArray<Model.PlayRecord> {
-    const out = await db.play_records.orderBy('created_at').reverse().offset(page * page_size).limit(page_size).toArray();
+export async function select_play_record(): AsyncOptional<Model.PlayRecord> {
+    const out = await db.play_records.orderBy('created_at').reverse().first();
+    return out;
+}
+
+export async function select_play_records(page: number = 1, page_size: number = 100): AsyncArray<Model.PlayRecord> {
+    const out = await db.play_records.orderBy('created_at').reverse().offset((page - 1) * page_size).limit(page_size).toArray();
     return out;
 }
 

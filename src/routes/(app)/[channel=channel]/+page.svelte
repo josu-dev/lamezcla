@@ -134,7 +134,7 @@
 <PageSimple.Root>
   <PageSimple.Header>
     {#snippet image()}
-      <PageSimple.HeaderImage img={data_channel.img} alt="{data_channel.title} profile avatar" />
+      <PageSimple.HeaderImage img={data_channel.img} alt="{data_channel.title} profile avatar" square />
     {/snippet}
     {#snippet title()}
       {data_channel.title}
@@ -196,7 +196,7 @@
                   {
                     on_copy_ok: () => toast.success("Channel link copied to clipboard"),
                     on_copy_err: () => toast.error("Failed to copy channel link to clipboard"),
-                  },
+                  }
                 );
               },
               icon_left: { Icon: Icon.Share2 },
@@ -240,9 +240,9 @@
       <ul class="grid grid-cols-[repeat(auto-fit,minmax(18rem,1fr))] gap-2">
         {#each playlists_displayed as playlist (playlist.id)}
           {@const is_pinned = pinned_state.is_pinned(playlist.id)}
-          <li class="flex flex-col flex-1">
+          <li class="flex flex-col flex-1 sm:max-w-sm">
             <button
-              class="group text-left flex mr-auto"
+              class="group text-left flex"
               onclick={(e) => {
                 if (is_play_prevented(e)) {
                   return;
@@ -250,7 +250,7 @@
                 on_play_playlist(playlist.id);
               }}
             >
-              <div class="flex flex-col px-4 py-2">
+              <div class="flex flex-col px-4 py-2 w-full">
                 <div class="relative">
                   <img
                     src={playlist.img?.url}
@@ -301,7 +301,7 @@
                                 {
                                   on_copy_ok: () => toast.success("Playlist link copied to clipboard"),
                                   on_copy_err: () => toast.error("Failed to copy playlist link to clipboard"),
-                                },
+                                }
                               );
                             },
                             icon_left: { Icon: Icon.Share2 },

@@ -49,7 +49,7 @@ export const load: PageLoad = async ({ params, fetch }) => {
     }
     else {
         playlists = await db.select_lplaylists_by_channel_id(channel.id);
-        await db.recount_playlists_items(playlists);
+        await db.compute_system_playlists_meta(playlists as Array<Model.LPlaylist>);
     }
 
     return {

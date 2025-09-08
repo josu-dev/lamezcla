@@ -60,7 +60,7 @@
   });
 </script>
 
-<div class="flex w-full h-full relative">
+<div class="grid grid-rows-1 w-full h-full relative xl:grid-cols-[1fr_auto]">
   <div class="flex flex-col flex-1">
     <div class="flex-none flex justify-center pt-6">
       <h2 class="text-2xl font-bold {player_source.invalid ? 'text-primary' : ''}">
@@ -88,7 +88,7 @@
               <feComposite in="SourceGraphic" in2="saturated_blur" operator="over"></feComposite>
             </filter>
           </svg>
-          <div class="aspect-video rounded-md overflow-clip" style="filter: url(#blur-and-scale);">
+          <div class="aspect-video rounded-md overflow-clip max-w-full" style="filter: url(#blur-and-scale);">
             <img
               src={current_video.img?.url}
               height={current_video.img?.height}
@@ -152,7 +152,7 @@
         </Dialog.Portal>
       </Dialog.Root>
     </div>
-    <div class="hidden xl:block flex-none">
+    <div class="hidden xl:block">
       <Tracklist
         {channel}
         playlist={player_source.playlist}

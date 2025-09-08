@@ -59,6 +59,7 @@ export interface YPlaylist extends BasePlaylist, SyncableTrait {
 
 export interface LPlaylist extends BasePlaylist {
     tag: 'l';
+    parent_id: undefined | StringId;
     computed: boolean;
     system: boolean;
     pinneable: boolean;

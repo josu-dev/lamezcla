@@ -1,5 +1,6 @@
 import type { Model } from '$data/models/index.js';
-import type { AsyncArray, AsyncVoid } from '$lib/utils/index.js';
+import type { AsyncArray, AsyncOptional, AsyncVoid } from '$lib/utils/index.js';
+import Dexie from 'dexie';
 import type { DexieWithTables } from './db.js';
 
 
@@ -7,7 +8,7 @@ export type TableSchema = Model.PlaylistItemCompact;
 
 export const TABLE_NAME = 'playlists_items';
 
-export const TABLE_INDEXES = 'id, playlist_id, video_id';
+export const TABLE_INDEXES = 'id, playlist_id, video_id, [playlist_id+created_at]';
 
 let db: DexieWithTables;
 
@@ -21,6 +22,15 @@ export async function upsert_playlist_item(value: Model.PlaylistItemCompact): As
 
 export async function upsert_playlists_items(values: Model.PlaylistItemCompact[]): AsyncVoid {
     await db.playlists_items.bulkPut(values);
+}
+
+export async function select_last_playlist_item_by_playlist_id(id: string): AsyncOptional<Model.PlaylistItemCompact> {
+    const out = await db.playlists_items
+        .where('[playlist_id+created_at]')
+        .between([id, Dexie.minKey], [id, Dexie.maxKey])
+        .reverse()
+        .first();
+    return out;
 }
 
 export async function select_playlist_items_by_playlist_id(id: string): AsyncArray<Model.PlaylistItemCompact> {

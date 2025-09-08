@@ -8,10 +8,20 @@ import type * as YApi from './api.types.js';
 
 const MAX_RESULTS_PER_REQUEST = "50";
 const BASE_API = `https://youtube.googleapis.com/youtube/v3`;
-const ENDPOINT_CHANNEL = `/channels`;
-const ENDPOINT_PLAYLIST = `/playlists`;
-const ENDPOINT_PLAYLIST_ITEMS = `/playlistItems`;
-const ENDPOINT_VIDEOS = `/videos`;
+
+/** this image is 240px wide and 240px tall. */
+const CHANNEL_THUMBNAIL = 'medium';
+const CHANNELS_ENDPOINT = `/channels`;
+
+/** this image is 480px wide and 360px tall. */
+const PLAYLIST_THUMBNAIL = 'high';
+const PLAYLISTS_ENDPOINT = `/playlists`;
+
+const PLAYLIST_ITEMS_ENDPOINT = `/playlistItems`;
+
+/** this image is 480px wide and 360px tall. */
+const VIDEO_THUMBNAIL = 'high';
+const VIDEOS_ENDPOINT = `/videos`;
 
 function build_api_url(endpoint: string, params: Record<string, string>) {
     const sp = new URLSearchParams(params);
@@ -51,7 +61,7 @@ function normalize_channel(value: YApi.Channel): Out.Channel {
         id: value.id,
         handle: safe_handle,
         title: value.snippet.title,
-        img: value.snippet.thumbnails?.medium,
+        img: value.snippet.thumbnails?.[CHANNEL_THUMBNAIL],
         created_at: value.snippet.publishedAt,
     };
     return out;
@@ -117,7 +127,7 @@ function duration_to_seconds(duration: string): number {
 
 export async function get_channel(id: string): AsyncResult<undefined | Out.Channel, FetchApiErrValue<YApi.ChannelListResponse>> {
     const data = await fetch_api<YApi.ChannelListResponse>({
-        endpoint: ENDPOINT_CHANNEL,
+        endpoint: CHANNELS_ENDPOINT,
         part: ['snippet', 'contentDetails', 'status'],
         others: {
             id: id
@@ -138,7 +148,7 @@ export async function get_channel(id: string): AsyncResult<undefined | Out.Chann
 
 export async function get_channel_by_handle(handle: string): AsyncResult<undefined | Out.Channel, FetchApiErrValue<YApi.ChannelListResponse>> {
     const data = await fetch_api<YApi.ChannelListResponse>({
-        endpoint: ENDPOINT_CHANNEL,
+        endpoint: CHANNELS_ENDPOINT,
         part: ['snippet', 'contentDetails', 'status'],
         others: {
             forHandle: handle
@@ -167,20 +177,11 @@ function _get_channel_playlists(channel_id: string, page_token: undefined | stri
     }
 
     return fetch_api<YApi.PlaylistListResponse>({
-        endpoint: ENDPOINT_PLAYLIST,
+        endpoint: PLAYLISTS_ENDPOINT,
         part: ["snippet", "player", "status", "contentDetails"],
         others: others
     });
 }
-
-// export async function get_channel_playlists(channel_id: string) {
-//     const data = await _get_channel_playlists(channel_id);
-//     if (data.is_err){
-//         return data;
-//     }
-
-//     return ok(out);
-// }
 
 export async function get_channel_playlists_all(channel_id: string) {
     const out: Out.Playlist[] = [];
@@ -207,7 +208,7 @@ export async function get_channel_playlists_all(channel_id: string) {
                 id: item.id,
                 channel_id: item.snippet.channelId,
                 description: item.snippet.description,
-                img: item.snippet.thumbnails?.medium,
+                img: item.snippet.thumbnails?.[PLAYLIST_THUMBNAIL],
                 item_count: item.contentDetails.itemCount,
                 privacy_status: item.status.privacyStatus,
                 created_at: item.snippet.publishedAt,
@@ -238,20 +239,11 @@ async function _get_playlist_items(playlist_id: string, page_token: undefined | 
     }
 
     return fetch_api<YApi.PlaylistItemListResponse>({
-        endpoint: ENDPOINT_PLAYLIST_ITEMS,
+        endpoint: PLAYLIST_ITEMS_ENDPOINT,
         part: ["snippet", "contentDetails", "status"],
         others: others
     });
 }
-
-// export async function get_playlist_items(playlist_id: string) {
-//     const data = await _get_playlist_items(playlist_id);
-//     if (data === undefined) {
-//         return undefined;
-//     }
-
-//     return ok(out);
-// }
 
 export function extract_playlist_item_flags(item: YApi.PlaylistItem): number {
     let flags = 0;
@@ -377,7 +369,7 @@ function _get_playlists(ids: string[]) {
     };
 
     return fetch_api<YApi.PlaylistListResponse>({
-        endpoint: ENDPOINT_PLAYLIST,
+        endpoint: PLAYLISTS_ENDPOINT,
         part: ["snippet", "player", "status", "contentDetails"],
         others: others
     });
@@ -408,7 +400,7 @@ export async function get_playlists(ids: string[]) {
                 id: item.id,
                 channel_id: item.snippet.channelId,
                 description: item.snippet.description,
-                img: item.snippet.thumbnails?.medium,
+                img: item.snippet.thumbnails?.[PLAYLIST_THUMBNAIL],
                 item_count: item.contentDetails.itemCount,
                 privacy_status: item.status.privacyStatus,
                 created_at: item.snippet.publishedAt,
@@ -429,7 +421,7 @@ function _get_videos(ids: string[]) {
     };
 
     return fetch_api<YApi.VideoListResponse>({
-        endpoint: ENDPOINT_VIDEOS,
+        endpoint: VIDEOS_ENDPOINT,
         part: ["contentDetails", "snippet", "player", "statistics", "status", "liveStreamingDetails"],
         others: others
     });
@@ -493,7 +485,7 @@ export async function get_videos(ids: string[]) {
                 flags: extract_video_flags(item),
                 channel_id: item.snippet.channelId,
                 channel_title: item.snippet.channelTitle,
-                img: item.snippet.thumbnails?.medium,
+                img: item.snippet.thumbnails?.[VIDEO_THUMBNAIL],
                 created_at: item.snippet.publishedAt,
                 title: item.snippet.title,
                 duration_s: duration_to_seconds(item.contentDetails.duration),
