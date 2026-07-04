@@ -7,6 +7,7 @@
   import type { PlayerControlsStaticProps } from "./internal.js";
   import { use_player_ctx } from "./player.svelte.js";
 
+  // eslint-disable-next-line no-empty-pattern
   let {}: PlayerControlsStaticProps = $props();
 
   const player = use_player_ctx();
@@ -18,12 +19,21 @@
   }
 
   let is_dragging = $state(false);
-  let detached_progress = $derived(is_dragging ? undefined : current.time_current);
+  let progress_value = $state(0);
 
   let unset_is_dragging_id: undefined | number;
 
   function set_is_dragging() {
+    progress_value = current.time_current;
     is_dragging = true;
+  }
+
+  function get_progress_value() {
+    return is_dragging ? progress_value : current.time_current;
+  }
+
+  function set_progress_value(value: number) {
+    progress_value = value;
   }
 
   function unset_is_dragging() {
@@ -49,7 +59,7 @@
   <div class="h-0.5 mb-[10px] flex items-center">
     <Slider.Root
       type="single"
-      value={detached_progress}
+      bind:value={get_progress_value, set_progress_value}
       onpointerdown={set_is_dragging}
       onValueCommit={(v) => {
         player.seek_to(v);
@@ -149,7 +159,7 @@
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
             {#snippet child({ props })}
-              <ButtonIcon onclick={() => {}} title={"Open actions"} size="sm" {...props}>
+              <ButtonIcon onclick={() => {}} title="Open actions" size="sm" {...props}>
                 <Icon.EllipsisVertical />
               </ButtonIcon>
             {/snippet}
