@@ -24,3 +24,7 @@ vite.config.ts.timestamp-*
 
 # Custom
 /.local
+
+# ia
+/.opencode
+/AGENTS.md

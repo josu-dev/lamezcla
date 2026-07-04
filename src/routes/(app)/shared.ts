@@ -9,7 +9,7 @@ export type Query = {
 const skip_playlist = new Set(['WL']);
 
 const ytlink_re =
-    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?.*v=(?<v_id1>[\w-]+)(?:.*&list=(?<pl_id1>[\w-]+))?|playlist\?.*list=(?<pl_id2>[\w-]+)|(?<handle>@[\w-]+)|channel\/(?<c_id1>[\w-]+))|youtu\.be\/(?<v_id2>[\w-]+))/i;
+    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?.*v=(?<v_id1>[\w-]+)(?:.*&list=(?<pl_id1>[\w-]+))?|live\/(?<v_id3>[\w-]+)|playlist\?.*list=(?<pl_id2>[\w-]+)|(?<handle>@[\w-]+)|channel\/(?<c_id1>[\w-]+))|youtu\.be\/(?<v_id2>[\w-]+))/i;
 
 export function parse_query(v: string): Query {
     if (v.startsWith("@")) {
@@ -40,10 +40,11 @@ export function parse_query(v: string): Query {
     let mode: QueryMode = "";
     let value = "";
     const groups = r.groups!;
-    const video_id = groups.v_id1 ?? groups.v_id2;
+    const video_id = groups.v_id1 ?? groups.v_id2 ?? groups.v_id3;
     const playlist_id = groups.pl_id1 ?? groups.pl_id2;
     const handle = groups.handle;
     const channel_id = groups.c_id1;
+
     if (video_id?.length) {
         mode = "v";
         value = video_id;
