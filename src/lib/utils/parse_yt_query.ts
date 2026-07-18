@@ -6,7 +6,7 @@ export type Query = {
     value: string;
 };
 
-const skip_playlist = new Set(['WL']);
+const skip_playlist = new Set(["WL"]);
 
 const ytlink_re =
     /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?.*v=(?<v_id1>[\w-]+)(?:.*&list=(?<pl_id1>[\w-]+))?|live\/(?<v_id3>[\w-]+)|playlist\?.*list=(?<pl_id2>[\w-]+)|(?<handle>@[\w-]+)|channel\/(?<c_id1>[\w-]+))|youtu\.be\/(?<v_id2>[\w-]+))/i;

@@ -9,8 +9,8 @@
   import type { ElEvent } from "$lib/utils/index.js";
   import type { Component } from "svelte";
   import { superForm } from "sveltekit-superforms";
-  import type { Query, QueryMode } from "./shared.js";
-  import { parse_query } from "./shared.js";
+  import type { Query, QueryMode } from "$lib/utils/parse_yt_query";
+  import { parse_query } from "$lib/utils/parse_yt_query";
 
   let { data } = $props();
 

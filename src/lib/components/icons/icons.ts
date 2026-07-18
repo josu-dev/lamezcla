@@ -5,6 +5,8 @@ export { default as ArrowDownNarrowWide } from '@lucide/svelte/icons/arrow-down-
 export { default as ArrowDownWideNarrow } from '@lucide/svelte/icons/arrow-down-wide-narrow';
 export { default as ArrowDownAZ } from '@lucide/svelte/icons/arrow-down-z-a';
 export { default as ArrowDownUp } from '@lucide/svelte/icons/arrow-up-down';
+export { default as CircleHelp } from '@lucide/svelte/icons/circle-help';
+export { default as Ellipsis } from '@lucide/svelte/icons/ellipsis';
 export { default as EllipsisVertical } from '@lucide/svelte/icons/ellipsis-vertical';
 export { default as ExternalLink } from '@lucide/svelte/icons/external-link';
 export { default as Eye } from '@lucide/svelte/icons/eye';

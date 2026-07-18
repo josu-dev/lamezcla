@@ -4,7 +4,7 @@ import { message, superValidate, } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import * as v from 'valibot';
 import type { Actions, PageServerLoad } from './$types.js';
-import { parse_query } from './shared.js';
+import { parse_query } from '$lib/utils/parse_yt_query';
 
 
 const search_schema = v.object({
