@@ -61,6 +61,7 @@
 </script>
 
 <div class="grid grid-rows-1 w-full h-full relative xl:grid-cols-[1fr_auto]">
+<div class="grid grid-rows-1 w-full h-full relative xl:grid-cols-[1fr_auto]">
   <div class="flex flex-col flex-1">
     <div class="flex-none flex justify-center pt-6">
       <h2 class="text-2xl font-bold {player_source.invalid ? 'text-primary' : ''}">
@@ -92,7 +93,7 @@
             type="button"
             onclick={player.toggle_play}
             aria-label={player.is_playing ? `Pause ${current_video.title}` : `Play ${current_video.title}`}
-            class="aspect-video w-full rounded-md overflow-clip max-w-full"
+            class="aspect-video w-full rounded-md overflow-clip max-w-full max-w-full"
             style="filter: url(#blur-and-scale);"
           >
             <img
@@ -160,6 +161,7 @@
         </Dialog.Portal>
       </Dialog.Root>
     </div>
+    <div class="hidden xl:block">
     <div class="hidden xl:block">
       <Tracklist
         {channel}
