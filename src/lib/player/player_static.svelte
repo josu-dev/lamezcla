@@ -80,7 +80,7 @@
       {#if current_video === undefined}
         <div class="text-red-500 font-bold">Not available</div>
       {:else}
-        <div class="flex flex-col items-center max-w-[min(80%,36rem)]">
+        <div class="flex flex-col items-center w-full max-w-[min(80%,36rem)]">
           <svg width="0" height="0">
             <filter id="blur-and-scale" y="-50%" x="-50%" width="200%" height="200%">
               <feGaussianBlur in="SourceGraphic" stdDeviation="30" result="blurred"></feGaussianBlur>
@@ -88,17 +88,25 @@
               <feComposite in="SourceGraphic" in2="saturated_blur" operator="over"></feComposite>
             </filter>
           </svg>
-          <div class="aspect-video rounded-md overflow-clip max-w-full" style="filter: url(#blur-and-scale);">
+          <button
+            type="button"
+            onclick={player.toggle_play}
+            aria-label={player.is_playing ? `Pause ${current_video.title}` : `Play ${current_video.title}`}
+            class="aspect-video w-full rounded-md overflow-clip max-w-full"
+            style="filter: url(#blur-and-scale);"
+          >
             <img
               src={current_video.img?.url}
               height={current_video.img?.height}
               width={current_video.img?.width}
               alt="{current_video.title} video thumbnail"
-              class="object-cover h-full bg-transparent"
+              class="object-cover w-full h-full bg-transparent"
             />
-          </div>
+          </button>
           <div class="flex flex-col items-center mt-6 lg:mt-8 text-center">
-            <h3 class="text-xl font-bold text-pretty leading-tight select-text">{current_video.title}</h3>
+            <h3 class="text-xl font-bold text-pretty leading-tight select-text">
+              <a href="/video/{current_video.id}">{current_video.title}</a>
+            </h3>
             <a
               href="/{current_video.channel_id}"
               rel="noopener noreferrer"
